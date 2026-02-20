@@ -321,15 +321,66 @@
             <div>
               <b>Prestige: Court Patrons</b>
               <div class="muted smallSans">Lifetime Notes determine Patron gains. Ink persists.</div>
-              <div class="muted smallSans mono" id="prestigeInfo">Lifetime: 0 • Gain: +0 Patron(s)</div>
+
+              <!-- Requested: add "Notes" to Lifetime, and move it above prestige currency -->
+              <div class="muted smallSans mono" id="lifetimeNotesLine">Lifetime Notes: 0</div>
+              <div class="muted smallSans mono" id="patronLine">You have: 0 Patron(s) • Prestige Gain: +0</div>
               <div class="muted smallSans mono" id="nextPatronInfo">Next Patron in: — Notes</div>
             </div>
             <button class="primary" id="prestigeBtn">🎩 Prestige</button>
           </div>
 
+          <details class="dropdown" id="facilityDropdown">
+            <summary>
+              <span>Performance Facility (Patrons)</span>
+              <span class="tag" id="facilityTag">—</span>
+            </summary>
+            <div class="detailsBody">
+              <div class="muted smallSans" style="margin-bottom:8px;">
+                Spend Patrons to upgrade your facility. Patrons spent are gone, but facilities grant big global bonuses.
+              </div>
+
+              <div class="mini" style="margin-bottom:10px;">
+                <div class="name">
+                  <div class="top">
+                    <b id="facilityName">—</b>
+                    <span class="tag warn" id="facilityBonus">—</span>
+                  </div>
+                  <div class="muted smallSans" id="facilityDesc">—</div>
+                </div>
+                <div class="right">
+                  <div class="cost mono" id="facilityPatrons">Patrons: —</div>
+                  <div class="cost mono" id="facilityEarned">Earned: —</div>
+                </div>
+              </div>
+
+              <details class="dropdown" id="facilityUpgradesDetails">
+                <summary>
+                  <span>Facility Upgrades</span>
+                  <span class="tag" id="facilityUpgradesTag">—</span>
+                </summary>
+                <div class="detailsBody">
+                  <div class="table" id="facilityUpgradesList"></div>
+                </div>
+              </details>
+
+              <div style="height:10px"></div>
+
+              <details class="dropdown" id="facilityNextDetails">
+                <summary>
+                  <span>Move to a New Venue</span>
+                  <span class="tag" id="facilityNextTag">—</span>
+                </summary>
+                <div class="detailsBody">
+                  <div class="table" id="facilityNextList"></div>
+                </div>
+              </details>
+            </div>
+          </details>
+
           <div class="footer">
             <span class="mono" id="clock">—</span>
-            <span class="muted">Families, dropdown upgrades, stats & settings enabled.</span>
+            <span class="muted">Synergy dropdowns stay open now. Facility system enabled.</span>
           </div>
         </div>
       </section>
@@ -381,7 +432,7 @@
       <div class="content">
         <div class="table" id="statsList"></div>
         <div class="footer">
-          <span class="muted">Stats update live. More coming soon (facility, note-value progression, etc.).</span>
+          <span class="muted">Stats update live.</span>
           <span class="mono" id="statsClock">—</span>
         </div>
       </div>
@@ -411,7 +462,7 @@
         <div class="row">
           <div>
             <b>Hard Reset</b>
-            <div class="muted smallSans">Erases everything (including Ink & Patrons).</div>
+            <div class="muted smallSans">Erases everything (including Ink, Patrons, Facilities).</div>
           </div>
           <button class="danger" id="resetBtn">🧨 Hard Reset</button>
         </div>
@@ -455,8 +506,7 @@
     return `${scaled.toFixed(decimals)}${pick.s}`;
   }
 
-  // "Small" compact formatter for very large Notes in the HUD (keeps the game snappy)
-  // If suffix mode is enabled, we still prefer the sig4 style above 1M.
+  // Compact HUD formatter
   function fmtNotesHud(n, useSuffix){
     if (!isFinite(n)) return "∞";
     if (useSuffix) return fmtSig4Suffix(n);
@@ -512,11 +562,11 @@
   ];
 
   const FAMILY_ORDER = [
-    { id:"Winds",   label:"Woodwinds", defaultOpen:true },
-    { id:"Brass",   label:"Brass",     defaultOpen:false },
-    { id:"Perc",    label:"Percussion",defaultOpen:false },
-    { id:"Strings", label:"Strings",   defaultOpen:false },
-    { id:"Other",   label:"Other",     defaultOpen:false },
+    { id:"Winds",   label:"Woodwinds",  defaultOpen:true },
+    { id:"Brass",   label:"Brass",      defaultOpen:false },
+    { id:"Perc",    label:"Percussion", defaultOpen:false },
+    { id:"Strings", label:"Strings",    defaultOpen:false },
+    { id:"Other",   label:"Other",      defaultOpen:false },
   ];
 
   // ---------- NOTE Upgrades (per-building ladder) ----------
@@ -740,24 +790,178 @@
   }
   const INK_UPGRADES = buildInkUpgrades();
 
+  // ---------- Facilities (Prestige Spending) ----------
+  // Patron costs are deliberately chunky; easy to tune later.
+  const FACILITIES = [
+    {
+      id:"shed",
+      name:"Mildewy Shed",
+      desc:"A cramped shed behind the school. The music stands wobble if you breathe too hard.",
+      patronCostToUnlock: 0,
+      globalMult: { nps: 1.00, click: 1.00 },
+      upgrades: [
+        { id:"shed_stands",  name:"Unbent Music Stands", cost: 1,  desc:"+15% Notes/sec", mult:{ nps:1.15 } },
+        { id:"shed_light",   name:"Working Lightbulbs",  cost: 1,  desc:"+10% Click power", mult:{ click:1.10 } },
+      ]
+    },
+    {
+      id:"garage",
+      name:"One-Car Garage",
+      desc:"Still echoey… but at least it’s weatherproof and you can fit a full section inside.",
+      patronCostToUnlock: 10,
+      globalMult: { nps: 1.40, click: 1.15 },
+      upgrades: [
+        { id:"gar_podium",   name:"Stable Podium",       cost: 3,  desc:"+20% Click power", mult:{ click:1.20 } },
+        { id:"gar_panels",   name:"DIY Dampening Panels",cost: 4,  desc:"+25% Notes/sec",  mult:{ nps:1.25 } },
+      ]
+    },
+    {
+      id:"bandroom",
+      name:"Band Room",
+      desc:"Lockers. Posters. A metronome that has survived three directors. It feels like home.",
+      patronCostToUnlock: 25,
+      globalMult: { nps: 1.85, click: 1.25 },
+      upgrades: [
+        { id:"br_shell",     name:"Mini Sound Shell",    cost: 7,  desc:"+35% Notes/sec",  mult:{ nps:1.35 } },
+        { id:"br_library",   name:"Organized Music Library", cost: 6, desc:"+20% Notes/sec & +10% Click", mult:{ nps:1.20, click:1.10 } },
+      ]
+    },
+    {
+      id:"gym",
+      name:"Gymnasium",
+      desc:"Huge, loud, and absolutely unforgiving… but you can finally hear the low brass.",
+      patronCostToUnlock: 60,
+      globalMult: { nps: 2.40, click: 1.35 },
+      upgrades: [
+        { id:"gym_curtains", name:"Heavy Curtains",      cost: 12, desc:"+45% Notes/sec", mult:{ nps:1.45 } },
+        { id:"gym_shell",    name:"Full Sound Shell",    cost: 14, desc:"+30% Click power", mult:{ click:1.30 } },
+      ]
+    },
+    {
+      id:"pac",
+      name:"School PAC",
+      desc:"Real lights. Real stage. Real applause (and real stagehands who judge your setup time).",
+      patronCostToUnlock: 120,
+      globalMult: { nps: 3.25, click: 1.55 },
+      upgrades: [
+        { id:"pac_stands",   name:"Professional Stands", cost: 22, desc:"+55% Notes/sec", mult:{ nps:1.55 } },
+        { id:"pac_acoustics",name:"Acoustic Banners",    cost: 26, desc:"+35% Notes/sec & +15% Click", mult:{ nps:1.35, click:1.15 } },
+      ]
+    },
+    {
+      id:"church",
+      name:"Stone Church",
+      desc:"Natural reverb for days. Every chord sounds like it means something.",
+      patronCostToUnlock: 220,
+      globalMult: { nps: 4.30, click: 1.75 },
+      upgrades: [
+        { id:"ch_risers",    name:"Sturdy Risers",       cost: 45, desc:"+70% Notes/sec", mult:{ nps:1.70 } },
+        { id:"ch_conductor", name:"Elegant Podium",      cost: 40, desc:"+40% Click power", mult:{ click:1.40 } },
+      ]
+    },
+    {
+      id:"hall",
+      name:"Concert Hall",
+      desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",
+      patronCostToUnlock: 400,
+      globalMult: { nps: 6.00, click: 2.05 },
+      upgrades: [
+        { id:"hall_shell",   name:"Adjustable Shell",    cost: 80, desc:"+90% Notes/sec", mult:{ nps:1.90 } },
+        { id:"hall_record",  name:"Pro Recording Rig",   cost: 95, desc:"+60% Click power", mult:{ click:1.60 } },
+      ]
+    },
+    {
+      id:"famous",
+      name:"Famous Venue",
+      desc:"This is where the legends played. The manuscript practically writes itself.",
+      patronCostToUnlock: 800,
+      globalMult: { nps: 9.00, click: 2.60 },
+      upgrades: [
+        { id:"fam_crew",     name:"World-Class Stage Crew", cost: 160, desc:"+120% Notes/sec", mult:{ nps:2.20 } },
+        { id:"fam_patronage",name:"Patronage Network",      cost: 200, desc:"+85% Click power", mult:{ click:1.85 } },
+      ]
+    },
+  ];
+
+  function getFacility(id){ return FACILITIES.find(f => f.id === id); }
+
+  function facilityMults(s){
+    const f = getFacility(s.facility.currentId);
+    let nps = f?.globalMult?.nps ?? 1;
+    let click = f?.globalMult?.click ?? 1;
+
+    const purchased = s.facility.purchasedUpgrades || {};
+    for (const fac of FACILITIES){
+      // only apply upgrades for current facility (your request)
+      if (fac.id !== s.facility.currentId) continue;
+      for (const up of fac.upgrades){
+        if (!purchased[up.id]) continue;
+        if (up.mult?.nps) nps *= up.mult.nps;
+        if (up.mult?.click) click *= up.mult.click;
+      }
+    }
+    return { nps, click };
+  }
+
+  function canAffordPatrons(cost){ return (S.patrons || 0) >= cost; }
+  function spendPatrons(cost){
+    S.patrons = Math.max(0, (S.patrons || 0) - cost);
+  }
+
+  function unlockFacility(id){
+    const f = getFacility(id);
+    if (!f) return;
+    if (S.facility.unlocked[id]) return;
+    if (!canAffordPatrons(f.patronCostToUnlock)) return;
+
+    spendPatrons(f.patronCostToUnlock);
+    S.facility.unlocked[id] = true;
+    S.facility.currentId = id;
+    toast(`Venue: ${f.name}`);
+    save(false);
+    renderAll();
+  }
+
+  function buyFacilityUpgrade(upgradeId){
+    const f = getFacility(S.facility.currentId);
+    if (!f) return;
+    const up = f.upgrades.find(u => u.id === upgradeId);
+    if (!up) return;
+    if (S.facility.purchasedUpgrades[upgradeId]) return;
+    if (!canAffordPatrons(up.cost)) return;
+
+    spendPatrons(up.cost);
+    S.facility.purchasedUpgrades[upgradeId] = true;
+    toast(`Facility: ${up.name}`);
+    save(false);
+    renderAll();
+  }
+
   // ---------- Prestige ----------
+  // IMPORTANT: patron gain rate is UNCHANGED from your original code:
+  // patronsFromLifetime = floor(sqrt(lifetimeNotes / 500000))
   const patronBonus = (patrons) => (1 + patrons * 0.05);
+
   function patronsFromLifetime(lifetimeNotes){
     return Math.floor(Math.sqrt(lifetimeNotes / 500000));
   }
   function lifetimeForPatrons(p){
     return (p * p) * 500000;
   }
+
+  // Separate "earned total" from "available"
+  // - patronsEver: tracks how many patrons you've earned via prestige (never decreases)
+  // - patrons: spendable / visible / used for the patronBonus (decreases when spent)
   function notesUntilNextPatron(s){
-    const nextP = (s.patrons || 0) + 1;
+    const nextP = (s.patronsEver || 0) + 1;
     const needLife = lifetimeForPatrons(nextP);
     return Math.max(0, needLife - (s.lifetimeNotes || 0));
   }
 
   // ---------- State ----------
-  const KEY = "manuscript_note_clicker_v4";
+  const KEY = "manuscript_note_clicker_v5";
   const stateDefault = () => ({
-    version: 4,
+    version: 5,
 
     // run
     notes: 0,
@@ -765,7 +969,10 @@
 
     // permanent
     ink: 0,
+
+    // prestige currency (available/spendable) + total earned
     patrons: 0,
+    patronsEver: 0,
 
     // buildings (reset on prestige)
     owned: Object.fromEntries(BUILDINGS.map(b=>[b.id,0])),
@@ -784,12 +991,23 @@
     metaClickMult: 1,
     clickFromNpsRate: 0,
 
+    // Facilities (persistent; DOES NOT reset on prestige)
+    facility: {
+      currentId: "shed",
+      unlocked: { shed: true },
+      purchasedUpgrades: {}
+    },
+
     // UI / Settings
     buyMode: "1", // "1" | "10" | "100" | "max"
     ui: {
       tab: "main",
-      familyOpen: {},     // familyId -> bool
-      instrumentUpOpen: {}// buildingId -> bool
+      familyOpen: {},
+      instrumentUpOpen: {},
+      synergyOpen: {},   // FIX: preserve open state for synergy dropdowns
+      facilityOpen: false,
+      facilityUpOpen: false,
+      facilityNextOpen: false
     },
     settings: {
       abbrevLarge: true
@@ -808,20 +1026,21 @@
 
   function load(){
     try{
-      const rawOldV3 = localStorage.getItem("manuscript_note_clicker_v3");
-      const rawV4 = localStorage.getItem(KEY);
-      const raw = rawV4 || rawOldV3;
+      // accept prior versions:
+      const rawV5 = localStorage.getItem(KEY);
+      const rawV4 = localStorage.getItem("manuscript_note_clicker_v4");
+      const rawV3 = localStorage.getItem("manuscript_note_clicker_v3");
+      const raw = rawV5 || rawV4 || rawV3;
+
       if(!raw) return stateDefault();
 
       const s = JSON.parse(raw);
       const d = stateDefault();
 
-      // shallow defaults
       for (const k of Object.keys(d)){
         if (s[k] === undefined) s[k] = d[k];
       }
 
-      // deep defaults
       if (!s.owned) s.owned = {};
       if (!s.buildingMult) s.buildingMult = {};
       for (const b of BUILDINGS){
@@ -842,6 +1061,7 @@
       if (!s.ui) s.ui = d.ui;
       if (!s.ui.familyOpen) s.ui.familyOpen = {};
       if (!s.ui.instrumentUpOpen) s.ui.instrumentUpOpen = {};
+      if (!s.ui.synergyOpen) s.ui.synergyOpen = {};
       if (!s.ui.tab) s.ui.tab = "main";
 
       if (!s.settings) s.settings = d.settings;
@@ -852,7 +1072,18 @@
       if (s.stats.buildingsBought === undefined) s.stats.buildingsBought = 0;
       if (s.stats.inkEarned === undefined) s.stats.inkEarned = s.ink || 0;
 
-      // migrate old key to new key once
+      // Facilities migration
+      if (!s.facility) s.facility = d.facility;
+      if (!s.facility.currentId) s.facility.currentId = "shed";
+      if (!s.facility.unlocked) s.facility.unlocked = { shed: true };
+      if (!s.facility.purchasedUpgrades) s.facility.purchasedUpgrades = {};
+
+      // Prestige migration:
+      // v3/v4 had only s.patrons (total earned and not spendable).
+      // We preserve what you had as patronsEver and patrons (available) so nothing "disappears".
+      if (s.patronsEver === undefined) s.patronsEver = s.patrons || 0;
+      if (s.patrons === undefined) s.patrons = s.patronsEver;
+
       localStorage.setItem(KEY, JSON.stringify(s));
       return s;
     }catch(e){
@@ -916,13 +1147,15 @@
       const mult = (S.buildingMult[b.id] || 1);
       sum += owned * b.nps * mult;
     }
-    return sum * S.runNpsMult * S.metaNpsMult * patronBonus(S.patrons);
+    const fac = facilityMults(S);
+    return sum * S.runNpsMult * S.metaNpsMult * patronBonus(S.patrons) * fac.nps;
   }
 
   function notesPerClick(){
     const nps = totalNps();
     const fromNps = S.clickFromNpsRate > 0 ? (S.clickFromNpsRate * nps) : 0;
-    return ((S.baseNpc * S.runClickMult) + fromNps) * S.metaClickMult * patronBonus(S.patrons);
+    const fac = facilityMults(S);
+    return (((S.baseNpc * S.runClickMult) + fromNps) * S.metaClickMult * patronBonus(S.patrons)) * fac.click;
   }
 
   function buyBuilding(id, mode){
@@ -999,9 +1232,13 @@
 
   // ---------- Prestige ----------
   function prestigePreview(){
-    const totalWouldHave = patronsFromLifetime(S.lifetimeNotes);
-    const gain = Math.max(0, totalWouldHave - S.patrons);
-    return { totalWouldHave, gain };
+    // total earned possible from lifetimeNotes (rate unchanged)
+    const totalWouldHaveEver = patronsFromLifetime(S.lifetimeNotes);
+
+    // gain is based on patronsEver (NOT current patrons), so spending patrons doesn't change the gain rate.
+    const gain = Math.max(0, totalWouldHaveEver - (S.patronsEver || 0));
+
+    return { totalWouldHaveEver, gain };
   }
 
   function doPrestige(){
@@ -1012,12 +1249,14 @@
     }
     const ok = confirm(
       `Prestige will reset your run (Notes, instruments, NOTE-upgrades, Synergies).\n` +
-      `You keep Ink + Archive upgrades.\n\n` +
+      `You keep Ink + Archive upgrades + Facilities.\n\n` +
       `You will gain +${gain} Patron(s).\n\nProceed?`
     );
     if (!ok) return;
 
-    S.patrons += gain;
+    // add to earned + available
+    S.patronsEver = (S.patronsEver || 0) + gain;
+    S.patrons = (S.patrons || 0) + gain;
 
     // reset run
     S.notes = 0;
@@ -1073,6 +1312,8 @@
       btn.classList.toggle("active", m === mode);
     });
     save(false);
+    // rerender to update costs/labels
+    renderFamilies();
   }
 
   function instrumentLabelFamily(familyId){
@@ -1089,6 +1330,8 @@
     $("#npsHud").textContent = fmtExact(nps, useSuffix);
     $("#npcHud").textContent = fmtExact(npc, useSuffix);
     $("#inkHud").textContent = fmtNotesHud(S.ink, useSuffix);
+
+    // Show CURRENT/available patrons (what you actually have), not "after prestige"
     $("#patronsHud").textContent = fmtNotesHud(S.patrons, false);
 
     $("#bigNotes").textContent = `${fmtNotesHud(S.notes, useSuffix)} Notes`;
@@ -1097,19 +1340,24 @@
     $("#inkBonusMini").textContent = `x${S.metaNpsMult.toFixed(3)}`;
     $("#patronBonusMini").textContent = `x${patronBonus(S.patrons).toFixed(2)}`;
 
+    // Prestige lines per your requested UI:
+    $("#lifetimeNotesLine").textContent = `Lifetime Notes: ${fmtNotesHud(S.lifetimeNotes, useSuffix)}`;
+
     const p = prestigePreview();
-    $("#prestigeInfo").textContent =
-      `Lifetime: ${fmtNotesHud(S.lifetimeNotes, useSuffix)} • Gain: +${p.gain} Patron(s) • Total: ${p.totalWouldHave}`;
+    $("#patronLine").textContent = `You have: ${S.patrons} Patron(s) • Prestige Gain: +${p.gain}`;
 
     const rem = notesUntilNextPatron(S);
-    $("#nextPatronInfo").textContent =
-      `Next Patron in: ${fmtExact(rem, useSuffix)} Notes`;
+    $("#nextPatronInfo").textContent = `Next Patron in: ${fmtExact(rem, useSuffix)} Notes`;
 
     const timeStr = new Date().toLocaleString();
     $("#clock").textContent = timeStr;
     $("#statsClock").textContent = timeStr;
     $("#settingsClock").textContent = timeStr;
   }
+
+  // ---------- FIX: Synergy dropdown closing instantly ----------
+  // Cause: we re-rendered the family DOM frequently, recreating <details> and losing open state.
+  // Fix: persist open state in S.ui.synergyOpen and reapply it when rendering; also we render families less often.
 
   // ---------- Family Render ----------
   function renderFamilies(){
@@ -1120,7 +1368,6 @@
       const famBuildings = BUILDINGS.filter(b => b.family === fam.id);
       if (famBuildings.length === 0) continue;
 
-      // Default open states (Woodwinds open, others closed)
       const isOpen = (S.ui.familyOpen[fam.id] !== undefined) ? S.ui.familyOpen[fam.id] : fam.defaultOpen;
 
       const d = document.createElement("details");
@@ -1143,7 +1390,10 @@
           <span class="tag">${famBuildings.length} instruments</span>
         </summary>
         <div class="detailsBody">
-          <details class="dropdown" data-synfam="${fam.id}">
+          <div class="table" id="instList-${fam.id}"></div>
+
+          <!-- Requested: move synergies BELOW the rest of the instruments -->
+          <details class="dropdown" data-synfam="${fam.id}" ${((S.ui.synergyOpen[fam.id] !== undefined) ? (S.ui.synergyOpen[fam.id] ? "open" : "") : "")}>
             <summary>
               <span>Section Synergies (Notes)</span>
               <span class="tag">${instrumentLabelFamily(fam.id)}</span>
@@ -1152,16 +1402,20 @@
               <div class="table" id="synList-${fam.id}"></div>
             </div>
           </details>
-
-          <div style="height:10px"></div>
-          <div class="table" id="instList-${fam.id}"></div>
         </div>
       `;
 
       stack.appendChild(d);
 
-      renderSynergyForFamily(fam.id);
+      // hook synergy open persistence
+      const synDetails = d.querySelector(`details[data-synfam="${fam.id}"]`);
+      synDetails.addEventListener("toggle", ()=>{
+        S.ui.synergyOpen[fam.id] = synDetails.open;
+        save(false);
+      });
+
       renderInstrumentsForFamily(fam.id);
+      renderSynergyForFamily(fam.id);
     }
   }
 
@@ -1344,8 +1598,6 @@
   function renderInkUpgrades(){
     const el = $("#inkUpgradeList");
     el.innerHTML = "";
-    const useSuffix = !!S.settings.abbrevLarge;
-
     for (const u of INK_UPGRADES){
       const owned = !!S.inkUpgrades[u.id];
       const can = u.can(S);
@@ -1379,6 +1631,128 @@
     });
   }
 
+  function renderFacility(){
+    const useSuffix = !!S.settings.abbrevLarge;
+
+    const current = getFacility(S.facility.currentId);
+    $("#facilityName").textContent = current ? current.name : "—";
+    $("#facilityDesc").textContent = current ? current.desc : "—";
+
+    const fac = facilityMults(S);
+    $("#facilityBonus").textContent = `Global: x${fac.nps.toFixed(2)} NPS • x${fac.click.toFixed(2)} Click`;
+    $("#facilityTag").textContent = current ? current.name : "—";
+    $("#facilityPatrons").textContent = `Patrons (available): ${fmtExact(S.patrons, false)}`;
+    $("#facilityEarned").textContent = `Patrons (earned): ${fmtExact(S.patronsEver, false)}`;
+
+    $("#facilityUpgradesTag").textContent = current ? current.name : "—";
+    $("#facilityNextTag").textContent = current ? "Venues" : "—";
+
+    // persist open states
+    const fd = $("#facilityDropdown");
+    fd.open = !!S.ui.facilityOpen;
+    fd.onToggleBound || fd.addEventListener("toggle", ()=>{
+      S.ui.facilityOpen = fd.open;
+      save(false);
+    });
+    fd.onToggleBound = true;
+
+    const fud = $("#facilityUpgradesDetails");
+    fud.open = !!S.ui.facilityUpOpen;
+    fud.onToggleBound || fud.addEventListener("toggle", ()=>{
+      S.ui.facilityUpOpen = fud.open;
+      save(false);
+    });
+    fud.onToggleBound = true;
+
+    const fnd = $("#facilityNextDetails");
+    fnd.open = !!S.ui.facilityNextOpen;
+    fnd.onToggleBound || fnd.addEventListener("toggle", ()=>{
+      S.ui.facilityNextOpen = fnd.open;
+      save(false);
+    });
+    fnd.onToggleBound = true;
+
+    // upgrades list
+    const upEl = $("#facilityUpgradesList");
+    upEl.innerHTML = "";
+    if (!current){
+      upEl.innerHTML = `<div class="muted smallSans">No facility.</div>`;
+    } else {
+      for (const up of current.upgrades){
+        const owned = !!S.facility.purchasedUpgrades[up.id];
+        const afford = canAffordPatrons(up.cost);
+
+        const div = document.createElement("div");
+        div.className = "mini";
+        div.innerHTML = `
+          <div class="name">
+            <div class="top">
+              <b>${up.name}${owned ? " ✅" : ""}</b>
+              <span class="tag ${owned ? "good" : (afford ? "warn" : "")}">${owned ? "Owned" : (afford ? "Available" : "Costly")}</span>
+            </div>
+            <div class="muted smallSans">${up.desc}</div>
+          </div>
+          <div class="right">
+            <button data-fup="${up.id}" ${(!owned && afford) ? "" : "disabled"}>Buy</button>
+            <div class="cost mono">${up.cost} Patron(s)</div>
+          </div>
+        `;
+        upEl.appendChild(div);
+      }
+      upEl.querySelectorAll("button[data-fup]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          buyFacilityUpgrade(btn.getAttribute("data-fup"));
+        });
+      });
+    }
+
+    // next venues
+    const nextEl = $("#facilityNextList");
+    nextEl.innerHTML = "";
+
+    const currentIdx = FACILITIES.findIndex(f => f.id === S.facility.currentId);
+    for (let i=0;i<FACILITIES.length;i++){
+      const f = FACILITIES[i];
+      if (S.facility.unlocked[f.id]) continue;
+      // show only "forward" venues to keep it clean
+      if (currentIdx !== -1 && i < currentIdx) continue;
+
+      const afford = canAffordPatrons(f.patronCostToUnlock);
+      const div = document.createElement("div");
+      div.className = "mini";
+      div.innerHTML = `
+        <div class="name">
+          <div class="top">
+            <b>${f.name}</b>
+            <span class="tag ${afford ? "warn" : ""}">Unlock</span>
+          </div>
+          <div class="muted smallSans">${f.desc}</div>
+          <div class="muted smallSans mono" style="margin-top:4px;">
+            Bonus: x${f.globalMult.nps.toFixed(2)} NPS • x${f.globalMult.click.toFixed(2)} Click
+          </div>
+        </div>
+        <div class="right">
+          <button data-fac="${f.id}" ${afford ? "" : "disabled"}>Move</button>
+          <div class="cost mono">${f.patronCostToUnlock} Patron(s)</div>
+        </div>
+      `;
+      nextEl.appendChild(div);
+    }
+
+    if (nextEl.children.length === 0){
+      const done = document.createElement("div");
+      done.className = "muted smallSans";
+      done.textContent = "All venues unlocked (for now).";
+      nextEl.appendChild(done);
+    } else {
+      nextEl.querySelectorAll("button[data-fac]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          unlockFacility(btn.getAttribute("data-fac"));
+        });
+      });
+    }
+  }
+
   function renderStats(){
     const el = $("#statsList");
     el.innerHTML = "";
@@ -1394,6 +1768,8 @@
     }
 
     const p = prestigePreview();
+    const fac = facilityMults(S);
+    const currentFac = getFacility(S.facility.currentId);
 
     const rows = [
       { k:"Notes", v: fmtExact(S.notes, useSuffix) },
@@ -1402,8 +1778,10 @@
       { k:"Lifetime Notes", v: fmtExact(S.lifetimeNotes, useSuffix) },
       { k:"Ink (current)", v: fmtExact(S.ink, false) },
       { k:"Ink earned (lifetime)", v: fmtExact(S.stats.inkEarned || 0, false) },
-      { k:"Patrons", v: fmtExact(S.patrons, false) },
-      { k:"Prestige preview", v: `Gain +${p.gain} (would have ${p.totalWouldHave})` },
+      { k:"Patrons (available)", v: fmtExact(S.patrons, false) },
+      { k:"Patrons (earned)", v: fmtExact(S.patronsEver, false) },
+      { k:"Prestige preview", v: `Gain +${p.gain} (earned would be ${p.totalWouldHaveEver})` },
+      { k:"Next Patron (notes remaining)", v: fmtExact(notesUntilNextPatron(S), useSuffix) },
       { k:"Clicks (lifetime)", v: fmtExact(S.stats.clicks || 0, false) },
       { k:"Instruments owned (total)", v: fmtExact(totalOwned, false) },
       { k:"Owned: Woodwinds", v: fmtExact(byFam.Winds || 0, false) },
@@ -1411,7 +1789,8 @@
       { k:"Owned: Percussion", v: fmtExact(byFam.Perc || 0, false) },
       { k:"Owned: Strings", v: fmtExact(byFam.Strings || 0, false) },
       { k:"Owned: Other", v: fmtExact(byFam.Other || 0, false) },
-      { k:"Autosave interval", v: "30 seconds" },
+      { k:"Facility", v: currentFac ? currentFac.name : "—" },
+      { k:"Facility mults", v: `x${fac.nps.toFixed(2)} NPS • x${fac.click.toFixed(2)} Click` },
     ];
 
     for (const r of rows){
@@ -1438,11 +1817,14 @@
     renderHUD();
     renderFamilies();
     renderInkUpgrades();
+    renderFacility();
     renderStats();
     renderSettings();
   }
 
   // ---------- Tick Loop ----------
+  // We now avoid constantly re-rendering the whole families list (which was closing <details>).
+  // Heavy re-render happens less often.
   let lastHeavy = 0;
   function tick(){
     const t = now();
@@ -1464,11 +1846,12 @@
     // lightweight always
     renderHUD();
 
-    // heavier: families & lists
-    if (t - lastHeavy > 350){
+    // heavier occasionally
+    if (t - lastHeavy > 900){
       lastHeavy = t;
       renderFamilies();
       renderInkUpgrades();
+      renderFacility();
       renderStats();
     }
   }
@@ -1487,9 +1870,10 @@
   $("#saveBtn").addEventListener("click", ()=> save(true));
 
   $("#resetBtn").addEventListener("click", ()=>{
-    const ok = confirm("Hard reset will erase your save completely (including Ink & Patrons). Are you sure?");
+    const ok = confirm("Hard reset will erase your save completely (including Ink, Patrons, Facilities). Are you sure?");
     if (!ok) return;
     localStorage.removeItem(KEY);
+    localStorage.removeItem("manuscript_note_clicker_v4");
     localStorage.removeItem("manuscript_note_clicker_v3");
     S = stateDefault();
     toast("Reset complete.");
@@ -1501,7 +1885,6 @@
     btn.addEventListener("click", ()=>{
       const m = btn.getAttribute("data-buymode");
       setBuyMode(m);
-      renderFamilies();
     });
   });
 
