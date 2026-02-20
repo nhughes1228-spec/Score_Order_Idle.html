@@ -3,47 +3,75 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Quarter Note Clicker</title>
+  <title>Manuscript Note Clicker</title>
   <style>
     :root{
-      --bg:#0b0f14; --panel:#111823; --text:#e8eef7; --muted:#9fb0c6;
-      --line:rgba(255,255,255,.08); --shadow: 0 12px 28px rgba(0,0,0,.35);
-      --radius:16px; --accent:#66e3ff;
+      --ink:#1e1a16;
+      --ink2:#2b241e;
+      --muted:#5a4f45;
+      --paper:#f3e7cf;
+      --paper2:#eadbbd;
+      --line:rgba(35,29,24,.18);
+      --shadow: 0 16px 40px rgba(0,0,0,.22);
+      --radius:16px;
+      --accent:#2c6e7a;
+      --accent2:#6b3c2a;
+      --good:#1d7a41;
+      --warn:#8a5a00;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin:0;
+      color:var(--ink);
+      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
       background:
-        radial-gradient(1200px 800px at 20% 10%, rgba(102,227,255,.10), transparent 55%),
-        radial-gradient(900px 700px at 85% 20%, rgba(92,255,157,.08), transparent 60%),
-        var(--bg);
-      color:var(--text);
+        radial-gradient(1200px 800px at 15% 10%, rgba(44,110,122,.14), transparent 55%),
+        radial-gradient(900px 700px at 85% 20%, rgba(107,60,42,.10), transparent 60%),
+        linear-gradient(180deg, var(--paper), var(--paper2));
+    }
+    /* subtle manuscript staff lines */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.22;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(35,29,24,.09) 0px,
+          rgba(35,29,24,.09) 1px,
+          transparent 1px,
+          transparent 10px
+        );
+      mix-blend-mode:multiply;
     }
     header{
       padding:16px 16px 12px;
       position:sticky; top:0; z-index:5;
-      background: linear-gradient(to bottom, rgba(11,15,20,.92), rgba(11,15,20,.68));
-      backdrop-filter: blur(8px);
+      background: linear-gradient(to bottom, rgba(243,231,207,.94), rgba(243,231,207,.78));
+      backdrop-filter: blur(6px);
       border-bottom: 1px solid var(--line);
       display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
     }
-    h1{margin:0; font-size:18px; letter-spacing:.4px}
-    .sub{color:var(--muted); font-size:12px}
+    h1{margin:0; font-size:18px; letter-spacing:.3px}
+    .sub{color:var(--muted); font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
     .hud{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
     .pill{
-      background: rgba(255,255,255,.06);
+      background: rgba(255,255,255,.45);
       border:1px solid var(--line);
       padding:8px 10px;
       border-radius:999px;
       font-size:12px;
       display:flex; gap:8px; align-items:center;
+      box-shadow: 0 8px 22px rgba(0,0,0,.10);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     .pill b{font-size:13px}
     main{padding:16px; max-width:1200px; margin:0 auto}
-    .grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:14px}
+    .grid{display:grid; grid-template-columns: 1.05fr .95fr; gap:14px}
     @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      background: rgba(255,255,255,.55);
       border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -51,110 +79,124 @@
     }
     .card h2{
       margin:0; padding:12px 14px;
-      font-size:14px; letter-spacing:.4px;
+      font-size:14px; letter-spacing:.3px;
       border-bottom: 1px solid var(--line);
-      background: rgba(0,0,0,.18);
+      background: rgba(255,255,255,.40);
       display:flex; align-items:center; justify-content:space-between;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     .content{padding:12px 14px}
-    .row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.08)}
+    .row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(35,29,24,.18)}
     .row:last-child{border-bottom:none}
     .muted{color:var(--muted)}
     button{
-      background: rgba(255,255,255,.07);
-      color:var(--text);
+      background: rgba(255,255,255,.60);
+      color:var(--ink2);
       border:1px solid var(--line);
       padding:10px 12px;
       border-radius: 12px;
       cursor:pointer;
       transition: transform .05s ease, background .15s ease, border-color .15s ease;
-      font-weight:700;
+      font-weight:800;
       letter-spacing:.2px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-    button:hover{background: rgba(255,255,255,.10); border-color: rgba(102,227,255,.35)}
+    button:hover{background: rgba(255,255,255,.80); border-color: rgba(44,110,122,.35)}
     button:active{transform: translateY(1px)}
     button:disabled{opacity:.45; cursor:not-allowed}
     .primary{
-      background: linear-gradient(135deg, rgba(102,227,255,.18), rgba(92,255,157,.12));
-      border-color: rgba(102,227,255,.35);
+      background: linear-gradient(135deg, rgba(44,110,122,.18), rgba(255,255,255,.65));
+      border-color: rgba(44,110,122,.32);
     }
-    .danger{border-color: rgba(255,107,107,.35)}
+    .danger{border-color: rgba(160,60,60,.30)}
     .table{display:flex; flex-direction:column; gap:8px}
     .mini{
       display:grid;
       grid-template-columns: 1fr auto;
       gap:10px;
       padding:10px 10px;
-      background: rgba(0,0,0,.18);
-      border: 1px solid var(--line);
+      background: rgba(255,255,255,.42);
+      border: 1px solid rgba(35,29,24,.16);
       border-radius: 14px;
     }
     .mini .name{display:flex; flex-direction:column; gap:2px}
     .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
     .tag{
       font-size:11px; padding:2px 8px; border-radius:999px;
-      border:1px solid var(--line);
+      border:1px solid rgba(35,29,24,.18);
       color:var(--muted);
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.55);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-    .tag.good{color:#b9ffd5; border-color: rgba(92,255,157,.25); background: rgba(92,255,157,.08)}
-    .tag.warn{color:#ffe3a8; border-color: rgba(255,204,102,.25); background: rgba(255,204,102,.08)}
+    .tag.good{color:var(--good); border-color: rgba(29,122,65,.22); background: rgba(29,122,65,.06)}
+    .tag.warn{color:var(--warn); border-color: rgba(138,90,0,.22); background: rgba(138,90,0,.06)}
     .right{display:flex; flex-direction:column; gap:6px; align-items:flex-end; justify-content:center}
-    .cost{font-size:12px; color:var(--muted)}
-    .mono{font-variant-numeric: tabular-nums}
+    .cost{font-size:12px; color:var(--muted); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
+    .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
     .clickZone{
       display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:10px; padding:18px 0 6px;
+      gap:10px; padding:16px 0 6px;
     }
     .noteBtn{
       width:220px; height:220px;
       border-radius: 999px;
       display:grid; place-items:center;
-      font-size:110px;
+      font-size:112px;
       user-select:none;
-      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.14), rgba(255,255,255,.05));
-      border:1px solid rgba(102,227,255,.30);
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.88), rgba(255,255,255,.42));
+      border:1px solid rgba(44,110,122,.26);
+      box-shadow: 0 20px 60px rgba(0,0,0,.20);
+      color: var(--ink2);
     }
-    .noteBtn:hover{border-color: rgba(102,227,255,.55)}
+    .noteBtn:hover{border-color: rgba(44,110,122,.55)}
     .noteBtn:active{transform: translateY(2px)}
     .miniHud{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
     .toast{
       position:fixed; right:14px; bottom:14px;
       display:flex; flex-direction:column; gap:8px;
-      max-width: 360px;
+      max-width: 380px;
       z-index:10;
     }
     .toast .t{
-      background: rgba(17,24,35,.92);
-      border:1px solid var(--line);
-      border-left: 4px solid rgba(102,227,255,.7);
+      background: rgba(255,255,255,.86);
+      border:1px solid rgba(35,29,24,.20);
+      border-left: 4px solid rgba(44,110,122,.75);
       padding:10px 12px;
       border-radius: 12px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 14px 30px rgba(0,0,0,.16);
       font-size: 12px;
-      color: var(--text);
-      backdrop-filter: blur(8px);
+      color: var(--ink2);
+      backdrop-filter: blur(6px);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     .footer{
       margin-top:10px; padding:10px 14px;
       color: var(--muted); font-size:12px;
       border-top:1px solid var(--line);
-      background: rgba(0,0,0,.12);
+      background: rgba(255,255,255,.35);
       display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .inkSig{
+      font-family: "Brush Script MT", "Snell Roundhand", "Apple Chancery", cursive;
+      font-size: 18px;
+      color: rgba(43,36,30,.85);
     }
   </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>Quarter Note Clicker</h1>
-    <div class="sub">Click ♩, hire composers, generate Notes per second.</div>
+    <h1>Manuscript Note Clicker</h1>
+    <div class="sub">Click ♩, hire instruments (score order), earn Ink for upgrades, prestige for Patrons.</div>
   </div>
   <div class="hud">
     <div class="pill"><span class="muted">Notes</span> <b class="mono" id="notes">0</b></div>
     <div class="pill"><span class="muted">Notes/sec</span> <b class="mono" id="nps">0</b></div>
     <div class="pill"><span class="muted">Click</span> <b class="mono" id="npc">1</b><span class="muted">/click</span></div>
+    <div class="pill"><span class="muted">Ink</span> <b class="mono" id="ink">0</b></div>
+    <div class="pill"><span class="muted">Patrons</span> <b class="mono" id="patrons">0</b></div>
   </div>
 </header>
 
@@ -171,20 +213,30 @@
           <button class="noteBtn" id="noteBtn" aria-label="Click the quarter note">♩</button>
           <div class="miniHud">
             <div class="pill"><span class="muted">Lifetime</span> <b class="mono" id="lifetime">0</b></div>
-            <div class="pill"><span class="muted">Tempo</span> <b class="mono" id="tempo">♩=60</b></div>
-            <div class="pill"><span class="muted">Gold</span> <b class="mono" id="gold">0</b></div>
+            <div class="pill"><span class="muted">Prestige bonus</span> <b class="mono" id="prestigeBonus">x1.00</b></div>
           </div>
-          <div class="muted" style="text-align:center; max-width:520px;">
-            Tip: Buy Bach early. Buy Beethoven when you want the engine to start running itself.
+          <div class="muted" style="text-align:center; max-width:560px;">
+            <span class="inkSig">In ink, we trust.</span>
+            <div style="margin-top:6px;">
+              Instruments generate Notes/sec. Patrons multiply all production permanently.
+            </div>
           </div>
         </div>
 
         <div class="row">
           <div>
             <b>Sell Sheet Music</b>
-            <div class="muted" style="font-size:12px">Convert 100 Notes into 1 Gold (upgrades only).</div>
+            <div class="muted" style="font-size:12px">Convert 250 Notes into 1 Ink (Ink buys upgrades).</div>
           </div>
-          <button id="sellBtn">💰 Sell (100→1)</button>
+          <button id="sellBtn">🖋️ Sell (250→1)</button>
+        </div>
+
+        <div class="row">
+          <div>
+            <b>Prestige: Court Patrons</b>
+            <div class="muted" style="font-size:12px">Reset run for permanent Patron bonus.</div>
+          </div>
+          <button class="primary" id="prestigeBtn">🎩 Prestige</button>
         </div>
 
         <div class="row">
@@ -201,27 +253,27 @@
 
         <div class="footer">
           <span class="mono" id="clock">—</span>
-          <span class="muted">Offline progress included (capped).</span>
+          <span class="muted">Bug fix: store now re-renders continuously (no more “only updates after a click”).</span>
         </div>
       </div>
     </section>
 
     <section class="card">
       <h2>
-        <span>Composers</span>
+        <span>Orchestra</span>
         <span class="muted" style="font-size:12px">Buildings (Notes/sec)</span>
       </h2>
       <div class="content">
-        <div class="table" id="composerList"></div>
+        <div class="table" id="buildingList"></div>
 
         <div style="height:10px"></div>
 
-        <div class="muted" style="font-size:12px; margin-bottom:8px;">Upgrades (Gold)</div>
+        <div class="muted" style="font-size:12px; margin-bottom:8px;">Upgrades (Ink)</div>
         <div class="table" id="upgradeList"></div>
 
         <div class="footer">
-          <span class="muted">Buy composers for steady NPS. Buy upgrades for power spikes.</span>
-          <span class="muted">Prices scale like Cookie Clicker.</span>
+          <span class="muted">Score order early → larger sections later → percussion → strings.</span>
+          <span class="muted">Ink upgrades = big spikes.</span>
         </div>
       </div>
     </section>
@@ -242,8 +294,7 @@
     const abs = Math.abs(n);
     if (abs < 1000) return Math.floor(n).toString();
     const units = ["K","M","B","T","Qa","Qi","Sx","Sp","Oc","No"];
-    let u = -1;
-    let x = abs;
+    let u = -1, x = abs;
     while (x >= 1000 && u < units.length-1) { x/=1000; u++; }
     const val = (n/Math.pow(1000,u+1));
     return (val >= 100 ? val.toFixed(0) : val >= 10 ? val.toFixed(1) : val.toFixed(2)) + units[u];
@@ -262,70 +313,88 @@
     setTimeout(()=>t.remove(), 3200);
   }
 
-  // ---------- Data ----------
-  // Buildings (composers): baseCost, costMult, notesPerSec
-  const COMPOSERS = [
-    // Baroque
-    { id:"bach",       name:"J.S. Bach",        era:"Baroque",   baseCost: 15,    costMult: 1.15, nps: 0.1 },
-    { id:"vivaldi",    name:"A. Vivaldi",       era:"Baroque",   baseCost: 100,   costMult: 1.15, nps: 1   },
-    { id:"handel",     name:"G.F. Handel",      era:"Baroque",   baseCost: 1100,  costMult: 1.15, nps: 8   },
+  // ---------- Buildings (in score-ish order) ----------
+  // nps is per building; costs scale like Cookie Clicker
+  const BUILDINGS = [
+    { id:"piccolo",     name:"Piccolo",      family:"Winds",   baseCost: 15,     costMult: 1.15, nps: 0.1 },
+    { id:"flute",       name:"Flute",        family:"Winds",   baseCost: 100,    costMult: 1.15, nps: 1   },
+    { id:"oboe",        name:"Oboe",         family:"Winds",   baseCost: 1100,   costMult: 1.15, nps: 8   },
+    { id:"enghorn",     name:"English Horn", family:"Winds",   baseCost: 12000,  costMult: 1.15, nps: 47  },
+    { id:"bassoon",     name:"Bassoon",      family:"Winds",   baseCost: 130000, costMult: 1.15, nps: 260 },
+    { id:"clarinet",    name:"Clarinet",     family:"Winds",   baseCost: 1.4e6,  costMult: 1.15, nps: 1400},
+    { id:"basscl",      name:"Bass Clarinet",family:"Winds",   baseCost: 2.0e7,  costMult: 1.15, nps: 7800},
 
-    // Classical
-    { id:"haydn",      name:"J. Haydn",         era:"Classical", baseCost: 12000, costMult: 1.15, nps: 47  },
-    { id:"mozart",     name:"W.A. Mozart",      era:"Classical", baseCost: 130000,costMult: 1.15, nps: 260 },
-    { id:"beethoven",  name:"L. van Beethoven", era:"Classical", baseCost: 1.4e6, costMult: 1.15, nps: 1400},
+    { id:"horn",        name:"Horn",         family:"Brass",   baseCost: 3.3e8,  costMult: 1.15, nps: 44000},
+    { id:"trumpet",     name:"Trumpet",      family:"Brass",   baseCost: 5.1e9,  costMult: 1.15, nps: 260000},
+    { id:"trombone",    name:"Trombone",     family:"Brass",   baseCost: 7.5e10, costMult: 1.15, nps: 1600000},
+    { id:"tuba",        name:"Tuba",         family:"Brass",   baseCost: 1.0e12, costMult: 1.15, nps: 1.0e7},
 
-    // Romantic
-    { id:"schubert",   name:"F. Schubert",      era:"Romantic",  baseCost: 2.0e7, costMult: 1.15, nps: 7800},
-    { id:"chopin",     name:"F. Chopin",        era:"Romantic",  baseCost: 3.3e8, costMult: 1.15, nps: 44000},
-    { id:"liszt",      name:"F. Liszt",         era:"Romantic",  baseCost: 5.1e9, costMult: 1.15, nps: 260000},
-    { id:"tchaikovsky",name:"P.I. Tchaikovsky", era:"Romantic",  baseCost: 7.5e10,costMult: 1.15, nps: 1600000},
+    { id:"timpani",     name:"Timpani",      family:"Perc",    baseCost: 1.4e13, costMult: 1.15, nps: 6.5e7},
+    { id:"perc",        name:"Percussion",   family:"Perc",    baseCost: 2.2e14, costMult: 1.15, nps: 4.0e8},
+
+    { id:"harp",        name:"Harp",         family:"Other",   baseCost: 3.7e15, costMult: 1.15, nps: 2.5e9},
+    { id:"piano",       name:"Piano/Celesta",family:"Other",   baseCost: 6.0e16, costMult: 1.15, nps: 1.6e10},
+
+    { id:"vln1",        name:"Violin I",     family:"Strings", baseCost: 1.0e18, costMult: 1.15, nps: 1.0e11},
+    { id:"vln2",        name:"Violin II",    family:"Strings", baseCost: 1.7e19, costMult: 1.15, nps: 7.0e11},
+    { id:"viola",       name:"Viola",        family:"Strings", baseCost: 2.8e20, costMult: 1.15, nps: 5.0e12},
+    { id:"cello",       name:"Cello",        family:"Strings", baseCost: 4.6e21, costMult: 1.15, nps: 3.6e13},
+    { id:"bass",        name:"Bass",         family:"Strings", baseCost: 7.5e22, costMult: 1.15, nps: 2.6e14},
   ];
 
-  // Upgrades purchased with GOLD (separate from notes)
+  // ---------- Upgrades (Ink) ----------
+  // Ink is an upgrade-only currency (fits the manuscript theme).
   const UPGRADES = [
-    { id:"click1", name:"Better Ink", desc:"+1 Note/click", costGold: 5,
-      can: s => true,
-      apply: s => s.notesPerClick += 1 },
+    { id:"click1",  name:"Sharper Quill",      desc:"+1 Note/click", costInk: 5,
+      can: s => true, apply: s => s.baseNpc += 1 },
 
-    { id:"click2", name:"Engraving Press", desc:"+50% Notes/click", costGold: 20,
-      can: s => s.upgrades.click1,
-      apply: s => s.clickMult *= 1.5 },
+    { id:"click2",  name:"Improved Engraving", desc:"+50% Notes/click", costInk: 20,
+      can: s => s.upgrades.click1, apply: s => s.clickMult *= 1.5 },
 
-    { id:"global1", name:"Patronage", desc:"+25% all Notes/sec", costGold: 12,
-      can: s => true,
-      apply: s => s.globalNpsMult *= 1.25 },
+    { id:"global1", name:"Rehearsal Schedule", desc:"+25% all Notes/sec", costInk: 12,
+      can: s => true, apply: s => s.globalNpsMult *= 1.25 },
 
-    { id:"global2", name:"Royal Commission", desc:"+35% all Notes/sec", costGold: 45,
-      can: s => s.upgrades.global1,
-      apply: s => s.globalNpsMult *= 1.35 },
+    { id:"global2", name:"Principal Chairs",   desc:"+35% all Notes/sec", costInk: 45,
+      can: s => s.upgrades.global1, apply: s => s.globalNpsMult *= 1.35 },
 
-    { id:"baroque1", name:"Well-Tempered Workflow", desc:"Bach +100% output", costGold: 8,
-      can: s => (s.owned.bach||0) >= 10,
-      apply: s => s.buildingMult.bach *= 2 },
+    // a few “10-owned” doubles
+    { id:"dbl_flute", name:"Silver Headjoints", desc:"Flute output x2", costInk: 18,
+      can: s => (s.owned.flute||0) >= 10, apply: s => s.buildingMult.flute *= 2 },
 
-    { id:"classical1", name:"Viennese Momentum", desc:"Mozart +100% output", costGold: 30,
-      can: s => (s.owned.mozart||0) >= 10,
-      apply: s => s.buildingMult.mozart *= 2 },
+    { id:"dbl_horn", name:"Hand-Stopped Mastery", desc:"Horn output x2", costInk: 60,
+      can: s => (s.owned.horn||0) >= 10, apply: s => s.buildingMult.horn *= 2 },
 
-    { id:"romantic1", name:"Virtuoso Hype", desc:"Chopin +100% output", costGold: 75,
-      can: s => (s.owned.chopin||0) >= 10,
-      apply: s => s.buildingMult.chopin *= 2 },
+    { id:"dbl_vln1", name:"Section Leadership", desc:"Violin I output x2", costInk: 120,
+      can: s => (s.owned.vln1||0) >= 10, apply: s => s.buildingMult.vln1 *= 2 },
   ];
+
+  // ---------- Prestige ----------
+  // Patrons are permanent. Each Patron adds +5% to all production.
+  const patronBonus = (patrons) => (1 + patrons * 0.05);
+
+  function patronsFromLifetime(lifetimeNotes){
+    // Gentle curve. You’ll see your first Patron reasonably early.
+    // Feel free to tune: smaller divisor = faster Patrons.
+    return Math.floor(Math.sqrt(lifetimeNotes / 500000));
+  }
 
   // ---------- State ----------
-  const KEY = "quarter_note_clicker_v1";
+  const KEY = "manuscript_note_clicker_v1";
   const stateDefault = () => ({
     version: 1,
     notes: 0,
-    gold: 0,
+    ink: 0,
     lifetimeNotes: 0,
-    owned: Object.fromEntries(COMPOSERS.map(c=>[c.id,0])),
-    buildingMult: Object.fromEntries(COMPOSERS.map(c=>[c.id,1])),
+    patrons: 0,
+
+    owned: Object.fromEntries(BUILDINGS.map(b=>[b.id,0])),
+    buildingMult: Object.fromEntries(BUILDINGS.map(b=>[b.id,1])),
     upgrades: {},
-    notesPerClick: 1,
+
+    baseNpc: 1,
     clickMult: 1,
     globalNpsMult: 1,
+
     autoSell: false,
     lastTick: now(),
     lastSave: now(),
@@ -343,9 +412,9 @@
       }
       if (!s.owned) s.owned = {};
       if (!s.buildingMult) s.buildingMult = {};
-      for (const c of COMPOSERS){
-        if (s.owned[c.id] === undefined) s.owned[c.id] = 0;
-        if (s.buildingMult[c.id] === undefined) s.buildingMult[c.id] = 1;
+      for (const b of BUILDINGS){
+        if (s.owned[b.id] === undefined) s.owned[b.id] = 0;
+        if (s.buildingMult[b.id] === undefined) s.buildingMult[b.id] = 1;
       }
       if (!s.upgrades) s.upgrades = {};
       return s;
@@ -364,48 +433,46 @@
   }
 
   // ---------- Economy ----------
-  function buildingCost(c){
-    const owned = S.owned[c.id] || 0;
-    return Math.floor(c.baseCost * Math.pow(c.costMult, owned));
+  function buildingCost(b){
+    const owned = S.owned[b.id] || 0;
+    return Math.floor(b.baseCost * Math.pow(b.costMult, owned));
   }
 
   function totalNps(){
     let sum = 0;
-    for (const c of COMPOSERS){
-      const owned = S.owned[c.id] || 0;
+    for (const b of BUILDINGS){
+      const owned = S.owned[b.id] || 0;
       if (owned <= 0) continue;
-      const mult = (S.buildingMult[c.id] || 1);
-      sum += owned * c.nps * mult;
+      const mult = (S.buildingMult[b.id] || 1);
+      sum += owned * b.nps * mult;
     }
-    return sum * S.globalNpsMult;
+    return sum * S.globalNpsMult * patronBonus(S.patrons);
   }
 
   function notesPerClick(){
-    return (S.notesPerClick * S.clickMult);
+    return (S.baseNpc * S.clickMult) * patronBonus(S.patrons);
   }
 
-  function buyComposer(id){
-    const c = COMPOSERS.find(x=>x.id===id);
-    if (!c) return;
-    const cost = buildingCost(c);
+  function buyBuilding(id){
+    const b = BUILDINGS.find(x=>x.id===id);
+    if (!b) return;
+    const cost = buildingCost(b);
     if (S.notes < cost) return;
     S.notes -= cost;
     S.owned[id] = (S.owned[id]||0) + 1;
-    toast(`Hired ${c.name}.`);
-    renderAll();
+    toast(`Added: ${b.name}.`);
   }
 
   function buyUpgrade(id){
     const u = UPGRADES.find(x=>x.id===id);
     if (!u) return;
     if (S.upgrades[id]) return;
-    if (S.gold < u.costGold) return;
+    if (S.ink < u.costInk) return;
     if (!u.can(S)) return;
-    S.gold -= u.costGold;
+    S.ink -= u.costInk;
     S.upgrades[id] = true;
     u.apply(S);
     toast(`Upgrade: ${u.name}`);
-    renderAll();
   }
 
   function clickNote(){
@@ -415,10 +482,47 @@
   }
 
   function sellNotesOnce(){
-    if (S.notes < 100) return false;
-    S.notes -= 100;
-    S.gold += 1;
+    const rate = 250;
+    if (S.notes < rate) return false;
+    S.notes -= rate;
+    S.ink += 1;
     return true;
+  }
+
+  // ---------- Prestige ----------
+  function prestigePreview(){
+    const totalWouldHave = patronsFromLifetime(S.lifetimeNotes);
+    const gain = Math.max(0, totalWouldHave - S.patrons);
+    return { totalWouldHave, gain };
+  }
+
+  function doPrestige(){
+    const { gain } = prestigePreview();
+    if (gain <= 0){
+      toast("No new Patrons yet. Bake… uh… compose more Notes.");
+      return;
+    }
+
+    const ok = confirm(
+      `Prestige will reset your current run (Notes, Ink, instruments, upgrades)\n` +
+      `and award +${gain} Patron(s).\n\nProceed?`
+    );
+    if (!ok) return;
+
+    // keep lifetimeNotes + patrons, reset the run economy
+    S.patrons += gain;
+    S.notes = 0;
+    S.ink = 0;
+
+    S.owned = Object.fromEntries(BUILDINGS.map(b=>[b.id,0]));
+    S.buildingMult = Object.fromEntries(BUILDINGS.map(b=>[b.id,1]));
+    S.upgrades = {};
+
+    S.baseNpc = 1;
+    S.clickMult = 1;
+    S.globalNpsMult = 1;
+
+    toast(`You gained ${gain} Patron(s). Production increased.`);
   }
 
   // ---------- Offline Progress ----------
@@ -427,18 +531,19 @@
     const dt = (t - S.lastTick) / 1000;
     if (dt <= 2) return;
 
-    const cap = 6 * 60 * 60; // 6 hours
+    const cap = 6 * 60 * 60;
     const used = Math.min(dt, cap);
-    const gained = totalNps() * used;
 
+    const gained = totalNps() * used;
     S.notes += gained;
     S.lifetimeNotes += gained;
 
     if (S.autoSell){
-      const sells = Math.floor(S.notes / 100);
+      const rate = 250;
+      const sells = Math.floor(S.notes / rate);
       if (sells > 0){
-        S.notes -= sells * 100;
-        S.gold += sells;
+        S.notes -= sells * rate;
+        S.ink += sells;
       }
     }
 
@@ -448,27 +553,26 @@
   // ---------- UI ----------
   function renderHUD(){
     $("#notes").textContent = fmt(S.notes);
-    $("#gold").textContent = fmt(S.gold);
+    $("#ink").textContent = fmt(S.ink);
+    $("#patrons").textContent = fmt(S.patrons);
     $("#lifetime").textContent = fmt(S.lifetimeNotes);
 
     const nps = totalNps();
     $("#nps").textContent = fmtExact(nps);
     $("#npc").textContent = fmtExact(notesPerClick());
 
-    // tempo is just flavor (tracks NPS)
-    const tempo = Math.max(40, Math.min(240, Math.round(60 + nps/10)));
-    $("#tempo").textContent = `♩=${tempo}`;
-
+    $("#prestigeBonus").textContent = `x${patronBonus(S.patrons).toFixed(2)}`;
     $("#toggleAutoSellBtn").textContent = S.autoSell ? "🔁 Auto-Sell: ON" : "🔁 Auto-Sell: OFF";
     $("#clock").textContent = new Date().toLocaleString();
   }
 
-  function renderComposers(){
-    const el = $("#composerList");
+  function renderBuildings(){
+    const el = $("#buildingList");
     el.innerHTML = "";
-    for (const c of COMPOSERS){
-      const owned = S.owned[c.id] || 0;
-      const cost = buildingCost(c);
+
+    for (const b of BUILDINGS){
+      const owned = S.owned[b.id] || 0;
+      const cost = buildingCost(b);
       const afford = S.notes >= cost;
 
       const div = document.createElement("div");
@@ -476,17 +580,17 @@
       div.innerHTML = `
         <div class="name">
           <div class="top">
-            <b>${c.name}</b>
-            <span class="tag">${c.era}</span>
+            <b>${b.name}</b>
+            <span class="tag">${b.family}</span>
             <span class="tag good">Owned: <span class="mono">${owned}</span></span>
           </div>
-          <div class="muted" style="font-size:12px">
-            Produces <span class="mono"><b>${fmtExact(c.nps * (S.buildingMult[c.id]||1))}</b></span> Notes/sec each
-            <span class="muted">(before global bonus)</span>
+          <div class="muted" style="font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
+            Produces <span class="mono"><b>${fmtExact(b.nps * (S.buildingMult[b.id]||1))}</b></span> Notes/sec each
+            <span class="muted">(before global + patrons)</span>
           </div>
         </div>
         <div class="right">
-          <button class="primary" data-buy="${c.id}" ${afford ? "" : "disabled"}>Hire</button>
+          <button class="primary" data-buy="${b.id}" ${afford ? "" : "disabled"}>Add</button>
           <div class="cost mono">Cost: ${fmtExact(cost)} Notes</div>
         </div>
       `;
@@ -494,17 +598,21 @@
     }
 
     el.querySelectorAll("button[data-buy]").forEach(btn=>{
-      btn.addEventListener("click", ()=>buyComposer(btn.getAttribute("data-buy")));
+      btn.addEventListener("click", ()=>{
+        buyBuilding(btn.getAttribute("data-buy"));
+        renderAll(); // make sure affordability + ownership refresh immediately
+      });
     });
   }
 
   function renderUpgrades(){
     const el = $("#upgradeList");
     el.innerHTML = "";
+
     for (const u of UPGRADES){
       const owned = !!S.upgrades[u.id];
       const can = u.can(S);
-      const afford = S.gold >= u.costGold;
+      const afford = S.ink >= u.costInk;
 
       const div = document.createElement("div");
       div.className = "mini";
@@ -512,30 +620,38 @@
         <div class="name">
           <div class="top">
             <b>${u.name}${owned ? " ✅" : ""}</b>
-            <span class="tag ${owned ? "good" : can ? "warn" : ""}">${owned ? "Owned" : can ? "Available" : "Locked"}</span>
+            <span class="tag ${owned ? "good" : (can ? "warn" : "")}">${owned ? "Owned" : (can ? "Available" : "Locked")}</span>
           </div>
-          <div class="muted" style="font-size:12px">${u.desc}</div>
+          <div class="muted" style="font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
+            ${u.desc}
+          </div>
         </div>
         <div class="right">
           <button data-up="${u.id}" ${(!owned && can && afford) ? "" : "disabled"}>Buy</button>
-          <div class="cost mono">${u.costGold} Gold</div>
+          <div class="cost mono">${u.costInk} Ink</div>
         </div>
       `;
       el.appendChild(div);
     }
 
     el.querySelectorAll("button[data-up]").forEach(btn=>{
-      btn.addEventListener("click", ()=>buyUpgrade(btn.getAttribute("data-up")));
+      btn.addEventListener("click", ()=>{
+        buyUpgrade(btn.getAttribute("data-up"));
+        renderAll();
+      });
     });
   }
 
   function renderAll(){
     renderHUD();
-    renderComposers();
+    renderBuildings();
     renderUpgrades();
   }
 
   // ---------- Tick Loop ----------
+  // FIX: re-render store continuously (throttled) so affordability updates without needing a click.
+  let lastFullRender = 0;
+
   function tick(){
     const t = now();
     let dt = (t - S.lastTick) / 1000;
@@ -549,10 +665,8 @@
     }
 
     if (S.autoSell){
-      // sell at most once per tick to keep it feeling gradual
-      if (S.notes >= 100){
-        sellNotesOnce();
-      }
+      // gradual autosell: up to 1 per tick
+      if (S.notes >= 250) sellNotesOnce();
     }
 
     if (t - S.lastSave > 30000){
@@ -561,18 +675,32 @@
     }
 
     renderHUD();
+    if (t - lastFullRender > 250){
+      lastFullRender = t;
+      renderBuildings();
+      renderUpgrades();
+    }
   }
 
   // ---------- Wire Buttons ----------
   $("#noteBtn").addEventListener("click", ()=>{
     clickNote();
-    // quick “pop” refresh
-    renderHUD();
+    renderHUD(); // quick feedback
   });
 
   $("#sellBtn").addEventListener("click", ()=>{
     const ok = sellNotesOnce();
-    toast(ok ? "Sold 100 Notes for 1 Gold." : "Need 100 Notes to sell.");
+    toast(ok ? "Sold 250 Notes for 1 Ink." : "Need 250 Notes to sell.");
+    renderAll();
+  });
+
+  $("#prestigeBtn").addEventListener("click", ()=>{
+    const p = prestigePreview();
+    if (p.gain <= 0){
+      toast("No new Patrons yet — keep building your lifetime Notes.");
+      return;
+    }
+    doPrestige();
     renderAll();
   });
 
@@ -585,7 +713,7 @@
   $("#saveBtn").addEventListener("click", save);
 
   $("#resetBtn").addEventListener("click", ()=>{
-    const ok = confirm("Hard reset will erase your save. Are you sure?");
+    const ok = confirm("Hard reset will erase your save completely. Are you sure?");
     if (!ok) return;
     localStorage.removeItem(KEY);
     S = stateDefault();
@@ -598,9 +726,8 @@
   renderAll();
   setInterval(tick, 100);
 
-  // starter nudge
   if (S.lifetimeNotes === 0 && S.notes === 0){
-    toast("Click the ♩ to start generating Notes!");
+    toast("Click ♩ to start!");
   }
 })();
 </script>
