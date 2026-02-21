@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Manuscript Note Clicker</title>
   <style>
     :root{
@@ -27,11 +27,11 @@
 
     /* ---- FORCE BATON CURSOR EVERYWHERE (including clickable elements) ---- */
     html, body, body *{
-      cursor: var(--baton-cursor) 6 6, auto !important; /* hotspot at baton tip-ish; adjust if needed */
+      cursor: var(--baton-cursor) 9 6, auto !important; /* hotspot at baton tip-ish; adjust if needed */
     }
     /* Stop buttons/links from switching to pointer/hand cursor */
     button, a, summary, details, input, label, select, textarea{
-      cursor: var(--baton-cursor) 6 6, auto !important;
+      cursor: var(--baton-cursor) 9 6, auto !important;
     }
 
     body{
@@ -49,6 +49,22 @@
       background-blend-mode: multiply, multiply, multiply, normal, normal;
     }
 
+    /* Disable double-tap zoom and gestures on the game area */
+    html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+#noteBtn, .noteBtn, header, button, summary, details {
+  touch-action: manipulation;
+}
+
+.noteBtn {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+    
     /* Replace notebook-like lines with subtle “ink bloom” mottling */
     body:before{
       content:"";
@@ -76,7 +92,7 @@
     .sub{color:var(--muted); font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
     .hud{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center}
     .pill{
-      background: rgba(255,255,255,.45);
+      background: rgba(255,255,255,.70);
       border:1px solid var(--line);
       padding:8px 10px;
       border-radius:999px;
@@ -90,7 +106,7 @@
     .grid{display:grid; grid-template-columns: 1.05fr .95fr; gap:14px}
     @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
     .card{
-      background: rgba(255,255,255,.52);
+      background: rgba(255,255,255,.75);
       border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -100,7 +116,7 @@
       margin:0; padding:12px 14px;
       font-size:14px; letter-spacing:.3px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,.38);
+      background: rgba(255,255,255,.55);
       display:flex; align-items:center; justify-content:space-between;
       gap:10px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -112,7 +128,7 @@
     .muted{color:var(--muted)}
 
     button{
-      background: rgba(255,255,255,.60);
+      background: rgba(255,255,255,.80);
       color:var(--ink2);
       border:1px solid var(--line);
       padding:10px 12px;
@@ -124,31 +140,31 @@
       user-select:none;
       /* cursor handled globally */
     }
-    button:hover{background: rgba(255,255,255,.80); border-color: rgba(44,110,122,.35)}
+    button:hover{background: rgba(255,255,255,.90); border-color: rgba(44,110,122,.35)}
     button:active{transform: translateY(1px)}
     button:disabled{opacity:.45}
     .primary{
-      background: linear-gradient(135deg, rgba(44,110,122,.18), rgba(255,255,255,.65));
-      border-color: rgba(44,110,122,.32);
+      background: linear-gradient(135deg, rgba(44,110,122,.45), rgba(255,255,255,.80));
+      border-color: rgba(44,110,122,.55);
     }
-    .danger{border-color: rgba(160,60,60,.30)}
+    .danger{border-color: rgba(160,60,60,.60)}
     .table{display:flex; flex-direction:column; gap:8px}
     .mini{
       display:grid;
       grid-template-columns: 1fr auto;
       gap:10px;
       padding:10px 10px;
-      background: rgba(255,255,255,.40);
-      border: 1px solid rgba(35,29,24,.16);
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(35,29,24,.35);
       border-radius: 14px;
     }
     .mini .name{display:flex; flex-direction:column; gap:2px}
     .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
     .tag{
       font-size:11px; padding:2px 8px; border-radius:999px;
-      border:1px solid rgba(35,29,24,.18);
+      border:1px solid rgba(35,29,24,.30);
       color:var(--muted);
-      background: rgba(255,255,255,.55);
+      background: rgba(255,255,255,.70);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       white-space: nowrap;
     }
@@ -180,7 +196,7 @@
     .noteImg{
       width:160px; height:160px;
       object-fit: contain;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.40));
       image-rendering: auto;
       user-select:none;
       pointer-events:none; /* so clicks hit the button, not the img */
@@ -275,7 +291,7 @@
     }
     details > summary::-webkit-details-marker{display:none}
     .detailsBody{padding:10px 10px; border-top:1px dashed rgba(35,29,24,.18)}
-    .familyHeader{
+    .familyer{
       display:flex; align-items:center; gap:8px; flex-wrap:wrap;
     }
     .familyStack{display:flex; flex-direction:column; gap:10px}
@@ -519,6 +535,22 @@
 <div class="toast" id="toast"></div>
 
 <script>
+
+    // iOS Safari: prevent double-tap zoom on the main click target
+(() => {
+  const btn = document.getElementById("noteBtn");
+  if (!btn) return;
+
+  let lastTouchEnd = 0;
+  btn.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault(); // blocks iOS double-tap zoom
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+})();
+  
 (() => {
   // ---------- Utilities ----------
   const $ = (sel)=>document.querySelector(sel);
