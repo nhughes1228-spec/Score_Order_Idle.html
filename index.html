@@ -9,23 +9,13 @@
       --ink:#1e1a16;
       --ink2:#2b241e;
       --muted:#5a4f45;
-
       --paper:#f3e7cf;
       --paper2:#eadbbd;
-
-      --panel:#fbf6ea;
-      --panel2:#f6eedc;
-
       --line:rgba(35,29,24,.18);
-      --line2:rgba(35,29,24,.26);
-
-      --shadow: 0 18px 46px rgba(0,0,0,.22);
-      --shadowSoft: 0 10px 24px rgba(0,0,0,.14);
-      --radius:18px;
-
+      --shadow: 0 16px 40px rgba(0,0,0,.22);
+      --radius:16px;
       --accent:#2c6e7a;
       --accent2:#6b3c2a;
-
       --good:#1d7a41;
       --warn:#8a5a00;
       --bad:#a03c3c;
@@ -33,32 +23,14 @@
       /* Transparent PNG baton cursor from your repo */
       --baton-cursor: url("assets/cursor-baton.png");
     }
-
     *{box-sizing:border-box}
 
-    /* ---- FORCE BATON CURSOR EVERYWHERE ---- */
+    /* ---- FORCE BATON CURSOR EVERYWHERE (including clickable elements) ---- */
     html, body, body *{
-      cursor: var(--baton-cursor) 0 0, auto !important; /* hotspot: tweak numbers if needed */
+      cursor: var(--baton-cursor) 0 0, auto !important; /* hotspot at baton tip-ish; adjust if needed */
     }
     button, a, summary, details, input, label, select, textarea{
       cursor: var(--baton-cursor) 0 0, auto !important;
-    }
-
-    /* ---- iOS / mobile tap + selection hygiene ---- */
-    html, body{
-      touch-action: manipulation;
-      -webkit-text-size-adjust: 100%;
-      overscroll-behavior: none;
-    }
-    /* The main tappable target should NOT be "manipulation"—it should be none for instant response. */
-    #noteBtn, .noteBtn{
-      touch-action: none;
-    }
-    .noteBtn, .noteImg, button, summary{
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body{
@@ -66,166 +38,133 @@
       color:var(--ink);
       font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
 
-      /* Archival parchment base + ink wash */
+      /* Parchment base + subtle ink-wash overlays */
       background:
         radial-gradient(1100px 800px at 18% 12%, rgba(44,110,122,.10), transparent 60%),
         radial-gradient(900px 700px at 82% 18%, rgba(107,60,42,.10), transparent 62%),
         radial-gradient(700px 500px at 40% 78%, rgba(0,0,0,.07), transparent 55%),
-        url("assets/parchment.jpg") center/cover fixed,
+        /* IMPORTANT: DO NOT use "fixed" here (Safari/iOS compositing bug causing ghost transparency on load) */
+        url("assets/parchment.jpg") center/cover scroll,
         linear-gradient(180deg, var(--paper), var(--paper2));
       background-blend-mode: multiply, multiply, multiply, normal, normal;
     }
 
-    /* Subtle “folio edges” vignette */
+    /* Disable double-tap zoom and gestures on the game area */
+    html, body {
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+    #noteBtn, .noteBtn, header, button, summary, details {
+      touch-action: manipulation;
+    }
+    .noteBtn {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* Replace notebook-like lines with subtle “ink bloom” mottling */
     body:before{
       content:"";
       position:fixed; inset:0;
       pointer-events:none;
+      opacity:.18;
       background:
-        radial-gradient(1200px 900px at 50% 0%, rgba(0,0,0,.10), transparent 55%),
-        radial-gradient(1200px 900px at 50% 100%, rgba(0,0,0,.12), transparent 55%),
-        radial-gradient(900px 900px at 0% 50%, rgba(0,0,0,.10), transparent 55%),
-        radial-gradient(900px 900px at 100% 50%, rgba(0,0,0,.10), transparent 55%);
-      opacity:.55;
+        radial-gradient(220px 180px at 12% 22%, rgba(0,0,0,.18), transparent 70%),
+        radial-gradient(260px 210px at 76% 18%, rgba(0,0,0,.13), transparent 72%),
+        radial-gradient(300px 240px at 70% 74%, rgba(0,0,0,.10), transparent 75%),
+        radial-gradient(280px 220px at 28% 78%, rgba(0,0,0,.10), transparent 75%);
       mix-blend-mode:multiply;
+      filter: blur(0.3px);
     }
 
-    /* Sticky header — more like an engraved title strip */
     header{
-      padding:14px 16px 12px;
+      padding:16px 16px 12px;
       position:sticky; top:0; z-index:5;
-      background:
-        linear-gradient(to bottom, rgba(251,246,234,.92), rgba(251,246,234,.78));
-      backdrop-filter: blur(8px);
+      background: linear-gradient(to bottom, rgba(243,231,207,.90), rgba(243,231,207,.72));
+      backdrop-filter: blur(6px);
       border-bottom: 1px solid var(--line);
       display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-      box-shadow: 0 6px 18px rgba(0,0,0,.12);
-    }
 
-    h1{
-      margin:0;
-      font-size:18px;
-      letter-spacing:.35px;
+      /* Compositing stabilization */
+      transform: translateZ(0);
+      will-change: transform;
     }
-
-    .sub{
-      color:var(--muted);
-      font-size:12px;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    }
-
+    h1{margin:0; font-size:18px; letter-spacing:.3px}
+    .sub{color:var(--muted); font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
     .hud{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center}
-
     .pill{
-      background: rgba(251,246,234,.88);
-      border:1px solid rgba(35,29,24,.22);
+      background: rgba(255,255,255,.70);
+      border:1px solid var(--line);
       padding:8px 10px;
       border-radius:999px;
       font-size:12px;
       display:flex; gap:8px; align-items:center;
-      box-shadow: 0 8px 18px rgba(0,0,0,.10);
+      box-shadow: 0 8px 22px rgba(0,0,0,.10);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     .pill b{font-size:13px}
-
     main{padding:16px; max-width:1200px; margin:0 auto}
-
     .grid{display:grid; grid-template-columns: 1.05fr .95fr; gap:14px}
     @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
-
-    /* Card now feels like a mounted folio sheet */
     .card{
-      position:relative;
-      background:
-        linear-gradient(180deg, rgba(251,246,234,.92), rgba(246,238,220,.86));
-      border:1px solid rgba(35,29,24,.26);
+      background: rgba(255,255,255,.75);
+      border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
-    }
-    /* “Deckle edge” illusion */
-    .card:before{
-      content:"";
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(18px 18px at 10% 8%, rgba(0,0,0,.10), transparent 70%),
-        radial-gradient(22px 22px at 88% 10%, rgba(0,0,0,.08), transparent 72%),
-        radial-gradient(24px 24px at 14% 92%, rgba(0,0,0,.08), transparent 72%),
-        radial-gradient(18px 18px at 92% 90%, rgba(0,0,0,.10), transparent 70%),
-        linear-gradient(90deg, rgba(0,0,0,.08), transparent 12%, transparent 88%, rgba(0,0,0,.08));
-      opacity:.18;
-      mix-blend-mode:multiply;
-    }
 
+      /* Compositing stabilization (prevents “too transparent until interaction” on Safari) */
+      transform: translateZ(0);
+      will-change: transform;
+    }
     .card h2{
       margin:0; padding:12px 14px;
-      font-size:13px; letter-spacing:.35px;
-      border-bottom: 1px solid rgba(35,29,24,.22);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.20));
+      font-size:14px; letter-spacing:.3px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.55);
       display:flex; align-items:center; justify-content:space-between;
       gap:10px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       flex-wrap:wrap;
     }
-
     .content{padding:12px 14px}
-
-    .row{
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-      padding:10px 0;
-      border-bottom:1px dashed rgba(35,29,24,.20);
-    }
+    .row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(35,29,24,.18)}
     .row:last-child{border-bottom:none}
-
     .muted{color:var(--muted)}
-    .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
 
     button{
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.66));
+      background: rgba(255,255,255,.80);
       color:var(--ink2);
-      border:1px solid rgba(35,29,24,.28);
+      border:1px solid var(--line);
       padding:10px 12px;
       border-radius: 12px;
-      transition: transform .05s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
-      font-weight:900;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      font-weight:800;
       letter-spacing:.2px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      box-shadow: var(--shadowSoft);
+      user-select:none;
     }
-    button:hover{
-      background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.72));
-      border-color: rgba(44,110,122,.42);
-    }
+    button:hover{background: rgba(255,255,255,.90); border-color: rgba(44,110,122,.35)}
     button:active{transform: translateY(1px)}
-    button:disabled{opacity:.45; box-shadow:none}
-
+    button:disabled{opacity:.45}
     .primary{
-      background:
-        linear-gradient(135deg, rgba(44,110,122,.55), rgba(255,255,255,.82));
-      border-color: rgba(44,110,122,.62);
+      background: linear-gradient(135deg, rgba(44,110,122,.45), rgba(255,255,255,.80));
+      border-color: rgba(44,110,122,.55);
     }
     .danger{border-color: rgba(160,60,60,.60)}
-
     .table{display:flex; flex-direction:column; gap:8px}
-
     .mini{
       display:grid;
       grid-template-columns: 1fr auto;
       gap:10px;
       padding:10px 10px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.42));
-      border: 1px solid rgba(35,29,24,.30);
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(35,29,24,.35);
       border-radius: 14px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.08);
     }
-
     .mini .name{display:flex; flex-direction:column; gap:2px}
     .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
-
     .tag{
       font-size:11px; padding:2px 8px; border-radius:999px;
       border:1px solid rgba(35,29,24,.30);
@@ -237,57 +176,46 @@
     .tag.good{color:var(--good); border-color: rgba(29,122,65,.22); background: rgba(29,122,65,.06)}
     .tag.warn{color:var(--warn); border-color: rgba(138,90,0,.22); background: rgba(138,90,0,.06)}
     .tag.bad{color:var(--bad); border-color: rgba(160,60,60,.22); background: rgba(160,60,60,.06)}
-
     .right{display:flex; flex-direction:column; gap:6px; align-items:flex-end; justify-content:center}
     .cost{font-size:12px; color:var(--muted); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
-
+    .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
     .clickZone{
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       gap:10px; padding:16px 0 6px;
     }
-
-    /* Tap target: feels like a wax-sealed medallion */
     .noteBtn{
       width:220px; height:220px;
       border-radius: 999px;
       display:grid; place-items:center;
+      user-select:none;
+      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.88), rgba(255,255,255,.40));
+      border:1px solid rgba(44,110,122,.26);
+      box-shadow: 0 20px 60px rgba(0,0,0,.20);
+      color: var(--ink2);
       padding:0;
-      border: 1px solid rgba(35,29,24,.25);
-
-      background:
-        radial-gradient(circle at 30% 25%, rgba(255,255,255,.92), rgba(255,255,255,.40)),
-        radial-gradient(circle at 70% 80%, rgba(44,110,122,.14), transparent 55%),
-        radial-gradient(circle at 15% 85%, rgba(107,60,42,.10), transparent 55%);
-
-      box-shadow:
-        0 26px 70px rgba(0,0,0,.20),
-        inset 0 1px 0 rgba(255,255,255,.70),
-        inset 0 -18px 50px rgba(0,0,0,.10);
-
-      transform: translateZ(0);
     }
     .noteBtn:hover{border-color: rgba(44,110,122,.55)}
-    .noteBtn:active{transform: translateY(2px) translateZ(0)}
+    .noteBtn:active{transform: translateY(2px)}
 
+    /* Real note images */
     .noteImg{
       width:160px; height:160px;
       object-fit: contain;
-      filter: drop-shadow(0 8px 12px rgba(0,0,0,.40));
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.40));
       image-rendering: auto;
+      user-select:none;
       pointer-events:none;
     }
 
     .bigNotes{
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: .4px;
       font-size: 34px;
       color: rgba(43,36,30,.92);
       text-shadow: 0 1px 0 rgba(255,255,255,.55);
     }
-
     .miniHud{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
-
     .toast{
       position:fixed; right:14px; bottom:14px;
       display:flex; flex-direction:column; gap:8px;
@@ -295,7 +223,7 @@
       z-index:10;
     }
     .toast .t{
-      background: rgba(251,246,234,.92);
+      background: rgba(255,255,255,.86);
       border:1px solid rgba(35,29,24,.20);
       border-left: 4px solid rgba(44,110,122,.75);
       padding:10px 12px;
@@ -306,69 +234,87 @@
       backdrop-filter: blur(6px);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-
     .footer{
       margin-top:10px; padding:10px 14px;
       color: var(--muted); font-size:12px;
-      border-top:1px solid rgba(35,29,24,.18);
-      background: rgba(255,255,255,.22);
+      border-top:1px solid var(--line);
+      background: rgba(255,255,255,.32);
       display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-
     .inkSig{
       font-family: "Brush Script MT", "Snell Roundhand", "Apple Chancery", cursive;
       font-size: 18px;
       color: rgba(43,36,30,.85);
     }
     .smallSans{font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
-
-    .seg{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    .seg button{padding:7px 10px; border-radius:999px; font-size:12px; font-weight:950}
+    .seg{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .seg button{
+      padding:7px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      font-weight:900;
+    }
     .seg button.active{
       background: rgba(44,110,122,.18);
-      border-color: rgba(44,110,122,.40);
+      border-color: rgba(44,110,122,.35);
     }
 
-    .tabs{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-    .tabs button{padding:8px 10px; border-radius:999px; font-size:12px; font-weight:950}
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap;
+      align-items:center;
+    }
+    .tabs button{
+      padding:8px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      font-weight:900;
+    }
     .tabs button.active{
       background: rgba(44,110,122,.18);
-      border-color: rgba(44,110,122,.40);
+      border-color: rgba(44,110,122,.35);
     }
     .tab[hidden]{display:none !important}
 
     details{
       border:1px solid rgba(35,29,24,.16);
       border-radius: 14px;
-      background: rgba(255,255,255,.28);
+      background: rgba(255,255,255,.40);
       overflow:hidden;
-      box-shadow: 0 10px 20px rgba(0,0,0,.08);
     }
     details > summary{
       list-style:none;
       padding:10px 10px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      font-weight:950;
+      font-weight:900;
       display:flex; align-items:center; justify-content:space-between; gap:10px;
+      user-select:none;
     }
     details > summary::-webkit-details-marker{display:none}
     .detailsBody{padding:10px 10px; border-top:1px dashed rgba(35,29,24,.18)}
-
+    .familyer{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    }
     .familyStack{display:flex; flex-direction:column; gap:10px}
     .dropdown{margin-top:10px}
-
     .settingRow{
       display:flex; align-items:center; gap:10px;
       padding:10px 10px;
       border:1px solid rgba(35,29,24,.16);
       border-radius: 14px;
-      background: rgba(255,255,255,.32);
+      background: rgba(255,255,255,.40);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      font-weight:900;
-      box-shadow: 0 10px 18px rgba(0,0,0,.07);
+      font-weight:800;
     }
     input[type="checkbox"]{transform: scale(1.15)}
+
+    /* One-time Safari repaint kick class (toggled by JS on load) */
+    .repaint-kick *{
+      /* tiny transform to force correct compositing without visible movement */
+      transform: translateZ(0);
+    }
   </style>
 </head>
 <body>
@@ -423,7 +369,6 @@
             </div>
           </div>
 
-          <!-- Baton / Note upgrades -->
           <details class="dropdown" id="batonDropdown">
             <summary>
               <span>Baton Techniques (Notes)</span>
@@ -499,7 +444,7 @@
 
           <div class="footer">
             <span class="mono" id="clock">—</span>
-            <span class="muted">Engraved folio UI • note art + parchment + baton cursor.</span>
+            <span class="muted">Real note art + parchment background + baton cursor enforced.</span>
           </div>
         </div>
       </section>
@@ -598,13 +543,41 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // iOS Safari: prevent double-tap zoom on the main click target
+  (() => {
+    const btn = document.getElementById("noteBtn");
+    if (!btn) return;
+
+    let lastTouchEnd = 0;
+    btn.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+  })();
+
+  // Safari/WebKit compositing bug: force a one-time repaint after first paint
+  // This prevents “everything is super transparent until you open a menu.”
+  (function repaintKick(){
+    const kick = () => {
+      document.body.classList.add("repaint-kick");
+      // force reflow
+      void document.body.offsetHeight;
+      // remove next frame
+      requestAnimationFrame(() => document.body.classList.remove("repaint-kick"));
+    };
+    // run after DOM is ready + after resources begin painting
+    window.addEventListener("load", kick, { once: true });
+  })();
+
 (() => {
   // ---------- Utilities ----------
   const $ = (sel)=>document.querySelector(sel);
   const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
   const now = ()=>Date.now();
 
-  // 4 significant figures with M/B/T suffix (only for >= 1,000,000)
   function fmtSig4Suffix(n){
     if (!isFinite(n)) return "∞";
     const abs = Math.abs(n);
@@ -707,6 +680,7 @@
     }
 
     S.batonBaseExtra = (S.batonBaseExtra || 0) + (u.extraBase || 0);
+
     toast(`Baton: ${u.name}`);
   }
 
@@ -909,7 +883,7 @@
     { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },
     { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },
     { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },
-    { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",                    patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },
+    { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },
   ];
 
   const FACILITY_UPGRADE_TEMPLATES = [
@@ -948,7 +922,13 @@
           desc = `+${Math.round((mult.nps-1)*100)}% Notes/sec & +${Math.round((mult.click-1)*100)}% Click`;
         }
 
-        ups.push({ id:`${facId}_${t.key}`, name:t.name, cost, desc, mult });
+        ups.push({
+          id:`${facId}_${t.key}`,
+          name:t.name,
+          cost,
+          desc,
+          mult
+        });
       }
       return ups;
     };
@@ -958,7 +938,10 @@
       const f = FACILITY_BASE[i];
       const next = FACILITY_BASE[i+1];
       const nextCost = next ? next.patronCostToUnlock : Math.max(1000, Math.round(f.patronCostToUnlock * 1.5));
-      facilities.push({ ...f, upgrades: upgradesFor(f.id, nextCost) });
+      facilities.push({
+        ...f,
+        upgrades: upgradesFor(f.id, nextCost)
+      });
     }
     return facilities;
   }
@@ -1071,38 +1054,29 @@
   const KEY = "score_order_idle_v8";
   const stateDefault = () => ({
     version: 8,
-
     notes: 0,
     lifetimeNotes: 0,
-
     ink: 0,
-
     patrons: 0,
     patronsEver: 0,
-
     owned: Object.fromEntries(BUILDINGS.map(b=>[b.id,0])),
     buildingMult: Object.fromEntries(BUILDINGS.map(b=>[b.id,1])),
     noteUpgrades: {},
     synergyUpgrades: {},
-
     runClickMult: 1,
     runNpsMult: 1,
-
     inkUpgrades: {},
     metaNpsMult: 1,
     metaClickMult: 1,
     clickFromNpsRate: 0,
-
     noteStageIdx: 0,
     batonUpgrades: {},
     batonBaseExtra: 0,
-
     facility: {
       currentId: "shed",
       unlocked: { shed: true },
       purchasedUpgrades: {}
     },
-
     buyMode: "1",
     ui: {
       tab: "main",
@@ -1114,10 +1088,14 @@
       facilityNextOpen: false,
       batonOpen: false
     },
-    settings: { abbrevLarge: true },
-
-    stats: { clicks: 0, buildingsBought: 0, inkEarned: 0 },
-
+    settings: {
+      abbrevLarge: true
+    },
+    stats: {
+      clicks: 0,
+      buildingsBought: 0,
+      inkEarned: 0
+    },
     lastTick: now(),
     lastSave: now(),
   });
@@ -1530,7 +1508,6 @@
         </summary>
         <div class="detailsBody">
           <div class="table" id="instList-${fam.id}"></div>
-
           <details class="dropdown" data-synfam="${fam.id}" ${(S.ui.synergyOpen[fam.id] ? "open" : "")}>
             <summary>
               <span>Section Synergies (Notes)</span>
@@ -1985,43 +1962,12 @@
     }
   }
 
-  // ---------- Fast Tap Fix (iPhone) ----------
-  // Use pointerdown for instant response, and suppress the follow-up click.
-  const noteBtn = $("#noteBtn");
-  let suppressClickUntil = 0;
-
-  function handleNoteAction(){
+  // ---------- Wire Buttons ----------
+  $("#noteBtn").addEventListener("click", ()=>{
     clickNote();
     renderHUD();
-  }
-
-  noteBtn.addEventListener("pointerdown", (e) => {
-    // Primary button only
-    if (e.button !== undefined && e.button !== 0) return;
-
-    // On touch, prevent default to stop gesture interpretation / delayed click.
-    if (e.pointerType === "touch") {
-      e.preventDefault();
-      suppressClickUntil = now() + 600;
-    }
-    handleNoteAction();
-  }, { passive: false });
-
-  // Fallback click for mouse/keyboard or odd browsers; suppressed right after touch pointerdown.
-  noteBtn.addEventListener("click", () => {
-    if (now() < suppressClickUntil) return;
-    handleNoteAction();
   });
 
-  // Keyboard accessibility
-  noteBtn.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleNoteAction();
-    }
-  });
-
-  // ---------- Wire Buttons ----------
   $("#prestigeBtn").addEventListener("click", ()=>{
     doPrestige();
     renderAll();
@@ -2062,7 +2008,7 @@
   setInterval(tick, 100);
 
   if (S.lifetimeNotes === 0 && S.notes === 0){
-    toast("Tap the note to start conducting!");
+    toast("Click the note to start conducting!");
   }
 })();
 </script>
