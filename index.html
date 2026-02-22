@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Manuscript Note Clicker</title>
+  <title>Score Order Idle</title>
   <style>
     :root{
       --ink:#1e1a16;
@@ -311,7 +311,7 @@
 <body>
 <header>
   <div>
-    <h1>Manuscript Note Clicker</h1>
+    <h1>Score Order Idle</h1>
     <div class="sub">Conduct with a baton, hire instruments, Ink is meta, “Take a bow” for Patrons.</div>
   </div>
 
@@ -337,7 +337,7 @@
 
       <section class="card">
         <h2>
-          <span>🎼 The Manuscript</span>
+          <span>🎼 The Score</span>
           <span class="tag good">Autosave: ON</span>
         </h2>
         <div class="content">
@@ -873,7 +873,7 @@
     { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },  // 10x
     { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },  // 10x
     { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },  // 10x
-    { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The manuscript practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },  // 10x
+    { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },  // 10x
   ];
 
   const FACILITY_UPGRADE_TEMPLATES = [
@@ -1046,7 +1046,7 @@
   }
 
   // ---------- State ----------
-  const KEY = "manuscript_note_clicker_v8";
+  const KEY = "score_order_idle_v8";
   const stateDefault = () => ({
     version: 8,
 
@@ -1120,11 +1120,11 @@
     try{
       const raw =
         localStorage.getItem(KEY) ||
-        localStorage.getItem("manuscript_note_clicker_v7") ||
-        localStorage.getItem("manuscript_note_clicker_v6") ||
-        localStorage.getItem("manuscript_note_clicker_v5") ||
-        localStorage.getItem("manuscript_note_clicker_v4") ||
-        localStorage.getItem("manuscript_note_clicker_v3");
+        localStorage.getItem("score_order_idle_v7") ||
+        localStorage.getItem("score_order_idle_v6") ||
+        localStorage.getItem("score_order_idle_v5") ||
+        localStorage.getItem("score_order_idle_v4") ||
+        localStorage.getItem("score_order_idle_v3");
 
       if(!raw) return stateDefault();
 
@@ -2002,12 +2002,12 @@
     const ok = confirm("Hard reset will erase your save completely (including Ink, Patrons, Facilities). Are you sure?");
     if (!ok) return;
     localStorage.removeItem(KEY);
-    localStorage.removeItem("manuscript_note_clicker_v8");
-    localStorage.removeItem("manuscript_note_clicker_v7");
-    localStorage.removeItem("manuscript_note_clicker_v6");
-    localStorage.removeItem("manuscript_note_clicker_v5");
-    localStorage.removeItem("manuscript_note_clicker_v4");
-    localStorage.removeItem("manuscript_note_clicker_v3");
+    localStorage.removeItem("score_order_idle_v8");
+    localStorage.removeItem("score_order_idle_v7");
+    localStorage.removeItem("score_order_idle_v6");
+    localStorage.removeItem("score_order_idle_v5");
+    localStorage.removeItem("score_order_idle_v4");
+    localStorage.removeItem("score_order_idle_v3");
     S = stateDefault();
     toast("Reset complete.");
     renderAll();
