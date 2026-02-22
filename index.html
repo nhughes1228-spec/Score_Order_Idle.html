@@ -202,7 +202,7 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    
+
     /* Real note images */
     .noteImg{
       width:160px; height:160px;
@@ -885,7 +885,7 @@
     { id:"shed",    name:"Mildewy Shed",  desc:"A cramped shed behind the school. The stands wobble if you breathe too hard.",            patronCostToUnlock: 0,    globalMult:{ nps:1.00, click:1.00 } },
     { id:"garage",  name:"One-Car Garage",desc:"Still echoey… but weatherproof, and you can fit a full section inside.",                  patronCostToUnlock: 100,  globalMult:{ nps:1.40, click:1.15 } },
     { id:"bandroom",name:"Band Room",     desc:"Lockers. Posters. A metronome that survived three directors. It feels like home.",         patronCostToUnlock: 250,  globalMult:{ nps:1.85, click:1.25 } },
-    { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 600,  globalMult:{ nps:2.40, click:1.35 } },
+    { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 600,  globalMult:{ nps:1.40, click:1.35 } },
     { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },
     { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },
     { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },
@@ -1335,6 +1335,42 @@
     S.notes += gain;
     S.lifetimeNotes += gain;
     S.stats.clicks += 1;
+  }
+
+  // ✅ FAST TAP (mobile) + click (desktop) wiring — bound ONCE
+  function wireNoteButtonOnce(){
+    const btn = document.getElementById("noteBtn");
+    if (!btn) return;
+    if (btn._wiredFastTap) return;
+    btn._wiredFastTap = true;
+
+    let lastFast = 0;
+
+    const doClick = () => {
+      clickNote();
+      renderHUD();
+    };
+
+    const fastTap = (e) => {
+      e.preventDefault();
+      lastFast = now();
+      doClick();
+    };
+
+    // Pointer events first (best)
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") return;
+      fastTap(e);
+    }, { passive: false });
+
+    // Touch fallback
+    btn.addEventListener("touchstart", fastTap, { passive: false });
+
+    // Desktop / fallback click (guard against synthetic click after touch)
+    btn.addEventListener("click", () => {
+      if (now() - lastFast < 650) return;
+      doClick();
+    });
   }
 
   // ---------- Offline Progress ----------
@@ -1964,36 +2000,12 @@
       renderFamilies();
       renderInkUpgrades();
       renderFacility();
+      // (Deliberately NOT binding any event listeners here)
+    }
+  }
 
-      // ---------- Wire Buttons ----------
-(() => {
-  const btn = $("#noteBtn");
-  if (!btn) return;
-
-  // Desktop / fallback
-  btn.addEventListener("click", (e) => {
-    clickNote();
-    renderHUD();
-  });
-
-  // iOS Safari / mobile: trigger instantly on touch/pointer, prevent gesture heuristics
-  const fastTap = (e) => {
-    // Only handle primary touch/pointer
-    // Prevents double-tap zoom / scroll interpretations
-    e.preventDefault();
-    clickNote();
-    renderHUD();
-  };
-
-  // Pointer Events first (best when supported)
-  btn.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse") return; // keep mouse as normal click
-    fastTap(e);
-  }, { passive: false });
-
-  // Touch fallback
-  btn.addEventListener("touchstart", fastTap, { passive: false });
-})();
+  // ---------- Wire Buttons (ONCE) ----------
+  wireNoteButtonOnce();
 
   $("#prestigeBtn").addEventListener("click", ()=>{
     doPrestige();
