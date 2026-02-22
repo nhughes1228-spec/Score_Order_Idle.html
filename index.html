@@ -197,6 +197,12 @@
     .noteBtn:hover{border-color: rgba(44,110,122,.55)}
     .noteBtn:active{transform: translateY(2px)}
 
+    /* Mobile tap polish */
+    .noteBtn{
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
     /* Real note images */
     .noteImg{
       width:160px; height:160px;
@@ -1958,15 +1964,36 @@
       renderFamilies();
       renderInkUpgrades();
       renderFacility();
-      renderStats();
-    }
-  }
 
-  // ---------- Wire Buttons ----------
-  $("#noteBtn").addEventListener("click", ()=>{
+      // ---------- Wire Buttons ----------
+(() => {
+  const btn = $("#noteBtn");
+  if (!btn) return;
+
+  // Desktop / fallback
+  btn.addEventListener("click", (e) => {
     clickNote();
     renderHUD();
   });
+
+  // iOS Safari / mobile: trigger instantly on touch/pointer, prevent gesture heuristics
+  const fastTap = (e) => {
+    // Only handle primary touch/pointer
+    // Prevents double-tap zoom / scroll interpretations
+    e.preventDefault();
+    clickNote();
+    renderHUD();
+  };
+
+  // Pointer Events first (best when supported)
+  btn.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse") return; // keep mouse as normal click
+    fastTap(e);
+  }, { passive: false });
+
+  // Touch fallback
+  btn.addEventListener("touchstart", fastTap, { passive: false });
+})();
 
   $("#prestigeBtn").addEventListener("click", ()=>{
     doPrestige();
