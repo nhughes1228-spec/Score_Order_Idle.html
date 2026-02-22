@@ -9,13 +9,23 @@
       --ink:#1e1a16;
       --ink2:#2b241e;
       --muted:#5a4f45;
+
       --paper:#f3e7cf;
       --paper2:#eadbbd;
+
+      --panel:#fbf6ea;
+      --panel2:#f6eedc;
+
       --line:rgba(35,29,24,.18);
-      --shadow: 0 16px 40px rgba(0,0,0,.22);
-      --radius:16px;
+      --line2:rgba(35,29,24,.26);
+
+      --shadow: 0 18px 46px rgba(0,0,0,.22);
+      --shadowSoft: 0 10px 24px rgba(0,0,0,.14);
+      --radius:18px;
+
       --accent:#2c6e7a;
       --accent2:#6b3c2a;
+
       --good:#1d7a41;
       --warn:#8a5a00;
       --bad:#a03c3c;
@@ -23,15 +33,32 @@
       /* Transparent PNG baton cursor from your repo */
       --baton-cursor: url("assets/cursor-baton.png");
     }
+
     *{box-sizing:border-box}
 
-    /* ---- FORCE BATON CURSOR EVERYWHERE (including clickable elements) ---- */
+    /* ---- FORCE BATON CURSOR EVERYWHERE ---- */
     html, body, body *{
-      cursor: var(--baton-cursor) 0 0, auto !important; /* hotspot at baton tip-ish; adjust if needed */
+      cursor: var(--baton-cursor) 0 0, auto !important; /* hotspot: tweak numbers if needed */
     }
-    /* Stop buttons/links from switching to pointer/hand cursor */
     button, a, summary, details, input, label, select, textarea{
       cursor: var(--baton-cursor) 0 0, auto !important;
+    }
+
+    /* ---- iOS / mobile tap + selection hygiene ---- */
+    html, body{
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+    /* The main tappable target should NOT be "manipulation"—it should be none for instant response. */
+    #noteBtn, .noteBtn{
+      touch-action: none;
+    }
+    .noteBtn, .noteImg, button, summary{
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body{
@@ -39,7 +66,7 @@
       color:var(--ink);
       font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
 
-      /* Parchment base + subtle ink-wash overlays */
+      /* Archival parchment base + ink wash */
       background:
         radial-gradient(1100px 800px at 18% 12%, rgba(44,110,122,.10), transparent 60%),
         radial-gradient(900px 700px at 82% 18%, rgba(107,60,42,.10), transparent 62%),
@@ -49,117 +76,156 @@
       background-blend-mode: multiply, multiply, multiply, normal, normal;
     }
 
-    /* Disable double-tap zoom and gestures on the game area */
-    html, body {
-  touch-action: manipulation;
-  -webkit-text-size-adjust: 100%;
-}
-
-#noteBtn, .noteBtn, header, button, summary, details {
-  touch-action: manipulation;
-}
-
-.noteBtn {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-    
-    /* Replace notebook-like lines with subtle “ink bloom” mottling */
+    /* Subtle “folio edges” vignette */
     body:before{
       content:"";
       position:fixed; inset:0;
       pointer-events:none;
-      opacity:.18;
       background:
-        radial-gradient(220px 180px at 12% 22%, rgba(0,0,0,.18), transparent 70%),
-        radial-gradient(260px 210px at 76% 18%, rgba(0,0,0,.13), transparent 72%),
-        radial-gradient(300px 240px at 70% 74%, rgba(0,0,0,.10), transparent 75%),
-        radial-gradient(280px 220px at 28% 78%, rgba(0,0,0,.10), transparent 75%);
+        radial-gradient(1200px 900px at 50% 0%, rgba(0,0,0,.10), transparent 55%),
+        radial-gradient(1200px 900px at 50% 100%, rgba(0,0,0,.12), transparent 55%),
+        radial-gradient(900px 900px at 0% 50%, rgba(0,0,0,.10), transparent 55%),
+        radial-gradient(900px 900px at 100% 50%, rgba(0,0,0,.10), transparent 55%);
+      opacity:.55;
       mix-blend-mode:multiply;
-      filter: blur(0.3px);
     }
 
+    /* Sticky header — more like an engraved title strip */
     header{
-      padding:16px 16px 12px;
+      padding:14px 16px 12px;
       position:sticky; top:0; z-index:5;
-      background: linear-gradient(to bottom, rgba(243,231,207,.90), rgba(243,231,207,.72));
-      backdrop-filter: blur(6px);
+      background:
+        linear-gradient(to bottom, rgba(251,246,234,.92), rgba(251,246,234,.78));
+      backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--line);
       display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
     }
-    h1{margin:0; font-size:18px; letter-spacing:.3px}
-    .sub{color:var(--muted); font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
+
+    h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.35px;
+    }
+
+    .sub{
+      color:var(--muted);
+      font-size:12px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
     .hud{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center}
+
     .pill{
-      background: rgba(255,255,255,.70);
-      border:1px solid var(--line);
+      background: rgba(251,246,234,.88);
+      border:1px solid rgba(35,29,24,.22);
       padding:8px 10px;
       border-radius:999px;
       font-size:12px;
       display:flex; gap:8px; align-items:center;
-      box-shadow: 0 8px 22px rgba(0,0,0,.10);
+      box-shadow: 0 8px 18px rgba(0,0,0,.10);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     .pill b{font-size:13px}
+
     main{padding:16px; max-width:1200px; margin:0 auto}
+
     .grid{display:grid; grid-template-columns: 1.05fr .95fr; gap:14px}
     @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    /* Card now feels like a mounted folio sheet */
     .card{
-      background: rgba(255,255,255,.75);
-      border:1px solid var(--line);
+      position:relative;
+      background:
+        linear-gradient(180deg, rgba(251,246,234,.92), rgba(246,238,220,.86));
+      border:1px solid rgba(35,29,24,.26);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
     }
+    /* “Deckle edge” illusion */
+    .card:before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(18px 18px at 10% 8%, rgba(0,0,0,.10), transparent 70%),
+        radial-gradient(22px 22px at 88% 10%, rgba(0,0,0,.08), transparent 72%),
+        radial-gradient(24px 24px at 14% 92%, rgba(0,0,0,.08), transparent 72%),
+        radial-gradient(18px 18px at 92% 90%, rgba(0,0,0,.10), transparent 70%),
+        linear-gradient(90deg, rgba(0,0,0,.08), transparent 12%, transparent 88%, rgba(0,0,0,.08));
+      opacity:.18;
+      mix-blend-mode:multiply;
+    }
+
     .card h2{
       margin:0; padding:12px 14px;
-      font-size:14px; letter-spacing:.3px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,.55);
+      font-size:13px; letter-spacing:.35px;
+      border-bottom: 1px solid rgba(35,29,24,.22);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.20));
       display:flex; align-items:center; justify-content:space-between;
       gap:10px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       flex-wrap:wrap;
     }
+
     .content{padding:12px 14px}
-    .row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(35,29,24,.18)}
+
+    .row{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:10px 0;
+      border-bottom:1px dashed rgba(35,29,24,.20);
+    }
     .row:last-child{border-bottom:none}
+
     .muted{color:var(--muted)}
+    .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
 
     button{
-      background: rgba(255,255,255,.80);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.66));
       color:var(--ink2);
-      border:1px solid var(--line);
+      border:1px solid rgba(35,29,24,.28);
       padding:10px 12px;
       border-radius: 12px;
-      transition: transform .05s ease, background .15s ease, border-color .15s ease;
-      font-weight:800;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      font-weight:900;
       letter-spacing:.2px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      user-select:none;
-      /* cursor handled globally */
+      box-shadow: var(--shadowSoft);
     }
-    button:hover{background: rgba(255,255,255,.90); border-color: rgba(44,110,122,.35)}
+    button:hover{
+      background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.72));
+      border-color: rgba(44,110,122,.42);
+    }
     button:active{transform: translateY(1px)}
-    button:disabled{opacity:.45}
+    button:disabled{opacity:.45; box-shadow:none}
+
     .primary{
-      background: linear-gradient(135deg, rgba(44,110,122,.45), rgba(255,255,255,.80));
-      border-color: rgba(44,110,122,.55);
+      background:
+        linear-gradient(135deg, rgba(44,110,122,.55), rgba(255,255,255,.82));
+      border-color: rgba(44,110,122,.62);
     }
     .danger{border-color: rgba(160,60,60,.60)}
+
     .table{display:flex; flex-direction:column; gap:8px}
+
     .mini{
       display:grid;
       grid-template-columns: 1fr auto;
       gap:10px;
       padding:10px 10px;
-      background: rgba(255,255,255,.65);
-      border: 1px solid rgba(35,29,24,.35);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.42));
+      border: 1px solid rgba(35,29,24,.30);
       border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.08);
     }
+
     .mini .name{display:flex; flex-direction:column; gap:2px}
     .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+
     .tag{
       font-size:11px; padding:2px 8px; border-radius:999px;
       border:1px solid rgba(35,29,24,.30);
@@ -171,46 +237,57 @@
     .tag.good{color:var(--good); border-color: rgba(29,122,65,.22); background: rgba(29,122,65,.06)}
     .tag.warn{color:var(--warn); border-color: rgba(138,90,0,.22); background: rgba(138,90,0,.06)}
     .tag.bad{color:var(--bad); border-color: rgba(160,60,60,.22); background: rgba(160,60,60,.06)}
+
     .right{display:flex; flex-direction:column; gap:6px; align-items:flex-end; justify-content:center}
     .cost{font-size:12px; color:var(--muted); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
-    .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
     .clickZone{
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       gap:10px; padding:16px 0 6px;
     }
+
+    /* Tap target: feels like a wax-sealed medallion */
     .noteBtn{
       width:220px; height:220px;
       border-radius: 999px;
       display:grid; place-items:center;
-      user-select:none;
-      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.88), rgba(255,255,255,.40));
-      border:1px solid rgba(44,110,122,.26);
-      box-shadow: 0 20px 60px rgba(0,0,0,.20);
-      color: var(--ink2);
       padding:0;
+      border: 1px solid rgba(35,29,24,.25);
+
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.92), rgba(255,255,255,.40)),
+        radial-gradient(circle at 70% 80%, rgba(44,110,122,.14), transparent 55%),
+        radial-gradient(circle at 15% 85%, rgba(107,60,42,.10), transparent 55%);
+
+      box-shadow:
+        0 26px 70px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.70),
+        inset 0 -18px 50px rgba(0,0,0,.10);
+
+      transform: translateZ(0);
     }
     .noteBtn:hover{border-color: rgba(44,110,122,.55)}
-    .noteBtn:active{transform: translateY(2px)}
+    .noteBtn:active{transform: translateY(2px) translateZ(0)}
 
-    /* Real note images */
     .noteImg{
       width:160px; height:160px;
       object-fit: contain;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,.40));
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,.40));
       image-rendering: auto;
-      user-select:none;
-      pointer-events:none; /* so clicks hit the button, not the img */
+      pointer-events:none;
     }
 
     .bigNotes{
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      font-weight: 900;
+      font-weight: 950;
       letter-spacing: .4px;
       font-size: 34px;
       color: rgba(43,36,30,.92);
       text-shadow: 0 1px 0 rgba(255,255,255,.55);
     }
+
     .miniHud{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+
     .toast{
       position:fixed; right:14px; bottom:14px;
       display:flex; flex-direction:column; gap:8px;
@@ -218,7 +295,7 @@
       z-index:10;
     }
     .toast .t{
-      background: rgba(255,255,255,.86);
+      background: rgba(251,246,234,.92);
       border:1px solid rgba(35,29,24,.20);
       border-left: 4px solid rgba(44,110,122,.75);
       padding:10px 12px;
@@ -229,81 +306,67 @@
       backdrop-filter: blur(6px);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
+
     .footer{
       margin-top:10px; padding:10px 14px;
       color: var(--muted); font-size:12px;
-      border-top:1px solid var(--line);
-      background: rgba(255,255,255,.32);
+      border-top:1px solid rgba(35,29,24,.18);
+      background: rgba(255,255,255,.22);
       display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
+
     .inkSig{
       font-family: "Brush Script MT", "Snell Roundhand", "Apple Chancery", cursive;
       font-size: 18px;
       color: rgba(43,36,30,.85);
     }
     .smallSans{font-size:12px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
-    .seg{
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-    }
-    .seg button{
-      padding:7px 10px;
-      border-radius: 999px;
-      font-size:12px;
-      font-weight:900;
-    }
+
+    .seg{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .seg button{padding:7px 10px; border-radius:999px; font-size:12px; font-weight:950}
     .seg button.active{
       background: rgba(44,110,122,.18);
-      border-color: rgba(44,110,122,.35);
+      border-color: rgba(44,110,122,.40);
     }
 
-    /* Tabs */
-    .tabs{
-      display:flex; gap:8px; flex-wrap:wrap;
-      align-items:center;
-    }
-    .tabs button{
-      padding:8px 10px;
-      border-radius: 999px;
-      font-size:12px;
-      font-weight:900;
-    }
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .tabs button{padding:8px 10px; border-radius:999px; font-size:12px; font-weight:950}
     .tabs button.active{
       background: rgba(44,110,122,.18);
-      border-color: rgba(44,110,122,.35);
+      border-color: rgba(44,110,122,.40);
     }
     .tab[hidden]{display:none !important}
 
-    /* Collapsibles */
     details{
       border:1px solid rgba(35,29,24,.16);
       border-radius: 14px;
-      background: rgba(255,255,255,.40);
+      background: rgba(255,255,255,.28);
       overflow:hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,.08);
     }
     details > summary{
       list-style:none;
       padding:10px 10px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      font-weight:900;
+      font-weight:950;
       display:flex; align-items:center; justify-content:space-between; gap:10px;
-      user-select:none;
     }
     details > summary::-webkit-details-marker{display:none}
     .detailsBody{padding:10px 10px; border-top:1px dashed rgba(35,29,24,.18)}
-    .familyer{
-      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-    }
+
     .familyStack{display:flex; flex-direction:column; gap:10px}
     .dropdown{margin-top:10px}
+
     .settingRow{
       display:flex; align-items:center; gap:10px;
       padding:10px 10px;
       border:1px solid rgba(35,29,24,.16);
       border-radius: 14px;
-      background: rgba(255,255,255,.40);
+      background: rgba(255,255,255,.32);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      font-weight:800;
+      font-weight:900;
+      box-shadow: 0 10px 18px rgba(0,0,0,.07);
     }
     input[type="checkbox"]{transform: scale(1.15)}
   </style>
@@ -436,7 +499,7 @@
 
           <div class="footer">
             <span class="mono" id="clock">—</span>
-            <span class="muted">Real note art + parchment background + baton cursor enforced.</span>
+            <span class="muted">Engraved folio UI • note art + parchment + baton cursor.</span>
           </div>
         </div>
       </section>
@@ -535,22 +598,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-
-    // iOS Safari: prevent double-tap zoom on the main click target
-(() => {
-  const btn = document.getElementById("noteBtn");
-  if (!btn) return;
-
-  let lastTouchEnd = 0;
-  btn.addEventListener("touchend", (e) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-      e.preventDefault(); // blocks iOS double-tap zoom
-    }
-    lastTouchEnd = now;
-  }, { passive: false });
-})();
-  
 (() => {
   // ---------- Utilities ----------
   const $ = (sel)=>document.querySelector(sel);
@@ -572,7 +619,6 @@
     const pick = suffixes.find(x => abs >= x.v) || suffixes[suffixes.length-1];
     const scaled = n / pick.v;
 
-    // 4 significant figures
     const digits = Math.floor(Math.log10(Math.abs(scaled))) + 1;
     const decimals = Math.max(0, 4 - digits);
     return `${scaled.toFixed(decimals)}${pick.s}`;
@@ -631,8 +677,6 @@
     return `<img class="noteImg" src="${src}" alt="${alt}" draggable="false">`;
   }
 
-  // Baton upgrades: NOTE VISUAL changes + ADDITIVE base click increases.
-  // IMPORTANT: Base click math is now strictly: 1 + sum(baton bonuses).
   const BATON_UPGRADES = [
     { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Base click +1.",   costNotes: 75,      requireStage: 0, setStage: 1, extraBase: 1 },
     { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Base click +2.",     costNotes: 450,     requireStage: 1, setStage: 2, extraBase: 2 },
@@ -642,7 +686,6 @@
     { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Base click +32.",  costNotes: 850000,  requireStage: 5, setStage: 6, extraBase: 32 },
   ];
 
-  // STRICT additive base: starts at 1.
   function batonBaseClick(){
     return 1 + (S.batonBaseExtra || 0);
   }
@@ -663,9 +706,7 @@
       S.noteStageIdx = u.setStage;
     }
 
-    // Additive bonus only
     S.batonBaseExtra = (S.batonBaseExtra || 0) + (u.extraBase || 0);
-
     toast(`Baton: ${u.name}`);
   }
 
@@ -860,20 +901,15 @@
   const INK_UPGRADES = buildInkUpgrades();
 
   // ---------- Facilities (Prestige Spending) ----------
-  // Requirements implemented here:
-  // - Each new venue cost increased by 10x
-  // - Each venue has 9 upgrades (8–10 unique upgrades)
-  // - Each upgrade cost is ~5–15% of the *next venue* unlock cost
-  // - Upgrade bonuses scale proportionately with cost
   const FACILITY_BASE = [
     { id:"shed",    name:"Mildewy Shed",  desc:"A cramped shed behind the school. The stands wobble if you breathe too hard.",            patronCostToUnlock: 0,    globalMult:{ nps:1.00, click:1.00 } },
-    { id:"garage",  name:"One-Car Garage",desc:"Still echoey… but weatherproof, and you can fit a full section inside.",                  patronCostToUnlock: 100,  globalMult:{ nps:1.40, click:1.15 } },  // 10x
-    { id:"bandroom",name:"Band Room",     desc:"Lockers. Posters. A metronome that survived three directors. It feels like home.",         patronCostToUnlock: 250,  globalMult:{ nps:1.85, click:1.25 } },  // 10x
-    { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 600,  globalMult:{ nps:2.40, click:1.35 } },  // 10x
-    { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },  // 10x
-    { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },  // 10x
-    { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },  // 10x
-    { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },  // 10x
+    { id:"garage",  name:"One-Car Garage",desc:"Still echoey… but weatherproof, and you can fit a full section inside.",                  patronCostToUnlock: 100,  globalMult:{ nps:1.40, click:1.15 } },
+    { id:"bandroom",name:"Band Room",     desc:"Lockers. Posters. A metronome that survived three directors. It feels like home.",         patronCostToUnlock: 250,  globalMult:{ nps:1.85, click:1.25 } },
+    { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 600,  globalMult:{ nps:2.40, click:1.35 } },
+    { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },
+    { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },
+    { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },
+    { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",                    patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },
   ];
 
   const FACILITY_UPGRADE_TEMPLATES = [
@@ -896,8 +932,6 @@
         const t = FACILITY_UPGRADE_TEMPLATES[i];
         const pct = percents[i];
         const cost = Math.max(1, Math.round(nextCost * pct));
-        // Scale bonuses with cost (proportionate)
-        // nps: stronger scaling than click, but both grow with cost.
         const npsMult = 1 + pct * 2.2;
         const clickMult = 1 + pct * 1.6;
 
@@ -914,13 +948,7 @@
           desc = `+${Math.round((mult.nps-1)*100)}% Notes/sec & +${Math.round((mult.click-1)*100)}% Click`;
         }
 
-        ups.push({
-          id:`${facId}_${t.key}`,
-          name:t.name,
-          cost,
-          desc,
-          mult
-        });
+        ups.push({ id:`${facId}_${t.key}`, name:t.name, cost, desc, mult });
       }
       return ups;
     };
@@ -930,10 +958,7 @@
       const f = FACILITY_BASE[i];
       const next = FACILITY_BASE[i+1];
       const nextCost = next ? next.patronCostToUnlock : Math.max(1000, Math.round(f.patronCostToUnlock * 1.5));
-      facilities.push({
-        ...f,
-        upgrades: upgradesFor(f.id, nextCost)
-      });
+      facilities.push({ ...f, upgrades: upgradesFor(f.id, nextCost) });
     }
     return facilities;
   }
@@ -990,7 +1015,6 @@
   }
 
   // ---------- Prestige ----------
-  // patronsFromLifetime = floor(sqrt(lifetimeNotes / 500000))
   const patronBonus = (patrons) => (1 + patrons * 0.05);
   function patronsFromLifetime(lifetimeNotes){
     return Math.floor(Math.sqrt(lifetimeNotes / 500000));
@@ -1027,7 +1051,6 @@
     S.patronsEver = (S.patronsEver || 0) + gain;
     S.patrons = (S.patrons || 0) + gain;
 
-    // reset run
     S.notes = 0;
     S.owned = Object.fromEntries(BUILDINGS.map(b=>[b.id,0]));
     S.buildingMult = Object.fromEntries(BUILDINGS.map(b=>[b.id,1]));
@@ -1037,7 +1060,6 @@
     S.runClickMult = 1;
     S.runNpsMult = 1;
 
-    // RESET BATON TECHNIQUES ON TAKE-A-BOW (as requested)
     S.noteStageIdx = 0;
     S.batonUpgrades = {};
     S.batonBaseExtra = 0;
@@ -1050,46 +1072,37 @@
   const stateDefault = () => ({
     version: 8,
 
-    // run
     notes: 0,
     lifetimeNotes: 0,
 
-    // permanent
     ink: 0,
 
-    // prestige currency (available/spendable) + total earned
     patrons: 0,
     patronsEver: 0,
 
-    // buildings (reset on take-a-bow)
     owned: Object.fromEntries(BUILDINGS.map(b=>[b.id,0])),
     buildingMult: Object.fromEntries(BUILDINGS.map(b=>[b.id,1])),
     noteUpgrades: {},
     synergyUpgrades: {},
 
-    // run multipliers (reset on take-a-bow)
     runClickMult: 1,
     runNpsMult: 1,
 
-    // meta (permanent)
     inkUpgrades: {},
     metaNpsMult: 1,
     metaClickMult: 1,
     clickFromNpsRate: 0,
 
-    // Baton / click note (RESET on take-a-bow)
     noteStageIdx: 0,
     batonUpgrades: {},
     batonBaseExtra: 0,
 
-    // Facilities (persistent)
     facility: {
       currentId: "shed",
       unlocked: { shed: true },
       purchasedUpgrades: {}
     },
 
-    // UI / Settings
     buyMode: "1",
     ui: {
       tab: "main",
@@ -1101,16 +1114,9 @@
       facilityNextOpen: false,
       batonOpen: false
     },
-    settings: {
-      abbrevLarge: true
-    },
+    settings: { abbrevLarge: true },
 
-    // Stats
-    stats: {
-      clicks: 0,
-      buildingsBought: 0,
-      inkEarned: 0
-    },
+    stats: { clicks: 0, buildingsBought: 0, inkEarned: 0 },
 
     lastTick: now(),
     lastSave: now(),
@@ -1171,11 +1177,9 @@
       if (!s.facility.unlocked) s.facility.unlocked = { shed: true };
       if (!s.facility.purchasedUpgrades) s.facility.purchasedUpgrades = {};
 
-      // Prestige migration:
       if (s.patronsEver === undefined) s.patronsEver = s.patrons || 0;
       if (s.patrons === undefined) s.patrons = s.patronsEver;
 
-      // Baton migration (still exists, but resets on take-a-bow)
       if (s.noteStageIdx === undefined) s.noteStageIdx = 0;
       if (!s.batonUpgrades) s.batonUpgrades = {};
       if (s.batonBaseExtra === undefined) s.batonBaseExtra = 0;
@@ -1240,8 +1244,6 @@
   }
 
   function globalNpsMultiplier(){
-    // IMPORTANT: global production multipliers stack MULTIPLICATIVELY:
-    // runNpsMult * metaNpsMult * patronBonus * facilityMult.nps
     return (S.runNpsMult * S.metaNpsMult * patronBonus(S.patrons) * facilityNpsMultOnly());
   }
 
@@ -1277,7 +1279,7 @@
     const nps = totalNps();
     const fromNps = S.clickFromNpsRate > 0 ? (S.clickFromNpsRate * nps) : 0;
     const fac = facilityMults(S);
-    const base = batonBaseClick(); // STRICT additive base
+    const base = batonBaseClick();
     return (((base * S.runClickMult) + fromNps) * S.metaClickMult * patronBonus(S.patrons)) * fac.click;
   }
 
@@ -1424,7 +1426,6 @@
     const rem = notesUntilNextPatron(S);
     $("#nextPatronInfo").textContent = `Next Patron in: ${fmtExact(rem, useSuffix)} Notes`;
 
-    // Set real note icon + baton stage tag
     const st = currentStage();
     $("#noteBtn").innerHTML = noteMarkup(st);
     $("#batonTag").textContent = st.label;
@@ -1530,7 +1531,6 @@
         <div class="detailsBody">
           <div class="table" id="instList-${fam.id}"></div>
 
-          <!-- Synergies BELOW instruments -->
           <details class="dropdown" data-synfam="${fam.id}" ${(S.ui.synergyOpen[fam.id] ? "open" : "")}>
             <summary>
               <span>Section Synergies (Notes)</span>
@@ -1577,7 +1577,7 @@
       const cost = sumCostForK(b, k);
       const afford = (k > 0) && (S.notes >= cost);
 
-      const perEachBase = b.nps * (S.buildingMult[b.id]||1); // before globals
+      const perEachBase = b.nps * (S.buildingMult[b.id]||1);
       const instNps = effectiveInstrumentNps(b);
       const instPct = total > 0 ? (instNps / total) : 0;
 
@@ -1985,12 +1985,43 @@
     }
   }
 
-  // ---------- Wire Buttons ----------
-  $("#noteBtn").addEventListener("click", ()=>{
+  // ---------- Fast Tap Fix (iPhone) ----------
+  // Use pointerdown for instant response, and suppress the follow-up click.
+  const noteBtn = $("#noteBtn");
+  let suppressClickUntil = 0;
+
+  function handleNoteAction(){
     clickNote();
     renderHUD();
+  }
+
+  noteBtn.addEventListener("pointerdown", (e) => {
+    // Primary button only
+    if (e.button !== undefined && e.button !== 0) return;
+
+    // On touch, prevent default to stop gesture interpretation / delayed click.
+    if (e.pointerType === "touch") {
+      e.preventDefault();
+      suppressClickUntil = now() + 600;
+    }
+    handleNoteAction();
+  }, { passive: false });
+
+  // Fallback click for mouse/keyboard or odd browsers; suppressed right after touch pointerdown.
+  noteBtn.addEventListener("click", () => {
+    if (now() < suppressClickUntil) return;
+    handleNoteAction();
   });
 
+  // Keyboard accessibility
+  noteBtn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleNoteAction();
+    }
+  });
+
+  // ---------- Wire Buttons ----------
   $("#prestigeBtn").addEventListener("click", ()=>{
     doPrestige();
     renderAll();
@@ -2031,7 +2062,7 @@
   setInterval(tick, 100);
 
   if (S.lifetimeNotes === 0 && S.notes === 0){
-    toast("Click the note to start conducting!");
+    toast("Tap the note to start conducting!");
   }
 })();
 </script>
