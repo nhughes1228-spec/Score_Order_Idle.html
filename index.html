@@ -371,20 +371,17 @@
       box-shadow: 0 0 0 7px rgba(44,110,122,.22), 0 18px 60px rgba(0,0,0,.35);
       border-radius: 18px;
     }
-    /* noteBtn is round; keep it round when highlighted */
     .tutorial-highlight.noteBtn{
       border-radius:999px;
     }
 
-    /* Start screen panel in center */
-    .startPanel{
-      position:absolute;
-      inset:0;
+    /* ---- Start Screen (REAL SCREEN, not overlay) ---- */
+    .startWrap{
       display:flex;
       align-items:center;
       justify-content:center;
       padding:18px;
-      z-index:1001;
+      min-height: calc(100vh - 110px);
     }
     .startCard{
       width:min(720px, calc(100% - 24px));
@@ -432,6 +429,7 @@
 
   <div class="hud">
     <div class="tabs" aria-label="Pages">
+      <!-- Start tab has no button; it's only shown automatically -->
       <button class="active" data-tab="main">Main</button>
       <button data-tab="stats">Stats</button>
       <button data-tab="prestige" id="prestigeTabBtn" hidden>Prestige</button>
@@ -447,6 +445,31 @@
 </header>
 
 <main>
+  <!-- START SCREEN (real screen) -->
+  <div class="tab" id="tab-start" hidden>
+    <section class="card">
+      <h2><span>Welcome</span><span class="tag">First Play</span></h2>
+      <div class="content">
+        <div class="startWrap">
+          <div class="startCard">
+            <h2 class="startTitle">Score Order Idle</h2>
+            <p class="startSub">
+              Conduct with your baton. Build an orchestra. Earn Ink (permanent).<br/>
+              When you’re ready, <b>Take a bow</b> to court Patrons and begin again—stronger.
+            </p>
+            <div class="centerButtons">
+              <button class="primary startBtn" id="startBtn">▶ Start</button>
+              <button id="startSkipBtn">Skip tutorial</button>
+            </div>
+            <div class="muted" style="margin-top:12px; font-size:12px;">
+              This screen shows on your first playthrough (or after Hard Reset).
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="tab" id="tab-main">
     <div class="grid">
 
@@ -469,7 +492,6 @@
 
             <div class="muted" style="text-align:center; max-width:560px;">
               <span class="inkSig">In ink, we trust.</span>
-              <!-- instruction line removed; tutorial handles onboarding -->
             </div>
           </div>
 
@@ -648,27 +670,6 @@
 </main>
 
 <div class="toast" id="toast"></div>
-
-<!-- Start screen -->
-<div class="overlay" id="startOverlay" aria-hidden="true">
-  <div class="veil"></div>
-  <div class="startPanel">
-    <div class="startCard">
-      <h2 class="startTitle">Score Order Idle</h2>
-      <p class="startSub">
-        Conduct with your baton. Build an orchestra. Earn Ink (permanent).<br/>
-        When you’re ready, <b>Take a bow</b> to court Patrons and begin again—stronger.
-      </p>
-      <div class="centerButtons">
-        <button class="primary startBtn" id="startBtn">▶ Start</button>
-        <button id="startSkipBtn">Skip tutorial</button>
-      </div>
-      <div class="muted" style="margin-top:12px; font-size:12px;">
-        Tip: This start screen only shows on your first playthrough (or after Hard Reset).
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Tutorial coach-marks -->
 <div class="overlay" id="tutorialOverlay" aria-hidden="true">
@@ -1134,7 +1135,6 @@
   // ---------- Prestige (Patrons reset ladder each run) ----------
   const patronBonus = (patrons) => (1 + patrons * 0.05);
 
-  // same shape as before, but based on notes earned THIS RUN
   function patronsFromRun(runNotes){
     return Math.floor(Math.sqrt((runNotes || 0) / 500000));
   }
@@ -1150,7 +1150,7 @@
 
   function prestigePreview(){
     const wouldEarnThisRun = patronsFromRun(S.runNotes || 0);
-    const gain = Math.max(0, wouldEarnThisRun); // bow resets run, so you haven’t claimed any this run yet
+    const gain = Math.max(0, wouldEarnThisRun);
     return { wouldEarnThisRun, gain };
   }
 
@@ -1172,7 +1172,6 @@
     S.patronsEver = (S.patronsEver || 0) + gain;
     S.patrons = (S.patrons || 0) + gain;
 
-    // reset run
     S.notes = 0;
     S.runNotes = 0;
 
@@ -1188,7 +1187,6 @@
     S.batonUpgrades = {};
     S.batonBaseExtra = 0;
 
-    // after first prestige, reveal Prestige tab
     if (!S.ui) S.ui = {};
     S.ui.hasPrestiged = true;
 
@@ -1200,12 +1198,12 @@
   }
 
   // ---------- State ----------
-  const KEY = "score_order_idle_v9";
+  const KEY = "score_order_idle_v10";
   const stateDefault = () => ({
-    version: 9,
+    version: 10,
     notes: 0,
     lifetimeNotes: 0,
-    runNotes: 0,                 // NEW: notes earned this run (used for patrons)
+    runNotes: 0,
     ink: 0,
     patrons: 0,
     patronsEver: 0,
@@ -1236,12 +1234,12 @@
       facilityUpOpen: false,
       facilityNextOpen: false,
       batonOpen: false,
-      hasStarted: false,          // NEW: start screen gate
-      tutorialCompleted: false,   // NEW
-      tutorialStep: 0,            // NEW
-      prestigeExplained: false,   // NEW
-      blocked: false,             // NEW: modal pause
-      hasPrestiged: false         // NEW: show prestige hall
+      hasStarted: false,
+      tutorialCompleted: false,
+      tutorialStep: 0,
+      prestigeExplained: false,
+      blocked: false,
+      hasPrestiged: false
     },
     settings: {
       abbrevLarge: true
@@ -1259,6 +1257,7 @@
     try{
       const raw =
         localStorage.getItem(KEY) ||
+        localStorage.getItem("score_order_idle_v9") ||
         localStorage.getItem("score_order_idle_v8") ||
         localStorage.getItem("score_order_idle_v7") ||
         localStorage.getItem("score_order_idle_v6") ||
@@ -1298,7 +1297,6 @@
       if (!s.ui.synergyOpen) s.ui.synergyOpen = {};
       if (!s.ui.tab) s.ui.tab = "main";
 
-      // NEW UI flags defaults
       if (s.ui.hasStarted === undefined) s.ui.hasStarted = false;
       if (s.ui.tutorialCompleted === undefined) s.ui.tutorialCompleted = false;
       if (s.ui.tutorialStep === undefined) s.ui.tutorialStep = 0;
@@ -1326,12 +1324,7 @@
       if (!s.batonUpgrades) s.batonUpgrades = {};
       if (s.batonBaseExtra === undefined) s.batonBaseExtra = 0;
 
-      // NEW: runNotes
-      if (s.runNotes === undefined){
-        // best effort: if this is an existing save, start runNotes at 0
-        // so patrons ladder restarts cleanly next time
-        s.runNotes = 0;
-      }
+      if (s.runNotes === undefined) s.runNotes = 0;
 
       localStorage.setItem(KEY, JSON.stringify(s));
       return s;
@@ -1350,12 +1343,13 @@
   }
 
   // ---------- Tutorial / Overlays ----------
-  const startOverlay = $("#startOverlay");
   const tutOverlay = $("#tutorialOverlay");
   const prestigeExplainOverlay = $("#prestigeExplainOverlay");
 
   function isBlocked(){
-    return !!S.ui.blocked || !S.ui.hasStarted || (tutOverlay.classList.contains("show")) || (startOverlay.classList.contains("show")) || (prestigeExplainOverlay.classList.contains("show"));
+    // IMPORTANT: while on start screen, game is blocked
+    if (!S.ui.hasStarted) return true;
+    return !!S.ui.blocked || tutOverlay.classList.contains("show") || prestigeExplainOverlay.classList.contains("show");
   }
 
   function clearHighlight(){
@@ -1398,16 +1392,9 @@
     }
   ];
 
-  function showStartScreen(){
-    startOverlay.classList.add("show");
-    startOverlay.setAttribute("aria-hidden","false");
-  }
-  function hideStartScreen(){
-    startOverlay.classList.remove("show");
-    startOverlay.setAttribute("aria-hidden","true");
-  }
-
   function showTutorial(){
+    // FORCE tutorial to run on Main screen
+    setTab("main");
     tutOverlay.classList.add("show");
     tutOverlay.setAttribute("aria-hidden","false");
     advanceTutorial(0, true);
@@ -1435,14 +1422,14 @@
     const step = TUTORIAL_STEPS[S.ui.tutorialStep];
     if (!step) return;
 
-    // ensure UI is rendered so targets exist
+    // Ensure main is visible for targets
+    setTab("main");
     renderAll();
     step.ensure();
 
     $("#tutTitle").textContent = step.title;
     $("#tutMsg").textContent = step.msg;
 
-    // delay a tick so DOM is open/updated
     requestAnimationFrame(() => {
       step.ensure();
       highlight(step.target);
@@ -1466,7 +1453,8 @@
 
   $("#startBtn").addEventListener("click", ()=>{
     S.ui.hasStarted = true;
-    hideStartScreen();
+    // Always go to main after start
+    setTab("main");
     // start tutorial unless already completed
     if (!S.ui.tutorialCompleted){
       showTutorial();
@@ -1479,7 +1467,8 @@
     S.ui.hasStarted = true;
     S.ui.tutorialCompleted = true;
     S.ui.tutorialStep = 0;
-    hideStartScreen();
+    // Always go to main after skip
+    setTab("main");
     hideTutorial();
     save(false);
     renderAll();
@@ -1503,7 +1492,7 @@
   $("#prestigeExplainGoHallBtn").addEventListener("click", ()=>{
     S.ui.prestigeExplained = true;
     hidePrestigeExplain();
-    S.ui.hasPrestiged = true; // reveal tab even if they haven't bowed yet (per your tutorial flow)
+    S.ui.hasPrestiged = true;
     setPrestigeTabVisibility();
     setTab("prestige");
     renderAll();
@@ -1699,7 +1688,7 @@
     if (isBlocked()) return;
 
     const t = now();
-    if (t - lastManualClickAt < 35) return; // ignore ultra-fast duplicates
+    if (t - lastManualClickAt < 35) return;
     lastManualClickAt = t;
 
     const gain = notesPerClick();
@@ -1764,7 +1753,7 @@
 
   function startStatsLive(){
     stopStatsLive();
-    renderStats(); // refresh immediately on open
+    renderStats();
     statsLiveTimer = setInterval(() => {
       if (S.ui.tab !== "stats") return;
       renderStats();
@@ -1781,21 +1770,27 @@
 
   function setTab(tab){
     S.ui.tab = tab;
+
+    $("#tab-start").hidden = tab !== "start";
     $("#tab-main").hidden = tab !== "main";
     $("#tab-stats").hidden = tab !== "stats";
     $("#tab-prestige").hidden = tab !== "prestige";
     $("#tab-settings").hidden = tab !== "settings";
 
+    // Only highlight actual nav buttons (no start button)
     $$("button[data-tab]").forEach(b => b.classList.toggle("active", b.getAttribute("data-tab") === tab));
 
-    // stats live update behavior
     if (tab === "stats") startStatsLive();
     else stopStatsLive();
 
     save(false);
   }
   $$("button[data-tab]").forEach(btn=>{
-    btn.addEventListener("click", ()=> setTab(btn.getAttribute("data-tab")));
+    btn.addEventListener("click", ()=> {
+      // if not started, prevent navigating away from start
+      if (!S.ui.hasStarted) return;
+      setTab(btn.getAttribute("data-tab"));
+    });
   });
 
   // ---------- UI Helpers ----------
@@ -2373,10 +2368,9 @@
   function tick(){
     const t = now();
 
-    // If blocked by tutorial/modal/start screen, keep clocks fresh but pause game gain
     if (isBlocked()){
       S.lastTick = t;
-      renderHUD();
+      if (S.ui.tab !== "start") renderHUD();
       return;
     }
 
@@ -2391,7 +2385,6 @@
       S.runNotes += gained;
     }
 
-    // First-run prestige explanation (when they hit 500,000 run notes)
     if (!S.ui.prestigeExplained && (S.patronsEver || 0) === 0 && (S.runNotes || 0) >= 500000){
       showPrestigeExplain();
       renderHUD();
@@ -2424,12 +2417,14 @@
 
   $("#saveBtn").addEventListener("click", ()=> save(true));
 
-  // ✅ Hard Reset: clone note button (kills duplicate handlers) + reset click debounce timer
+  // ✅ Hard Reset: always land on START SCREEN
   $("#resetBtn").addEventListener("click", ()=>{
     const ok = confirm("Hard reset will erase your save completely (including Ink, Patrons, Facilities). Are you sure?");
     if (!ok) return;
 
+    // remove any prior keys
     localStorage.removeItem(KEY);
+    localStorage.removeItem("score_order_idle_v10");
     localStorage.removeItem("score_order_idle_v9");
     localStorage.removeItem("score_order_idle_v8");
     localStorage.removeItem("score_order_idle_v7");
@@ -2453,8 +2448,10 @@
     stopStatsLive();
     toast("Reset complete.");
 
-    // show start screen again after reset
-    showStartScreen();
+    // force START screen
+    S.ui.tab = "start";
+    setTab("start");
+    save(false);
     renderAll();
   });
 
@@ -2472,17 +2469,18 @@
   applyOffline();
   setBuyMode(S.buyMode);
   setPrestigeTabVisibility();
-  setTab(S.ui.tab || "main");
+
+  // If not started, ALWAYS show start screen (real screen)
+  if (!S.ui.hasStarted){
+    setTab("start");
+  } else {
+    // otherwise restore last tab (but never "start")
+    const last = (S.ui.tab && S.ui.tab !== "start") ? S.ui.tab : "main";
+    setTab(last);
+  }
+
   renderAll();
   setInterval(tick, 100);
-
-  // Start screen / tutorial trigger
-  if (!S.ui.hasStarted){
-    showStartScreen();
-  } else if (!S.ui.tutorialCompleted && !tutOverlay.classList.contains("show")){
-    // If they started before but never finished tutorial, let them keep playing;
-    // tutorial can be re-triggered later if desired. (No forced pop-up here.)
-  }
 
   // Small toast only if already started
   if (S.ui.hasStarted && S.lifetimeNotes === 0 && S.notes === 0){
