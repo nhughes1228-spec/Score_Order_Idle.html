@@ -304,6 +304,123 @@
     .repaint-kick *{
       transform: translateZ(0);
     }
+
+    /* ---- Purchased / disabled look for one-time upgrades ---- */
+    .mini.purchased{
+      opacity:.78;
+      filter: saturate(.88);
+      background: rgba(255,255,255,.50);
+      border-color: rgba(35,29,24,.28);
+      box-shadow: inset 0 2px 10px rgba(0,0,0,.18);
+    }
+    .mini.purchased .right button{ display:none; }
+    .mini.purchased .cost{ display:none; }
+    .mini.purchased .afterPurchase{ display:none; }
+
+    /* ---- Tutorial overlays ---- */
+    .overlay{
+      position:fixed; inset:0;
+      z-index:1000;
+      display:none;
+    }
+    .overlay.show{display:block}
+    .overlay .veil{
+      position:absolute; inset:0;
+      background: rgba(20,16,12,.62);
+      backdrop-filter: blur(2px);
+    }
+    .overlay .panel{
+      position:absolute;
+      left:50%;
+      transform: translateX(-50%);
+      bottom:18px;
+      width:min(720px, calc(100% - 24px));
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(35,29,24,.25);
+      border-radius: 18px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.30);
+      padding:14px 14px 12px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink2);
+    }
+    .overlay .panel h3{
+      margin:0 0 6px 0;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .overlay .panel .msg{
+      font-size:13px;
+      color: rgba(43,36,30,.90);
+      line-height:1.35;
+    }
+    .overlay .panel .actions{
+      margin-top:10px;
+      display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;
+    }
+    .overlay .panel .actions button{
+      padding:8px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .tutorial-highlight{
+      position:relative;
+      z-index:1002 !important;
+      outline: 3px solid rgba(44,110,122,.70);
+      box-shadow: 0 0 0 7px rgba(44,110,122,.22), 0 18px 60px rgba(0,0,0,.35);
+      border-radius: 18px;
+    }
+    /* noteBtn is round; keep it round when highlighted */
+    .tutorial-highlight.noteBtn{
+      border-radius:999px;
+    }
+
+    /* Start screen panel in center */
+    .startPanel{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:1001;
+    }
+    .startCard{
+      width:min(720px, calc(100% - 24px));
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(35,29,24,.25);
+      border-radius: 22px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.35);
+      padding:18px 18px 16px;
+      text-align:center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .startTitle{
+      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
+      font-size:26px;
+      letter-spacing:.4px;
+      margin:0 0 6px 0;
+      color: rgba(43,36,30,.95);
+    }
+    .startSub{
+      margin:0 0 14px 0;
+      color: rgba(90,79,69,.95);
+      font-size:13px;
+      line-height:1.35;
+    }
+    .startBtn{
+      font-size:14px !important;
+      padding:12px 16px !important;
+      border-radius: 999px !important;
+    }
+    .centerButtons{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
   </style>
 </head>
 <body>
@@ -317,6 +434,7 @@
     <div class="tabs" aria-label="Pages">
       <button class="active" data-tab="main">Main</button>
       <button data-tab="stats">Stats</button>
+      <button data-tab="prestige" id="prestigeTabBtn" hidden>Prestige</button>
       <button data-tab="settings">Settings</button>
     </div>
 
@@ -351,9 +469,7 @@
 
             <div class="muted" style="text-align:center; max-width:560px;">
               <span class="inkSig">In ink, we trust.</span>
-              <div class="smallSans" style="margin-top:6px;">
-                Buy any instrument → gain <b>+1 Ink</b> permanently. Notes buy instruments & upgrades.
-              </div>
+              <!-- instruction line removed; tutorial handles onboarding -->
             </div>
           </div>
 
@@ -374,61 +490,14 @@
           <div class="row">
             <div>
               <b>Take a bow: Court Patrons</b>
-              <div class="muted smallSans">Lifetime Notes determine Patron gains. Ink persists.</div>
+              <div class="muted smallSans">Patron gains are based on <b>Notes earned this run</b>. Ink persists.</div>
+              <div class="muted smallSans mono" id="runNotesLine">Run Notes: 0</div>
               <div class="muted smallSans mono" id="lifetimeNotesLine">Lifetime Notes: 0</div>
               <div class="muted smallSans mono" id="patronLine">You have: 0 Patron(s) • Take-a-bow Gain: +0</div>
               <div class="muted smallSans mono" id="nextPatronInfo">Next Patron in: — Notes</div>
             </div>
             <button class="primary" id="prestigeBtn">🙇 Take a bow</button>
           </div>
-
-          <details class="dropdown" id="facilityDropdown">
-            <summary>
-              <span>Performance Facility (Patrons)</span>
-              <span class="tag" id="facilityTag">—</span>
-            </summary>
-            <div class="detailsBody">
-              <div class="muted smallSans" style="margin-bottom:8px;">
-                Spend Patrons to upgrade your facility. Patrons spent are gone, but facilities grant big global bonuses.
-              </div>
-
-              <div class="mini" style="margin-bottom:10px;">
-                <div class="name">
-                  <div class="top">
-                    <b id="facilityName">—</b>
-                    <span class="tag warn" id="facilityBonus">—</span>
-                  </div>
-                  <div class="muted smallSans" id="facilityDesc">—</div>
-                </div>
-                <div class="right">
-                  <div class="cost mono" id="facilityPatrons">Patrons: —</div>
-                  <div class="cost mono" id="facilityEarned">Earned: —</div>
-                </div>
-              </div>
-
-              <details class="dropdown" id="facilityUpgradesDetails">
-                <summary>
-                  <span>Facility Upgrades</span>
-                  <span class="tag" id="facilityUpgradesTag">—</span>
-                </summary>
-                <div class="detailsBody">
-                  <div class="table" id="facilityUpgradesList"></div>
-                </div>
-              </details>
-
-              <div style="height:10px"></div>
-
-              <details class="dropdown" id="facilityNextDetails">
-                <summary>
-                  <span>Move to a New Venue</span>
-                  <span class="tag" id="facilityNextTag">—</span>
-                </summary>
-                <div class="detailsBody">
-                  <div class="table" id="facilityNextList"></div>
-                </div>
-              </details>
-            </div>
-          </details>
 
           <div class="footer">
             <span class="mono" id="clock">—</span>
@@ -490,6 +559,58 @@
     </section>
   </div>
 
+  <div class="tab" id="tab-prestige" hidden>
+    <section class="card">
+      <h2><span>Performance Facility (Patrons)</span><span class="tag warn">Prestige Hall</span></h2>
+      <div class="content">
+        <div class="muted smallSans" style="margin-bottom:10px;">
+          Spend Patrons to upgrade your facility. Patrons spent are gone, but facilities grant big global bonuses.
+        </div>
+
+        <div class="mini" style="margin-bottom:10px;">
+          <div class="name">
+            <div class="top">
+              <b id="facilityName">—</b>
+              <span class="tag warn" id="facilityBonus">—</span>
+            </div>
+            <div class="muted smallSans" id="facilityDesc">—</div>
+          </div>
+          <div class="right">
+            <div class="cost mono" id="facilityPatrons">Patrons: —</div>
+            <div class="cost mono" id="facilityEarned">Earned: —</div>
+          </div>
+        </div>
+
+        <details class="dropdown" id="facilityUpgradesDetails">
+          <summary>
+            <span>Facility Upgrades</span>
+            <span class="tag" id="facilityUpgradesTag">—</span>
+          </summary>
+          <div class="detailsBody">
+            <div class="table" id="facilityUpgradesList"></div>
+          </div>
+        </details>
+
+        <div style="height:10px"></div>
+
+        <details class="dropdown" id="facilityNextDetails">
+          <summary>
+            <span>Move to a New Venue</span>
+            <span class="tag" id="facilityNextTag">—</span>
+          </summary>
+          <div class="detailsBody">
+            <div class="table" id="facilityNextList"></div>
+          </div>
+        </details>
+
+        <div class="footer">
+          <span class="muted">This hall appears after your first “Take a bow.”</span>
+          <span class="mono" id="prestigeClock">—</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="tab" id="tab-settings" hidden>
     <section class="card">
       <h2><span>Settings</span><span class="tag warn">Be careful</span></h2>
@@ -527,6 +648,58 @@
 </main>
 
 <div class="toast" id="toast"></div>
+
+<!-- Start screen -->
+<div class="overlay" id="startOverlay" aria-hidden="true">
+  <div class="veil"></div>
+  <div class="startPanel">
+    <div class="startCard">
+      <h2 class="startTitle">Score Order Idle</h2>
+      <p class="startSub">
+        Conduct with your baton. Build an orchestra. Earn Ink (permanent).<br/>
+        When you’re ready, <b>Take a bow</b> to court Patrons and begin again—stronger.
+      </p>
+      <div class="centerButtons">
+        <button class="primary startBtn" id="startBtn">▶ Start</button>
+        <button id="startSkipBtn">Skip tutorial</button>
+      </div>
+      <div class="muted" style="margin-top:12px; font-size:12px;">
+        Tip: This start screen only shows on your first playthrough (or after Hard Reset).
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tutorial coach-marks -->
+<div class="overlay" id="tutorialOverlay" aria-hidden="true">
+  <div class="veil"></div>
+  <div class="panel">
+    <h3 id="tutTitle">—</h3>
+    <div class="msg" id="tutMsg">—</div>
+    <div class="actions">
+      <button id="tutSkipBtn">Skip</button>
+      <button class="primary" id="tutNextBtn">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prestige explanation modal (first-run @ 500,000 run notes) -->
+<div class="overlay" id="prestigeExplainOverlay" aria-hidden="true">
+  <div class="veil"></div>
+  <div class="panel">
+    <h3>Prestige: “Take a bow”</h3>
+    <div class="msg" style="margin-top:6px;">
+      When you <b>Take a bow</b>, you reset your run (Notes, instruments, note-upgrades, synergies, baton techniques)…<br/>
+      but you keep <b>Ink</b> and your <b>Archive Upgrades</b> permanently.<br/><br/>
+      Your <b>Patron</b> gains are based on <b>Notes earned this run</b>. After you bow, you start earning Patrons from the beginning again (500,000 → …), while keeping all Patrons you’ve already earned overall.<br/><br/>
+      Patrons unlock your <b>Performance Facility</b>—big global bonuses that grow over time.
+    </div>
+    <div class="actions">
+      <button id="prestigeExplainGoHallBtn">Open Prestige Hall</button>
+      <button class="primary" id="prestigeExplainOkBtn">Got it</button>
+    </div>
+  </div>
+</div>
 
 <script>
   // iOS Safari: prevent double-tap zoom on the main click target
@@ -643,27 +816,6 @@
 
   function batonBaseClick(){
     return 1 + (S.batonBaseExtra || 0);
-  }
-
-  function buyBatonUpgrade(id){
-    const u = BATON_UPGRADES.find(x=>x.id===id);
-    if (!u) return;
-    if (S.batonUpgrades[id]) return;
-
-    const stageIdx = S.noteStageIdx || 0;
-    if (stageIdx < u.requireStage) return;
-    if (S.notes < u.costNotes) return;
-
-    S.notes -= u.costNotes;
-    S.batonUpgrades[id] = true;
-
-    if (u.setStage !== undefined && u.setStage > stageIdx){
-      S.noteStageIdx = u.setStage;
-    }
-
-    S.batonBaseExtra = (S.batonBaseExtra || 0) + (u.extraBase || 0);
-
-    toast(`Baton: ${u.name}`);
   }
 
   // ---------- Buildings ----------
@@ -979,28 +1131,32 @@
     renderAll();
   }
 
-  // ---------- Prestige ----------
+  // ---------- Prestige (Patrons reset ladder each run) ----------
   const patronBonus = (patrons) => (1 + patrons * 0.05);
-  function patronsFromLifetime(lifetimeNotes){
-    return Math.floor(Math.sqrt(lifetimeNotes / 500000));
+
+  // same shape as before, but based on notes earned THIS RUN
+  function patronsFromRun(runNotes){
+    return Math.floor(Math.sqrt((runNotes || 0) / 500000));
   }
-  function lifetimeForPatrons(p){
+  function runNotesForPatrons(p){
     return (p * p) * 500000;
   }
-  function notesUntilNextPatron(s){
-    const possibleNow = patronsFromLifetime(s.lifetimeNotes || 0);
+  function runNotesUntilNextPatron(s){
+    const possibleNow = patronsFromRun(s.runNotes || 0);
     const nextP = possibleNow + 1;
-    const needLife = lifetimeForPatrons(nextP);
-    return Math.max(0, needLife - (s.lifetimeNotes || 0));
+    const need = runNotesForPatrons(nextP);
+    return Math.max(0, need - (s.runNotes || 0));
   }
 
   function prestigePreview(){
-    const totalWouldHaveEver = patronsFromLifetime(S.lifetimeNotes);
-    const gain = Math.max(0, totalWouldHaveEver - (S.patronsEver || 0));
-    return { totalWouldHaveEver, gain };
+    const wouldEarnThisRun = patronsFromRun(S.runNotes || 0);
+    const gain = Math.max(0, wouldEarnThisRun); // bow resets run, so you haven’t claimed any this run yet
+    return { wouldEarnThisRun, gain };
   }
 
   function doPrestige(){
+    if (isBlocked()) return;
+
     const { gain } = prestigePreview();
     if (gain <= 0){
       toast("No new Patrons yet. Keep composing.");
@@ -1016,7 +1172,10 @@
     S.patronsEver = (S.patronsEver || 0) + gain;
     S.patrons = (S.patrons || 0) + gain;
 
+    // reset run
     S.notes = 0;
+    S.runNotes = 0;
+
     S.owned = Object.fromEntries(BUILDINGS.map(b=>[b.id,0]));
     S.buildingMult = Object.fromEntries(BUILDINGS.map(b=>[b.id,1]));
     S.noteUpgrades = {};
@@ -1029,15 +1188,24 @@
     S.batonUpgrades = {};
     S.batonBaseExtra = 0;
 
+    // after first prestige, reveal Prestige tab
+    if (!S.ui) S.ui = {};
+    S.ui.hasPrestiged = true;
+
     toast(`You gained ${gain} Patron(s).`);
+    save(false);
+    setPrestigeTabVisibility();
+    setTab("prestige");
+    renderAll();
   }
 
   // ---------- State ----------
-  const KEY = "score_order_idle_v8";
+  const KEY = "score_order_idle_v9";
   const stateDefault = () => ({
-    version: 8,
+    version: 9,
     notes: 0,
     lifetimeNotes: 0,
+    runNotes: 0,                 // NEW: notes earned this run (used for patrons)
     ink: 0,
     patrons: 0,
     patronsEver: 0,
@@ -1065,10 +1233,15 @@
       familyOpen: {},
       instrumentUpOpen: {},
       synergyOpen: {},
-      facilityOpen: false,
       facilityUpOpen: false,
       facilityNextOpen: false,
-      batonOpen: false
+      batonOpen: false,
+      hasStarted: false,          // NEW: start screen gate
+      tutorialCompleted: false,   // NEW
+      tutorialStep: 0,            // NEW
+      prestigeExplained: false,   // NEW
+      blocked: false,             // NEW: modal pause
+      hasPrestiged: false         // NEW: show prestige hall
     },
     settings: {
       abbrevLarge: true
@@ -1086,6 +1259,7 @@
     try{
       const raw =
         localStorage.getItem(KEY) ||
+        localStorage.getItem("score_order_idle_v8") ||
         localStorage.getItem("score_order_idle_v7") ||
         localStorage.getItem("score_order_idle_v6") ||
         localStorage.getItem("score_order_idle_v5") ||
@@ -1124,6 +1298,14 @@
       if (!s.ui.synergyOpen) s.ui.synergyOpen = {};
       if (!s.ui.tab) s.ui.tab = "main";
 
+      // NEW UI flags defaults
+      if (s.ui.hasStarted === undefined) s.ui.hasStarted = false;
+      if (s.ui.tutorialCompleted === undefined) s.ui.tutorialCompleted = false;
+      if (s.ui.tutorialStep === undefined) s.ui.tutorialStep = 0;
+      if (s.ui.prestigeExplained === undefined) s.ui.prestigeExplained = false;
+      if (s.ui.blocked === undefined) s.ui.blocked = false;
+      if (s.ui.hasPrestiged === undefined) s.ui.hasPrestiged = (s.patronsEver || 0) > 0;
+
       if (!s.settings) s.settings = d.settings;
       if (s.settings.abbrevLarge === undefined) s.settings.abbrevLarge = true;
 
@@ -1144,6 +1326,13 @@
       if (!s.batonUpgrades) s.batonUpgrades = {};
       if (s.batonBaseExtra === undefined) s.batonBaseExtra = 0;
 
+      // NEW: runNotes
+      if (s.runNotes === undefined){
+        // best effort: if this is an existing save, start runNotes at 0
+        // so patrons ladder restarts cleanly next time
+        s.runNotes = 0;
+      }
+
       localStorage.setItem(KEY, JSON.stringify(s));
       return s;
     }catch(e){
@@ -1158,6 +1347,172 @@
     S.lastSave = now();
     localStorage.setItem(KEY, JSON.stringify(S));
     if (showToast) toast("Saved.");
+  }
+
+  // ---------- Tutorial / Overlays ----------
+  const startOverlay = $("#startOverlay");
+  const tutOverlay = $("#tutorialOverlay");
+  const prestigeExplainOverlay = $("#prestigeExplainOverlay");
+
+  function isBlocked(){
+    return !!S.ui.blocked || !S.ui.hasStarted || (tutOverlay.classList.contains("show")) || (startOverlay.classList.contains("show")) || (prestigeExplainOverlay.classList.contains("show"));
+  }
+
+  function clearHighlight(){
+    $$(".tutorial-highlight").forEach(el => el.classList.remove("tutorial-highlight","noteBtn"));
+  }
+
+  function highlight(selector){
+    clearHighlight();
+    const el = $(selector);
+    if (!el) return null;
+    el.classList.add("tutorial-highlight");
+    if (el.id === "noteBtn") el.classList.add("noteBtn");
+    return el;
+  }
+
+  const TUTORIAL_STEPS = [
+    {
+      title: "Click the large note",
+      msg: "Click the large whole note to gain Notes.",
+      target: "#noteBtn",
+      ensure: () => {}
+    },
+    {
+      title: "Upgrade your conducting",
+      msg: "Purchase Baton Techniques to upgrade your click power (and change the note symbol).",
+      target: "#batonDropdown summary",
+      ensure: () => { $("#batonDropdown").open = true; }
+    },
+    {
+      title: "Start automatic production",
+      msg: "Purchase instruments (start with Piccolo) to begin producing Notes every second.",
+      target: "button[data-buy='piccolo']",
+      ensure: () => {}
+    },
+    {
+      title: "Ink is permanent",
+      msg: "Every instrument you purchase gives Ink. Use Ink to buy permanent Archive Upgrades.",
+      target: "#inkDropdown summary",
+      ensure: () => { $("#inkDropdown").open = true; }
+    }
+  ];
+
+  function showStartScreen(){
+    startOverlay.classList.add("show");
+    startOverlay.setAttribute("aria-hidden","false");
+  }
+  function hideStartScreen(){
+    startOverlay.classList.remove("show");
+    startOverlay.setAttribute("aria-hidden","true");
+  }
+
+  function showTutorial(){
+    tutOverlay.classList.add("show");
+    tutOverlay.setAttribute("aria-hidden","false");
+    advanceTutorial(0, true);
+  }
+  function hideTutorial(){
+    tutOverlay.classList.remove("show");
+    tutOverlay.setAttribute("aria-hidden","true");
+    clearHighlight();
+  }
+
+  function advanceTutorial(stepDelta=1, absolute=false){
+    const max = TUTORIAL_STEPS.length;
+    if (absolute) S.ui.tutorialStep = stepDelta;
+    else S.ui.tutorialStep = (S.ui.tutorialStep || 0) + stepDelta;
+
+    if (S.ui.tutorialStep >= max){
+      S.ui.tutorialCompleted = true;
+      S.ui.tutorialStep = 0;
+      hideTutorial();
+      save(false);
+      renderAll();
+      return;
+    }
+
+    const step = TUTORIAL_STEPS[S.ui.tutorialStep];
+    if (!step) return;
+
+    // ensure UI is rendered so targets exist
+    renderAll();
+    step.ensure();
+
+    $("#tutTitle").textContent = step.title;
+    $("#tutMsg").textContent = step.msg;
+
+    // delay a tick so DOM is open/updated
+    requestAnimationFrame(() => {
+      step.ensure();
+      highlight(step.target);
+    });
+
+    save(false);
+  }
+
+  function showPrestigeExplain(){
+    S.ui.blocked = true;
+    prestigeExplainOverlay.classList.add("show");
+    prestigeExplainOverlay.setAttribute("aria-hidden","false");
+    save(false);
+  }
+  function hidePrestigeExplain(){
+    prestigeExplainOverlay.classList.remove("show");
+    prestigeExplainOverlay.setAttribute("aria-hidden","true");
+    S.ui.blocked = false;
+    save(false);
+  }
+
+  $("#startBtn").addEventListener("click", ()=>{
+    S.ui.hasStarted = true;
+    hideStartScreen();
+    // start tutorial unless already completed
+    if (!S.ui.tutorialCompleted){
+      showTutorial();
+    }
+    save(false);
+    renderAll();
+  });
+
+  $("#startSkipBtn").addEventListener("click", ()=>{
+    S.ui.hasStarted = true;
+    S.ui.tutorialCompleted = true;
+    S.ui.tutorialStep = 0;
+    hideStartScreen();
+    hideTutorial();
+    save(false);
+    renderAll();
+  });
+
+  $("#tutNextBtn").addEventListener("click", ()=> advanceTutorial(1,false));
+  $("#tutSkipBtn").addEventListener("click", ()=>{
+    S.ui.tutorialCompleted = true;
+    S.ui.tutorialStep = 0;
+    hideTutorial();
+    save(false);
+    renderAll();
+  });
+
+  $("#prestigeExplainOkBtn").addEventListener("click", ()=>{
+    S.ui.prestigeExplained = true;
+    hidePrestigeExplain();
+    save(false);
+    renderAll();
+  });
+  $("#prestigeExplainGoHallBtn").addEventListener("click", ()=>{
+    S.ui.prestigeExplained = true;
+    hidePrestigeExplain();
+    S.ui.hasPrestiged = true; // reveal tab even if they haven't bowed yet (per your tutorial flow)
+    setPrestigeTabVisibility();
+    setTab("prestige");
+    renderAll();
+  });
+
+  function setPrestigeTabVisibility(){
+    const show = !!S.ui.hasPrestiged || (S.patronsEver || 0) > 0;
+    const btn = $("#prestigeTabBtn");
+    btn.hidden = !show;
   }
 
   // ---------- Economy ----------
@@ -1244,6 +1599,8 @@
   }
 
   function buyBuilding(id, mode){
+    if (isBlocked()) return false;
+
     const b = BUILDINGS.find(x=>x.id===id);
     if (!b) return false;
 
@@ -1269,6 +1626,8 @@
   }
 
   function buyNoteUpgrade(id){
+    if (isBlocked()) return;
+
     const u = NOTE_UPGRADES.find(x=>x.id===id);
     if (!u) return;
     if (S.noteUpgrades[id]) return;
@@ -1282,6 +1641,8 @@
   }
 
   function buySynergyUpgrade(id){
+    if (isBlocked()) return;
+
     const u = SYNERGY_UPGRADES.find(x=>x.id===id);
     if (!u) return;
     if (S.synergyUpgrades[id]) return;
@@ -1295,6 +1656,8 @@
   }
 
   function buyInkUpgrade(id){
+    if (isBlocked()) return;
+
     const u = INK_UPGRADES.find(x=>x.id===id);
     if (!u) return;
     if (S.inkUpgrades[id]) return;
@@ -1306,10 +1669,35 @@
     toast(`Archive: ${u.name}`);
   }
 
+  function buyBatonUpgrade(id){
+    if (isBlocked()) return;
+
+    const u = BATON_UPGRADES.find(x=>x.id===id);
+    if (!u) return;
+    if (S.batonUpgrades[id]) return;
+
+    const stageIdx = S.noteStageIdx || 0;
+    if (stageIdx < u.requireStage) return;
+    if (S.notes < u.costNotes) return;
+
+    S.notes -= u.costNotes;
+    S.batonUpgrades[id] = true;
+
+    if (u.setStage !== undefined && u.setStage > stageIdx){
+      S.noteStageIdx = u.setStage;
+    }
+
+    S.batonBaseExtra = (S.batonBaseExtra || 0) + (u.extraBase || 0);
+
+    toast(`Baton: ${u.name}`);
+  }
+
   // ✅ Global “manual click” debounce (prevents double-fire from touch/click overlap)
   let lastManualClickAt = 0;
 
   function clickNote(){
+    if (isBlocked()) return;
+
     const t = now();
     if (t - lastManualClickAt < 35) return; // ignore ultra-fast duplicates
     lastManualClickAt = t;
@@ -1317,6 +1705,7 @@
     const gain = notesPerClick();
     S.notes += gain;
     S.lifetimeNotes += gain;
+    S.runNotes += gain;
     S.stats.clicks += 1;
   }
 
@@ -1365,18 +1754,44 @@
     const gained = totalNps() * used;
     S.notes += gained;
     S.lifetimeNotes += gained;
+    S.runNotes += gained;
 
     toast(`Welcome back! +${fmtExact(gained, S.settings.abbrevLarge)} Notes from ${Math.floor(used/60)}m offline.`);
   }
 
   // ---------- Tabs ----------
+  let statsLiveTimer = null;
+
+  function startStatsLive(){
+    stopStatsLive();
+    renderStats(); // refresh immediately on open
+    statsLiveTimer = setInterval(() => {
+      if (S.ui.tab !== "stats") return;
+      renderStats();
+      const timeStr = new Date().toLocaleString();
+      $("#statsClock").textContent = timeStr;
+    }, 250);
+  }
+  function stopStatsLive(){
+    if (statsLiveTimer){
+      clearInterval(statsLiveTimer);
+      statsLiveTimer = null;
+    }
+  }
+
   function setTab(tab){
     S.ui.tab = tab;
     $("#tab-main").hidden = tab !== "main";
     $("#tab-stats").hidden = tab !== "stats";
+    $("#tab-prestige").hidden = tab !== "prestige";
     $("#tab-settings").hidden = tab !== "settings";
 
     $$("button[data-tab]").forEach(b => b.classList.toggle("active", b.getAttribute("data-tab") === tab));
+
+    // stats live update behavior
+    if (tab === "stats") startStatsLive();
+    else stopStatsLive();
+
     save(false);
   }
   $$("button[data-tab]").forEach(btn=>{
@@ -1418,12 +1833,13 @@
     $("#inkBonusMini").textContent = `x${S.metaNpsMult.toFixed(3)}`;
     $("#patronBonusMini").textContent = `x${(1 + (S.patrons||0) * 0.05).toFixed(2)}`;
 
+    $("#runNotesLine").textContent = `Run Notes: ${fmtNotesHud(S.runNotes || 0, useSuffix)}`;
     $("#lifetimeNotesLine").textContent = `Lifetime Notes: ${fmtNotesHud(S.lifetimeNotes, useSuffix)}`;
 
     const p = prestigePreview();
     $("#patronLine").textContent = `You have: ${S.patrons} Patron(s) • Take-a-bow Gain: +${p.gain}`;
 
-    const rem = notesUntilNextPatron(S);
+    const rem = runNotesUntilNextPatron(S);
     $("#nextPatronInfo").textContent = `Next Patron in: ${fmtExact(rem, useSuffix)} Notes`;
 
     const st = currentStage();
@@ -1434,11 +1850,9 @@
     $("#clock").textContent = timeStr;
     $("#statsClock").textContent = timeStr;
     $("#settingsClock").textContent = timeStr;
+    const pc = $("#prestigeClock");
+    if (pc) pc.textContent = timeStr;
   }
-
-  /* ------- (UNCHANGED) The rest of render functions are identical to your previous file ------- */
-  /* To keep this answer readable: everything below is unchanged except the reset handler at the end.
-     I am still including the full working file content here, continuing exactly as before. */
 
   function renderBatonUpgrades(){
     const el = $("#batonUpgradeList");
@@ -1463,10 +1877,10 @@
       const afford = S.notes >= u.costNotes;
 
       const tagClass = owned ? "good" : unlocked ? (afford ? "warn" : "") : "bad";
-      const tagText  = owned ? "Owned" : unlocked ? "Unlocked" : `Need ${NOTE_STAGES[u.requireStage].label}`;
+      const tagText  = owned ? "Purchased" : unlocked ? "Unlocked" : `Need ${NOTE_STAGES[u.requireStage].label}`;
 
       const div = document.createElement("div");
-      div.className = "mini";
+      div.className = "mini" + (owned ? " purchased" : "");
       div.innerHTML = `
         <div class="name">
           <div class="top">
@@ -1474,12 +1888,15 @@
             <span class="tag ${tagClass}">${tagText}</span>
           </div>
           <div class="muted smallSans">${u.desc}</div>
-          <div class="muted smallSans mono" style="margin-top:4px;">
-            After purchase: Base click = <b>${batonBaseClick() + (owned?0:u.extraBase)}</b>
-          </div>
+          ${
+            owned ? "" : `
+            <div class="muted smallSans mono afterPurchase" style="margin-top:4px;">
+              After purchase: Base click = <b>${batonBaseClick() + u.extraBase}</b>
+            </div>`
+          }
         </div>
         <div class="right">
-          <button data-bt="${u.id}" ${(!owned && unlocked && afford) ? "" : "disabled"}>Buy</button>
+          <button data-bt="${u.id}" ${(!owned && unlocked && afford && !isBlocked()) ? "" : "disabled"}>Buy</button>
           <div class="cost mono">${fmtExact(u.costNotes, useSuffix)} Notes</div>
         </div>
       `;
@@ -1494,12 +1911,6 @@
     });
   }
 
-  /* ---- Everything from your prior file continues here unchanged: ---- */
-  /* renderFamilies, renderInstrumentsForFamily, renderInstrumentUpgrades,
-     renderSynergyForFamily, renderInkUpgrades, renderFacility, renderStats,
-     renderSettings, renderAll, tick loop, etc. */
-
-  // ---- (START) Unchanged block copied from your previous file ----
   function renderFamilies(){
     const stack = $("#familyStack");
     stack.innerHTML = "";
@@ -1584,7 +1995,7 @@
       else if (S.buyMode === "max") k = maxAffordableCount(b);
 
       const cost = sumCostForK(b, k);
-      const afford = (k > 0) && (S.notes >= cost);
+      const afford = (k > 0) && (S.notes >= cost) && !isBlocked();
 
       let perEachBase = b.nps * (S.buildingMult[b.id]||1);
       const instNps = effectiveInstrumentNps(b);
@@ -1668,7 +2079,7 @@
       const owned = !!S.noteUpgrades[u.id];
       const have = S.owned[u.buildingId] || 0;
       const unlocked = have >= u.requireOwned;
-      const afford = S.notes >= u.costNotes;
+      const afford = (S.notes >= u.costNotes) && !isBlocked();
 
       const tagClass = owned ? "good" : unlocked ? (afford ? "warn" : "") : "bad";
       const tagText = owned ? "Owned" : unlocked ? "Unlocked" : `Need ${u.requireOwned}`;
@@ -1717,7 +2128,7 @@
     for (const u of list){
       const owned = !!S.synergyUpgrades[u.id];
       const can = u.can(S);
-      const afford = S.notes >= u.costNotes;
+      const afford = (S.notes >= u.costNotes) && !isBlocked();
 
       const div = document.createElement("div");
       div.className = "mini";
@@ -1752,16 +2163,16 @@
     el.innerHTML = "";
     for (const u of INK_UPGRADES){
       const owned = !!S.inkUpgrades[u.id];
-      const afford = S.ink >= u.costInk;
+      const afford = (S.ink >= u.costInk) && !isBlocked();
 
       const div = document.createElement("div");
-      div.className = "mini";
+      div.className = "mini" + (owned ? " purchased" : "");
       div.innerHTML = `
         <div class="name">
           <div class="top">
             <b>${u.name}${owned ? " ✅" : ""}</b>
             <span class="tag ${owned ? "good" : (afford ? "warn" : "")}">
-              ${owned ? "Owned" : (afford ? "Available" : "Locked")}
+              ${owned ? "Purchased" : (afford ? "Available" : "Locked")}
             </span>
           </div>
           <div class="muted smallSans">${u.desc}</div>
@@ -1789,19 +2200,12 @@
 
     const fac = facilityMults(S);
     $("#facilityBonus").textContent = `Global: x${fac.nps.toFixed(2)} NPS • x${fac.click.toFixed(2)} Click`;
-    $("#facilityTag").textContent = current ? current.name : "—";
+
     $("#facilityPatrons").textContent = `Patrons (available): ${S.patrons}`;
     $("#facilityEarned").textContent = `Patrons (earned): ${S.patronsEver}`;
 
     $("#facilityUpgradesTag").textContent = current ? current.name : "—";
     $("#facilityNextTag").textContent = "Venues";
-
-    const fd = $("#facilityDropdown");
-    fd.open = !!S.ui.facilityOpen;
-    if (!fd._bound){
-      fd.addEventListener("toggle", ()=>{ S.ui.facilityOpen = fd.open; save(false); });
-      fd._bound = true;
-    }
 
     const fud = $("#facilityUpgradesDetails");
     fud.open = !!S.ui.facilityUpOpen;
@@ -1824,7 +2228,7 @@
     } else {
       for (const up of current.upgrades){
         const owned = !!S.facility.purchasedUpgrades[up.id];
-        const afford = canAffordPatrons(up.cost);
+        const afford = canAffordPatrons(up.cost) && !isBlocked();
 
         const div = document.createElement("div");
         div.className = "mini";
@@ -1857,7 +2261,7 @@
       if (S.facility.unlocked[f.id]) continue;
       if (currentIdx !== -1 && i < currentIdx) continue;
 
-      const afford = canAffordPatrons(f.patronCostToUnlock);
+      const afford = canAffordPatrons(f.patronCostToUnlock) && !isBlocked();
       const div = document.createElement("div");
       div.className = "mini";
       div.innerHTML = `
@@ -1914,12 +2318,13 @@
       { k:"Notes", v: fmtExact(S.notes, useSuffix) },
       { k:"Notes/sec", v: fmtExact(nps, useSuffix) },
       { k:"Notes/click", v: fmtExact(npc, useSuffix) },
+      { k:"Run Notes", v: fmtExact(S.runNotes || 0, useSuffix) },
       { k:"Lifetime Notes", v: fmtExact(S.lifetimeNotes, useSuffix) },
       { k:"Ink (current)", v: fmtExact(S.ink, false) },
       { k:"Patrons (available)", v: fmtExact(S.patrons, false) },
       { k:"Patrons (earned)", v: fmtExact(S.patronsEver, false) },
-      { k:"Take-a-bow preview", v: `Gain +${p.gain} (earned would be ${p.totalWouldHaveEver})` },
-      { k:"Next Patron (notes remaining)", v: fmtExact(notesUntilNextPatron(S), useSuffix) },
+      { k:"Take-a-bow preview", v: `Gain +${p.gain} (based on this run)` },
+      { k:"Next Patron (run notes remaining)", v: fmtExact(runNotesUntilNextPatron(S), useSuffix) },
       { k:"Clicks (lifetime)", v: fmtExact(S.stats.clicks || 0, false) },
       { k:"Instruments owned (total)", v: fmtExact(totalOwned, false) },
       { k:"Owned: Woodwinds", v: fmtExact(byFam.Winds || 0, false) },
@@ -1954,18 +2359,27 @@
   }
 
   function renderAll(){
+    setPrestigeTabVisibility();
     renderHUD();
     renderBatonUpgrades();
     renderFamilies();
     renderInkUpgrades();
     renderFacility();
-    renderStats();
+    if (S.ui.tab === "stats") renderStats();
     renderSettings();
   }
 
   let lastHeavy = 0;
   function tick(){
     const t = now();
+
+    // If blocked by tutorial/modal/start screen, keep clocks fresh but pause game gain
+    if (isBlocked()){
+      S.lastTick = t;
+      renderHUD();
+      return;
+    }
+
     let dt = (t - S.lastTick) / 1000;
     S.lastTick = t;
     dt = Math.min(dt, 0.25);
@@ -1974,6 +2388,14 @@
     if (gained > 0){
       S.notes += gained;
       S.lifetimeNotes += gained;
+      S.runNotes += gained;
+    }
+
+    // First-run prestige explanation (when they hit 500,000 run notes)
+    if (!S.ui.prestigeExplained && (S.patronsEver || 0) === 0 && (S.runNotes || 0) >= 500000){
+      showPrestigeExplain();
+      renderHUD();
+      return;
     }
 
     if (t - S.lastSave > 30000){
@@ -1989,6 +2411,7 @@
       renderFamilies();
       renderInkUpgrades();
       renderFacility();
+      if (S.ui.tab === "stats") renderStats();
     }
   }
 
@@ -1997,7 +2420,6 @@
 
   $("#prestigeBtn").addEventListener("click", ()=>{
     doPrestige();
-    renderAll();
   });
 
   $("#saveBtn").addEventListener("click", ()=> save(true));
@@ -2008,6 +2430,7 @@
     if (!ok) return;
 
     localStorage.removeItem(KEY);
+    localStorage.removeItem("score_order_idle_v9");
     localStorage.removeItem("score_order_idle_v8");
     localStorage.removeItem("score_order_idle_v7");
     localStorage.removeItem("score_order_idle_v6");
@@ -2027,7 +2450,11 @@
     lastManualClickAt = 0;
     wireNoteButtonOnce();
 
+    stopStatsLive();
     toast("Reset complete.");
+
+    // show start screen again after reset
+    showStartScreen();
     renderAll();
   });
 
@@ -2044,11 +2471,21 @@
   // ---------- Boot ----------
   applyOffline();
   setBuyMode(S.buyMode);
+  setPrestigeTabVisibility();
   setTab(S.ui.tab || "main");
   renderAll();
   setInterval(tick, 100);
 
-  if (S.lifetimeNotes === 0 && S.notes === 0){
+  // Start screen / tutorial trigger
+  if (!S.ui.hasStarted){
+    showStartScreen();
+  } else if (!S.ui.tutorialCompleted && !tutOverlay.classList.contains("show")){
+    // If they started before but never finished tutorial, let them keep playing;
+    // tutorial can be re-triggered later if desired. (No forced pop-up here.)
+  }
+
+  // Small toast only if already started
+  if (S.ui.hasStarted && S.lifetimeNotes === 0 && S.notes === 0){
     toast("Click the note to start conducting!");
   }
 })();
