@@ -317,18 +317,38 @@
       position:fixed; inset:0;
       z-index:1000;
       display:none;
-      /* allow clicks only on the panel; don't block the page */
-      pointer-events:none;
     }
     .overlay.show{display:block}
+
+    /* VEIL: blurred + darkened, with a "hole" (mask) where the target is */
     .overlay .veil{
       position:absolute; inset:0;
-      /* tutorial mask handles dim+blur now */
-      background: transparent;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      pointer-events:none;
+      background: rgba(20,16,12,.62);
+      backdrop-filter: blur(5px);
+
+      /* Spotlight variables (set by JS) */
+      --sx: 50vw;
+      --sy: 50vh;
+      --sr: 140px;
+
+      /* The mask creates a transparent hole in the veil */
+      -webkit-mask-image: radial-gradient(circle var(--sr) at var(--sx) var(--sy),
+        transparent 0 calc(var(--sr) - 6px),
+        rgba(0,0,0,.95) calc(var(--sr) + 22px)
+      );
+      mask-image: radial-gradient(circle var(--sr) at var(--sx) var(--sy),
+        transparent 0 calc(var(--sr) - 6px),
+        rgba(0,0,0,.95) calc(var(--sr) + 22px)
+      );
+
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+
+      transition: -webkit-mask-position .18s ease, mask-position .18s ease, -webkit-mask-image .18s ease, mask-image .18s ease;
+      z-index:1001;
     }
+
+    /* Panel always sits above veil */
     .overlay .panel{
       position:absolute;
       left:50%;
@@ -342,8 +362,7 @@
       padding:14px 14px 12px;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color: var(--ink2);
-      pointer-events:auto; /* clickable */
-      z-index: 1003;
+      z-index:1003;
     }
     .overlay .panel h3{
       margin:0 0 6px 0;
@@ -366,7 +385,6 @@
       font-weight:900;
     }
 
-    /* Focus ring on the element being explained */
     .tutorial-highlight{
       position:relative;
       z-index:1002 !important;
@@ -374,25 +392,9 @@
       box-shadow: 0 0 0 7px rgba(44,110,122,.22), 0 18px 60px rgba(0,0,0,.35);
       border-radius: 18px;
     }
-    /* Note stays circular when highlighted */
-    .tutorial-highlight.tutorial-note{
+    /* Keep the big note circular when highlighted */
+    #noteBtn.tutorial-highlight{
       border-radius:999px !important;
-    }
-
-    /* ---- Tutorial mask that LEAVES the highlighted area unblurred ---- */
-    #tutorialMask{
-      position: fixed;
-      inset: 0;
-      z-index: 1001; /* under highlight (1002) and panel (1003), above app UI */
-      display:none;
-      pointer-events:none;
-    }
-    #tutorialMask .tut-pane{
-      position: fixed;
-      background: rgba(20,16,12,.58);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      pointer-events:none;
     }
 
     /* ---- Start Screen (REAL SCREEN, not overlay) ---- */
@@ -510,7 +512,7 @@
               <div class="pill"><span class="muted">Patron bonus</span> <b class="mono" id="patronBonusMini">x1.00</b></div>
             </div>
 
-            <!-- slogan removed -->
+            <!-- Removed: “In ink, we trust.” -->
           </div>
 
           <details class="dropdown" id="batonDropdown">
@@ -689,17 +691,9 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Tutorial blur mask (leaves highlight area unblurred) -->
-<div id="tutorialMask" aria-hidden="true">
-  <div class="tut-pane" data-pane="top"></div>
-  <div class="tut-pane" data-pane="left"></div>
-  <div class="tut-pane" data-pane="right"></div>
-  <div class="tut-pane" data-pane="bottom"></div>
-</div>
-
 <!-- Tutorial coach-marks -->
 <div class="overlay" id="tutorialOverlay" aria-hidden="true">
-  <div class="veil"></div>
+  <div class="veil" id="tutorialVeil"></div>
   <div class="panel">
     <h3 id="tutTitle">—</h3>
     <div class="msg" id="tutMsg">—</div>
@@ -716,7 +710,7 @@
   <div class="panel">
     <h3>Prestige: “Take a bow”</h3>
     <div class="msg" style="margin-top:6px;">
-      When you <b>Take a bow</b>, you reset your run (Notes, instruments, note-upgrades, synergies, baton techniques)…<br/>
+      When you <b>Take a bow</b>, you reset your run (Notes, instruments, NOTE-upgrades, Synergies, Baton Techniques)…<br/>
       but you keep <b>Ink</b> and your <b>Archive Upgrades</b> permanently.<br/><br/>
       Your <b>Patron</b> gains are based on <b>Notes earned this run</b>. After you bow, you start earning Patrons from the beginning again (500,000 → …), while keeping all Patrons you’ve already earned overall.<br/><br/>
       Patrons unlock your <b>Performance Facility</b>—big global bonuses that grow over time.
@@ -1370,70 +1364,8 @@
 
   // ---------- Tutorial / Overlays ----------
   const tutOverlay = $("#tutorialOverlay");
+  const tutVeil = $("#tutorialVeil");
   const prestigeExplainOverlay = $("#prestigeExplainOverlay");
-
-  // --- Tutorial mask helpers (unblur highlighted area) ---
-  let _tutorialMaskTarget = null;
-
-  function ensureTutorialMask(){
-    const mask = document.getElementById("tutorialMask");
-    if (!mask) return null;
-    return {
-      el: mask,
-      panes: {
-        top: mask.querySelector('[data-pane="top"]'),
-        left: mask.querySelector('[data-pane="left"]'),
-        right: mask.querySelector('[data-pane="right"]'),
-        bottom: mask.querySelector('[data-pane="bottom"]'),
-      }
-    };
-  }
-
-  function showTutorialMaskFor(targetEl, pad = 14){
-    const mask = ensureTutorialMask();
-    if (!mask || !targetEl) return;
-
-    mask.el.style.display = "block";
-
-    const r = targetEl.getBoundingClientRect();
-    const x = Math.max(0, r.left - pad);
-    const y = Math.max(0, r.top - pad);
-    const w = Math.min(window.innerWidth - x, r.width + pad * 2);
-    const h = Math.min(window.innerHeight - y, r.height + pad * 2);
-
-    Object.assign(mask.panes.top.style, {
-      left:"0px", top:"0px", width:"100vw", height:`${y}px`
-    });
-
-    Object.assign(mask.panes.left.style, {
-      left:"0px", top:`${y}px`, width:`${x}px`, height:`${h}px`
-    });
-
-    Object.assign(mask.panes.right.style, {
-      left:`${x+w}px`, top:`${y}px`,
-      width:`${Math.max(0, window.innerWidth - (x+w))}px`,
-      height:`${h}px`
-    });
-
-    Object.assign(mask.panes.bottom.style, {
-      left:"0px", top:`${y+h}px`, width:"100vw",
-      height:`${Math.max(0, window.innerHeight - (y+h))}px`
-    });
-  }
-
-  function hideTutorialMask(){
-    const mask = document.getElementById("tutorialMask");
-    if (mask) mask.style.display = "none";
-  }
-
-  function setTutorialMaskTarget(el){
-    _tutorialMaskTarget = el;
-    if (el) showTutorialMaskFor(el);
-    else hideTutorialMask();
-  }
-
-  window.addEventListener("resize", ()=>{ if (_tutorialMaskTarget) showTutorialMaskFor(_tutorialMaskTarget); }, { passive:true });
-  window.addEventListener("scroll", ()=>{ if (_tutorialMaskTarget) showTutorialMaskFor(_tutorialMaskTarget); }, { passive:true });
 
   function isBlocked(){
     // IMPORTANT: while on start screen, game is blocked
@@ -1442,31 +1374,54 @@
   }
 
   function clearHighlight(){
-    // IMPORTANT FIX:
-    // Previously you removed the REAL .noteBtn class during tutorial cleanup,
-    // which made the note button lose its circular styling and look square on desktop.
-    $$(".tutorial-highlight").forEach(el => el.classList.remove("tutorial-highlight","tutorial-note"));
-    setTutorialMaskTarget(null);
+    // IMPORTANT: ONLY remove tutorial-highlight
+    // Never remove any base classes like "noteBtn" (that caused the square button bug).
+    $$(".tutorial-highlight").forEach(el => el.classList.remove("tutorial-highlight"));
+  }
+
+  function setSpotlightToElement(el){
+    if (!tutVeil) return;
+    if (!el){
+      tutVeil.style.setProperty("--sx", "50vw");
+      tutVeil.style.setProperty("--sy", "50vh");
+      tutVeil.style.setProperty("--sr", "140px");
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width/2;
+    const cy = r.top + r.height/2;
+    const sr = Math.max(r.width, r.height)/2 + 34; // padding around target
+
+    tutVeil.style.setProperty("--sx", `${cx}px`);
+    tutVeil.style.setProperty("--sy", `${cy}px`);
+    tutVeil.style.setProperty("--sr", `${sr}px`);
   }
 
   function highlight(selector){
     clearHighlight();
     const el = $(selector);
     if (!el) return null;
-
     el.classList.add("tutorial-highlight");
-    if (el.id === "noteBtn") el.classList.add("tutorial-note");
-
-    // Unblur the highlighted region
-    setTutorialMaskTarget(el);
-
-    // If it's off-screen (desktop), bring it into view gently
-    try{
-      el.scrollIntoView({ behavior:"smooth", block:"center", inline:"center" });
-    }catch(_){}
-
+    setSpotlightToElement(el);
     return el;
   }
+
+  // Keep spotlight aligned on scroll/resize while tutorial is visible
+  let spotlightTargetSelector = null;
+  function updateSpotlightFromSelector(){
+    if (!spotlightTargetSelector) return;
+    const el = $(spotlightTargetSelector);
+    if (!el) return;
+    setSpotlightToElement(el);
+  }
+  window.addEventListener("resize", ()=> {
+    if (!tutOverlay.classList.contains("show")) return;
+    updateSpotlightFromSelector();
+  }, { passive:true });
+  window.addEventListener("scroll", ()=> {
+    if (!tutOverlay.classList.contains("show")) return;
+    updateSpotlightFromSelector();
+  }, { passive:true });
 
   const TUTORIAL_STEPS = [
     {
@@ -1506,6 +1461,8 @@
     tutOverlay.classList.remove("show");
     tutOverlay.setAttribute("aria-hidden","true");
     clearHighlight();
+    spotlightTargetSelector = null;
+    setSpotlightToElement(null);
   }
 
   function advanceTutorial(stepDelta=1, absolute=false){
@@ -1533,9 +1490,17 @@
     $("#tutTitle").textContent = step.title;
     $("#tutMsg").textContent = step.msg;
 
+    spotlightTargetSelector = step.target;
+
     requestAnimationFrame(() => {
       step.ensure();
-      highlight(step.target);
+      const el = highlight(step.target);
+      // Make sure it's on screen (especially for later steps)
+      if (el && el.scrollIntoView){
+        el.scrollIntoView({ behavior:"smooth", block:"center", inline:"center" });
+        // after scroll, re-sync spotlight
+        setTimeout(updateSpotlightFromSelector, 220);
+      }
     });
 
     save(false);
@@ -2465,6 +2430,8 @@
     renderFacility();
     if (S.ui.tab === "stats") renderStats();
     renderSettings();
+    // keep spotlight aligned if tutorial is open
+    if (tutOverlay.classList.contains("show")) updateSpotlightFromSelector();
   }
 
   let lastHeavy = 0;
@@ -2508,6 +2475,7 @@
       renderInkUpgrades();
       renderFacility();
       if (S.ui.tab === "stats") renderStats();
+      if (tutOverlay.classList.contains("show")) updateSpotlightFromSelector();
     }
   }
 
