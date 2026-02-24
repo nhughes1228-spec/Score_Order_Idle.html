@@ -332,6 +332,10 @@
     .mini.purchased .right button{ display:none; }
     .mini.purchased .cost{ display:none; }
     .mini.purchased .afterPurchase{ display:none; }
+    .mini.compactPurchased{
+      grid-template-columns: 1fr;
+      padding:8px 10px;
+    }
 
     /* ---- Tutorial overlays ---- */
     .overlay{
@@ -474,114 +478,6 @@
     }
     h1{font-size:22px; letter-spacing:.2px}
     .startTitle{font-size:30px}
-    .sectionLabel{
-      margin:2px 0 8px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      color:var(--muted);
-      font-family:var(--font-ui);
-      font-size:11px;
-      font-weight:900;
-      letter-spacing:.9px;
-      text-transform:uppercase;
-    }
-    .ico{
-      width:1.05em;
-      height:1.05em;
-      display:inline-grid;
-      place-items:center;
-      border-radius:999px;
-      border:1px solid rgba(35,29,24,.28);
-      background: rgba(255,255,255,.7);
-      color: var(--accent);
-      font-size:.78em;
-      line-height:1;
-      margin-right:6px;
-      vertical-align:baseline;
-    }
-    .sectionLabel::before{
-      content:"";
-      width:24px;
-      height:2px;
-      border-radius:999px;
-      background: rgba(44,110,122,.45);
-    }
-    .milestoneRail{
-      display:flex;
-      gap:8px;
-      overflow-x:auto;
-      padding:4px 1px 8px;
-      margin-bottom:8px;
-      scroll-snap-type:x proximity;
-    }
-    .mile{
-      min-width:160px;
-      background: rgba(255,255,255,.68);
-      border:1px solid rgba(35,29,24,.2);
-      border-radius:12px;
-      padding:8px 9px;
-      scroll-snap-align:start;
-    }
-    .mile .k{
-      font-size:11px;
-      color:var(--muted);
-      font-weight:800;
-      font-family:var(--font-ui);
-    }
-    .mile .v{
-      margin-top:2px;
-      font-size:12px;
-      color:var(--ink2);
-      font-family:var(--font-ui);
-      font-weight:800;
-    }
-    .sparkRow{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px;
-      margin-top:6px;
-    }
-    .sparkCard{
-      border:1px solid rgba(35,29,24,.16);
-      border-radius:12px;
-      background:rgba(255,255,255,.52);
-      padding:7px 8px;
-    }
-    .sparkCard .k{
-      font-size:11px;
-      color:var(--muted);
-      font-weight:800;
-      font-family:var(--font-ui);
-      margin-bottom:3px;
-    }
-    .spark{
-      width:100%;
-      height:30px;
-      display:block;
-    }
-    .prog{
-      margin-top:6px;
-    }
-    .progTrack{
-      width:100%;
-      height:7px;
-      border-radius:999px;
-      background: rgba(35,29,24,.14);
-      overflow:hidden;
-    }
-    .progFill{
-      height:100%;
-      border-radius:999px;
-      background: linear-gradient(90deg, rgba(44,110,122,.72), rgba(44,110,122,.42));
-    }
-    .progText{
-      margin-top:2px;
-      font-size:11px;
-      color:var(--muted);
-      font-family:var(--font-ui);
-      font-weight:800;
-    }
     .emptyState{
       border:1px dashed rgba(35,29,24,.24);
       border-radius:12px;
@@ -613,36 +509,67 @@
       border-radius:14px;
       box-shadow: 0 10px 30px rgba(0,0,0,.2);
       padding:8px;
-      display:none;
-      gap:8px;
+      display:grid;
+      grid-template-columns: 1fr 1fr 1.15fr 1fr 1fr;
+      gap:6px;
       align-items:center;
       backdrop-filter: blur(6px);
       font-family:var(--font-ui);
     }
-    .mobileBar .miniModes{
-      display:flex; gap:6px; flex-wrap:wrap;
+    .mobileBar button{
+      padding:8px 6px;
+      border-radius:10px;
+      font-size:12px;
+      font-weight:900;
     }
-    .mobileBar .miniModes button{
-      padding:6px 8px;
-      border-radius:999px;
-      font-size:11px;
-    }
-    .mobileBar .miniModes button.active{
+    .mobileBar button.active{
       background: rgba(44,110,122,.18);
       border-color: rgba(44,110,122,.35);
     }
-    .mobileBar .grow{
-      min-width:0;
-      flex:1;
+    .noteDockBtn{
+      padding:6px 6px !important;
+      border-radius:10px !important;
+      display:grid;
+      place-items:center;
     }
-    .mobileBar .subline{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:3px;
+    .noteDockBtn .noteImg{
+      width:28px;
+      height:28px;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,.32));
+    }
+
+    .desktopBuyDock{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      z-index:24;
+      background: rgba(255,255,255,.9);
+      border:1px solid rgba(35,29,24,.2);
+      border-radius:12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.2);
+      padding:6px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      backdrop-filter: blur(6px);
+      font-family:var(--font-ui);
+    }
+    .desktopBuyDock button{
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+    }
+    .desktopBuyDock button.active{
+      background: rgba(44,110,122,.18);
+      border-color: rgba(44,110,122,.35);
     }
     @media (max-width: 980px){
-      .mobileBar{display:flex;}
-      body{padding-bottom:84px;}
+      body{padding-bottom:86px;}
+      .desktopBuyDock{display:none;}
+    }
+    @media (min-width: 981px){
+      .mobileBar{display:none;}
     }
   </style>
 </head>
@@ -656,11 +583,11 @@
   <div class="hud">
     <div class="tabs" aria-label="Pages">
       <!-- Start tab has no button; it's only shown automatically -->
-      <button class="active" data-tab="main"><span class="ico">♪</span>Main</button>
-      <button data-tab="stats"><span class="ico">≡</span>Stats</button>
-      <button data-tab="achievements"><span class="ico">★</span>Achievements</button>
-      <button data-tab="prestige" id="prestigeTabBtn" hidden><span class="ico">◎</span>Prestige</button>
-      <button data-tab="settings"><span class="ico">⚙</span>Settings</button>
+      <button class="active" data-tab="main">Main</button>
+      <button data-tab="stats">Stats</button>
+      <button data-tab="achievements">Achievements</button>
+      <button data-tab="prestige" id="prestigeTabBtn" hidden>Prestige</button>
+      <button data-tab="settings">Settings</button>
     </div>
 
     <div class="pill"><span class="muted">Notes</span> <b class="mono" id="notesHud">0</b></div>
@@ -675,7 +602,7 @@
   <!-- START SCREEN (real screen) -->
   <div class="tab" id="tab-start" hidden>
     <section class="card">
-      <h2><span><span class="ico">▶</span>Welcome</span><span class="tag">First Play</span></h2>
+      <h2><span>Welcome</span><span class="tag">First Play</span></h2>
       <div class="content">
         <div class="startWrap">
           <div class="startCard">
@@ -685,7 +612,7 @@
               When you’re ready, <b>Take a bow</b> to court Patrons and begin again—stronger.
             </p>
             <div class="centerButtons">
-              <button class="primary startBtn" id="startBtn"><span class="ico">▶</span>Start</button>
+              <button class="primary startBtn" id="startBtn">Start</button>
               <button id="startSkipBtn">Skip tutorial</button>
             </div>
             <div class="muted" style="margin-top:12px; font-size:12px;">
@@ -702,11 +629,10 @@
 
       <section class="card">
         <h2>
-          <span><span class="ico">♪</span>The Score</span>
+          <span>The Score</span>
           <span class="tag good">Autosave: ON</span>
         </h2>
         <div class="content">
-          <div class="sectionLabel">Click Economy</div>
           <div class="clickZone">
             <button class="noteBtn" id="noteBtn" aria-label="Click the note"></button>
 
@@ -716,17 +642,6 @@
               <div class="pill"><span class="muted">Notes/sec</span> <b class="mono" id="npsMini">0</b></div>
               <div class="pill"><span class="muted">Ink bonus</span> <b class="mono" id="inkBonusMini">x1.000</b></div>
               <div class="pill"><span class="muted">Patron bonus</span> <b class="mono" id="patronBonusMini">x1.00</b></div>
-            </div>
-
-            <div class="sparkRow">
-              <div class="sparkCard">
-                <div class="k">NPS Trend</div>
-                <svg class="spark" id="sparkNps" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-              </div>
-              <div class="sparkCard">
-                <div class="k">Click Trend</div>
-                <svg class="spark" id="sparkClick" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-              </div>
             </div>
 
             <!-- Removed: “In ink, we trust.” -->
@@ -757,7 +672,7 @@
               <div class="muted smallSans mono" id="patronLine">You have: 0 Patron(s) • Take-a-bow Gain: +0</div>
               <div class="muted smallSans mono" id="nextPatronInfo">Next Patron in: — Notes</div>
             </div>
-            <button class="primary" id="prestigeBtn"><span class="ico">◎</span>Take a bow</button>
+            <button class="primary" id="prestigeBtn">Take a bow</button>
           </div>
 
           <div class="footer">
@@ -769,8 +684,8 @@
 
       <section class="card">
         <h2>
-          <span><span class="ico">♬</span>Orchestra</span>
-          <span class="seg" aria-label="Bulk buy mode">
+          <span>Orchestra</span>
+          <span class="seg" aria-label="Bulk buy mode" id="buyModeSeg">
             <span class="muted smallSans">Buy:</span>
             <button id="buy1"  class="active" data-buymode="1">x1</button>
             <button id="buy10" data-buymode="10">x10</button>
@@ -782,8 +697,6 @@
           <div class="muted smallSans" style="margin-bottom:8px;">
             Instruments are grouped by family. Each instrument has its own Upgrades dropdown.
           </div>
-          <div class="sectionLabel">Auto Economy</div>
-          <div class="milestoneRail" id="milestoneRail"></div>
 
           <div class="familyStack" id="familyStack"></div>
 
@@ -811,7 +724,7 @@
 
   <div class="tab" id="tab-stats" hidden>
     <section class="card">
-      <h2><span><span class="ico">≡</span>Statistics</span><span class="tag">Read-only</span></h2>
+      <h2><span>Statistics</span><span class="tag">Read-only</span></h2>
       <div class="content">
         <div class="table" id="statsList"></div>
         <div class="footer">
@@ -825,7 +738,7 @@
   <div class="tab" id="tab-achievements" hidden>
     <section class="card">
       <h2>
-        <span><span class="ico">★</span>Achievements</span>
+        <span>Achievements</span>
         <span class="tag warn" id="achCountTag">0 / 0</span>
       </h2>
       <div class="content">
@@ -845,7 +758,7 @@
 
   <div class="tab" id="tab-prestige" hidden>
     <section class="card">
-      <h2><span><span class="ico">◎</span>Performance Facility (Patrons)</span><span class="tag warn">Prestige Hall</span></h2>
+      <h2><span>Performance Facility (Patrons)</span><span class="tag warn">Prestige Hall</span></h2>
       <div class="content">
         <div class="muted smallSans" style="margin-bottom:10px;">
           Spend Patrons to upgrade your facility. Patrons spent are gone, but facilities grant big global bonuses.
@@ -897,7 +810,7 @@
 
   <div class="tab" id="tab-settings" hidden>
     <section class="card">
-      <h2><span><span class="ico">⚙</span>Settings</span><span class="tag warn">Be careful</span></h2>
+      <h2><span>Settings</span><span class="tag warn">Be careful</span></h2>
       <div class="content">
         <label class="settingRow" for="settingSuffix">
           <input type="checkbox" id="settingSuffix"/>
@@ -911,7 +824,7 @@
             <b>Save</b>
             <div class="muted smallSans">Autosave runs every 30 seconds, but you can save anytime.</div>
           </div>
-          <button id="saveBtn"><span class="ico">◉</span>Save Now</button>
+          <button id="saveBtn">Save Now</button>
         </div>
 
         <div class="row">
@@ -919,7 +832,7 @@
             <b>Hard Reset</b>
             <div class="muted smallSans">Erases everything (including Ink, Patrons, Facilities).</div>
           </div>
-          <button class="danger" id="resetBtn"><span class="ico">×</span>Hard Reset</button>
+          <button class="danger" id="resetBtn">Hard Reset</button>
         </div>
 
         <div class="row">
@@ -954,16 +867,17 @@
 </main>
 
 <div class="mobileBar" id="mobileActionBar" hidden>
-  <div class="miniModes" aria-label="Mobile buy mode">
-    <button id="mBuy1" data-mbuymode="1">x1</button>
-    <button id="mBuy10" data-mbuymode="10">x10</button>
-    <button id="mBuy100" data-mbuymode="100">x100</button>
-    <button id="mBuyMax" data-mbuymode="max">Max</button>
-  </div>
-  <div class="grow">
-    <button class="primary" id="mBuyBatonBtn">Buy Baton</button>
-    <div class="subline mono" id="mBatonCostLine">Cost: —</div>
-  </div>
+  <button id="mBuy1" data-mbuymode="1">x1</button>
+  <button id="mBuy10" data-mbuymode="10">x10</button>
+  <button class="primary noteDockBtn" id="mQuickNoteBtn" aria-label="Tap note"></button>
+  <button id="mBuy100" data-mbuymode="100">x100</button>
+  <button id="mBuyMax" data-mbuymode="max">Max</button>
+</div>
+<div class="desktopBuyDock" id="desktopBuyDock" hidden>
+  <button id="dBuy1" data-dbuymode="1">x1</button>
+  <button id="dBuy10" data-dbuymode="10">x10</button>
+  <button id="dBuy100" data-dbuymode="100">x100</button>
+  <button id="dBuyMax" data-dbuymode="max">Max</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1190,7 +1104,7 @@
           id: noteUpgradeId(b.id, i),
           buildingId: b.id,
           family: b.family,
-          name: `${b.name}: ${UPGRADE_NAME_TEMPLATES[i]}`,
+          name: `${UPGRADE_NAME_TEMPLATES[i]}`,
           desc: `${b.name} output x2 (requires ${milestone} owned)`,
           costNotes: Math.floor(b.baseCost * mult),
           requireOwned: milestone,
@@ -2453,8 +2367,7 @@
       renderAchievements();
       renderRecentUnlocks();
     }
-    const mb = $("#mobileActionBar");
-    if (mb) mb.hidden = (tab !== "main") || !S.ui.hasStarted;
+    updateFloatingControls();
 
     save(false);
   }
@@ -2471,6 +2384,7 @@
     S.buyMode = mode;
     ["buy1","buy10","buy100","buyMax"].forEach(id=>{
       const btn = $("#"+id);
+      if (!btn) return;
       const m = btn.getAttribute("data-buymode");
       btn.classList.toggle("active", m === mode);
     });
@@ -2478,9 +2392,39 @@
       const btn = $("#"+id);
       if (btn) btn.classList.toggle("active", m === mode);
     });
+    [["dBuy1","1"],["dBuy10","10"],["dBuy100","100"],["dBuyMax","max"]].forEach(([id,m])=>{
+      const btn = $("#"+id);
+      if (btn) btn.classList.toggle("active", m === mode);
+    });
     save(false);
     renderFamilies();
     refreshDynamicShopStates();
+    updateFloatingControls();
+  }
+
+  function updateFloatingControls(){
+    const mainActive = (S.ui.tab === "main") && !!S.ui.hasStarted;
+    const mobile = $("#mobileActionBar");
+    const desktopDock = $("#desktopBuyDock");
+    const isMobile = window.matchMedia("(max-width: 980px)").matches;
+
+    const noteBtn = $("#noteBtn");
+    let noteVisible = true;
+    if (noteBtn){
+      const r = noteBtn.getBoundingClientRect();
+      noteVisible = (r.bottom > 80) && (r.top < (window.innerHeight - 80));
+    }
+
+    const seg = $("#buyModeSeg");
+    const headerBottom = $("header")?.getBoundingClientRect().bottom || 0;
+    let segVisible = true;
+    if (seg){
+      const r = seg.getBoundingClientRect();
+      segVisible = (r.bottom > headerBottom + 4) && (r.top < (window.innerHeight - 12));
+    }
+
+    if (mobile) mobile.hidden = !mainActive || !isMobile || noteVisible;
+    if (desktopDock) desktopDock.hidden = !mainActive || isMobile || segVisible;
   }
 
   function instrumentLabelFamily(familyId){
@@ -2541,17 +2485,6 @@
     return `<div class="emptyState">${text}${subText ? `<div class="smallSans" style="margin-top:4px;">${subText}</div>` : ""}</div>`;
   }
 
-  function progressMarkup(cur, target){
-    const safeTarget = Math.max(1, target || 1);
-    const ratio = Math.max(0, Math.min(1, (cur || 0) / safeTarget));
-    return `
-      <div class="prog">
-        <div class="progTrack"><div class="progFill" style="width:${(ratio*100).toFixed(1)}%"></div></div>
-        <div class="progText mono">${fmtInt(cur)} / ${fmtInt(safeTarget)}</div>
-      </div>
-    `;
-  }
-
   function formatDeltaTip(deltaNps, deltaClick){
     const npsTxt = (deltaNps > 0) ? `+${fmtExact(deltaNps, true)} NPS` : "No NPS change";
     const clickTxt = (deltaClick > 0) ? `+${fmtExact(deltaClick, true)} Click` : "No Click change";
@@ -2563,103 +2496,6 @@
       .filter(u => u.buildingId === buildingId)
       .sort((a,b)=>a.requireOwned - b.requireOwned);
     return list.find(u => !S.noteUpgrades[u.id]) || null;
-  }
-
-  function renderMilestoneRail(){
-    const el = $("#milestoneRail");
-    if (!el) return;
-    const items = [];
-
-    const nextPatron = runNotesUntilNextPatron(S);
-    items.push(`
-      <div class="mile">
-        <div class="k">Patron</div>
-        <div class="v mono">${fmtExact(nextPatron, true)} notes to next</div>
-      </div>
-    `);
-
-    const batonOwned = S.batonOwned || 0;
-    const nextBatonCost = buildingCostAtOwned(BATON_ITEM, batonOwned);
-    items.push(`
-      <div class="mile">
-        <div class="k">Baton</div>
-        <div class="v mono">${fmtExact(nextBatonCost, true)} • +${BATON_ITEM.basePer.toFixed(2)} base</div>
-      </div>
-    `);
-
-    const nextBatonTech = BATON_UPGRADES.find(u => !S.batonUpgrades[u.id]);
-    if (nextBatonTech){
-      items.push(`
-        <div class="mile">
-          <div class="k">Technique</div>
-          <div class="v mono">${nextBatonTech.name} • ${fmtExact(nextBatonTech.costNotes, true)}</div>
-        </div>
-      `);
-    } else {
-      items.push(`
-        <div class="mile">
-          <div class="k">Technique</div>
-          <div class="v">All techniques purchased</div>
-        </div>
-      `);
-    }
-
-    for (const b of BUILDINGS){
-      const up = nextNoteUpgradeForBuilding(b.id);
-      if (!up){
-        items.push(`
-          <div class="mile">
-            <div class="k">${b.name}</div>
-            <div class="v">Ladder complete</div>
-          </div>
-        `);
-        continue;
-      }
-      items.push(`
-        <div class="mile">
-          <div class="k">${b.name}</div>
-          <div class="v mono">Next at ${up.requireOwned} • ${fmtExact(up.costNotes, true)}</div>
-        </div>
-      `);
-    }
-
-    el.innerHTML = items.join("");
-  }
-
-  const SPARK_HISTORY = { nps: [], click: [], lastAt: 0 };
-  function pushSparkPoints(){
-    const t = now();
-    if (t - SPARK_HISTORY.lastAt < 500) return;
-    SPARK_HISTORY.lastAt = t;
-
-    SPARK_HISTORY.nps.push(totalNps());
-    SPARK_HISTORY.click.push(notesPerClick());
-    if (SPARK_HISTORY.nps.length > 60) SPARK_HISTORY.nps.shift();
-    if (SPARK_HISTORY.click.length > 60) SPARK_HISTORY.click.shift();
-  }
-
-  function drawSpark(svgId, values, color){
-    const svg = document.getElementById(svgId);
-    if (!svg) return;
-    if (!values || values.length < 2){
-      svg.innerHTML = "";
-      return;
-    }
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    const span = Math.max(1e-9, max - min);
-    const points = values.map((v, i) => {
-      const x = (i / (values.length - 1)) * 100;
-      const y = 28 - (((v - min) / span) * 24);
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    }).join(" ");
-
-    svg.innerHTML = `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>`;
-  }
-
-  function renderSparks(){
-    drawSpark("sparkNps", SPARK_HISTORY.nps, "rgba(44,110,122,.92)");
-    drawSpark("sparkClick", SPARK_HISTORY.click, "rgba(107,60,42,.92)");
   }
 
   function applyVisualSettings(){
@@ -2757,7 +2593,7 @@
       const enabled = !blocked && k > 0;
       let reason = "";
       if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (k <= 0) reason = `Need ${fmtExact(cost, useSuffix)} Notes for next Baton.`;
+      else if (k <= 0) reason = `Need ${fmtExact(cost, useSuffix)} Notes for next Baton (${fmtExact(S.notes, useSuffix)}/${fmtExact(cost, useSuffix)}).`;
       setButtonState(batonBtn, enabled, reason);
       setButtonEffectTip(batonBtn, tip);
 
@@ -2769,25 +2605,13 @@
       if (gainEl) gainEl.textContent = `+${fmtExact(gain, false)} base click`;
     }
 
-    const mBatonBtn = $("#mBuyBatonBtn");
-    if (mBatonBtn){
-      const owned = S.batonOwned || 0;
-      const k = buyCountForMode(BATON_ITEM, S.buyMode);
-      const cost = (k > 0) ? sumCostForK(BATON_ITEM, k) : buildingCostAtOwned(BATON_ITEM, owned);
-      const gain = (k > 0 ? k : 1) * BATON_ITEM.basePer;
-      const deltaClick = (gain * S.runClickMult * batonClickMult()) * clickScalar;
-      const tip = formatDeltaTip(0, deltaClick);
-
-      mBatonBtn.textContent = batonBuyLabel(S.buyMode, k);
-      const enabled = !blocked && k > 0;
+    const mQuickNote = $("#mQuickNoteBtn");
+    if (mQuickNote){
+      const enabled = !blocked;
       let reason = "";
       if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (k <= 0) reason = `Need ${fmtExact(cost, useSuffix)} Notes for next Baton.`;
-      setButtonState(mBatonBtn, enabled, reason);
-      setButtonEffectTip(mBatonBtn, tip);
-
-      const mCost = $("#mBatonCostLine");
-      if (mCost) mCost.textContent = `Cost: ${fmtExact(cost, useSuffix)} • +${fmtExact(gain, false)} click base`;
+      setButtonState(mQuickNote, enabled, reason);
+      if (!blocked) mQuickNote.title = `Tap note (+${fmtExact(notesPerClick(), useSuffix)}).`;
     }
 
     BUILDINGS.forEach(b=>{
@@ -2807,7 +2631,7 @@
       const enabled = !blocked && k > 0;
       let reason = "";
       if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (k <= 0) reason = `Need ${fmtExact(cost, useSuffix)} Notes for next ${b.name}.`;
+      else if (k <= 0) reason = `Need ${fmtExact(cost, useSuffix)} Notes for next ${b.name} (${fmtExact(S.notes, useSuffix)}/${fmtExact(cost, useSuffix)}).`;
       setButtonState(buyBtn, enabled, reason);
       setButtonEffectTip(buyBtn, tip);
 
@@ -2829,8 +2653,8 @@
       let reason = "";
       if (owned) reason = "Already purchased.";
       else if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!unlocked) reason = `Need ${NOTE_STAGES[u.requireStage].label}.`;
-      else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes.`;
+      else if (!unlocked) reason = `Need ${NOTE_STAGES[u.requireStage].label} (current: ${NOTE_STAGES[S.noteStageIdx || 0].label}).`;
+      else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes (${fmtExact(S.notes, useSuffix)}/${fmtExact(u.costNotes, useSuffix)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
     });
@@ -2850,8 +2674,8 @@
       let reason = "";
       if (owned) reason = "Already purchased.";
       else if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!unlocked) reason = `Need ${u.requireOwned} owned.`;
-      else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes.`;
+      else if (!unlocked) reason = `Need ${u.requireOwned} owned (${have}/${u.requireOwned}).`;
+      else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes (${fmtExact(S.notes, useSuffix)}/${fmtExact(u.costNotes, useSuffix)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
     });
@@ -2869,7 +2693,7 @@
       if (owned) reason = "Already purchased.";
       else if (blocked) reason = "Unavailable while tutorial or modal is open.";
       else if (!can) reason = "Requirement not met yet.";
-      else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes.`;
+      else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes (${fmtExact(S.notes, useSuffix)}/${fmtExact(u.costNotes, useSuffix)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
     });
@@ -2885,7 +2709,7 @@
       let reason = "";
       if (owned) reason = "Already purchased.";
       else if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!afford) reason = `Need ${u.costInk} Ink.`;
+      else if (!afford) reason = `Need ${u.costInk} Ink (${fmtInt(S.ink || 0)}/${fmtInt(u.costInk)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
     });
@@ -2903,7 +2727,7 @@
       let reason = "";
       if (owned) reason = "Already purchased.";
       else if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!afford) reason = `Need ${up.cost} Patron(s).`;
+      else if (!afford) reason = `Need ${up.cost} Patron(s) (${fmtInt(S.patrons || 0)}/${fmtInt(up.cost)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
     });
@@ -2924,7 +2748,7 @@
       const tip = formatDeltaTip(delta.nps, delta.click);
       let reason = "";
       if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!afford) reason = `Need ${f.patronCostToUnlock} Patron(s).`;
+      else if (!afford) reason = `Need ${f.patronCostToUnlock} Patron(s) (${fmtInt(S.patrons || 0)}/${fmtInt(f.patronCostToUnlock)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
     });
@@ -2960,6 +2784,8 @@
     const st = currentStage();
     $("#noteBtn").innerHTML = noteMarkup(st);
     $("#batonTag").textContent = st.label;
+    const mQuickNote = $("#mQuickNoteBtn");
+    if (mQuickNote) mQuickNote.innerHTML = noteMarkup(st);
 
     const timeStr = new Date().toLocaleString();
     $("#clock").textContent = timeStr;
@@ -3044,8 +2870,6 @@
         unlockedText: "Available",
         lockedText: "Locked"
       });
-      const stageNeed = u.requireStage;
-      const stageHave = stageIdx;
 
       const div = document.createElement("div");
       div.className = "mini" + (owned ? " purchased" : "");
@@ -3056,7 +2880,6 @@
             <span class="tag ${tag.cls}">${tag.text}</span>
           </div>
           <div class="muted smallSans">${u.desc}</div>
-          ${(!owned && !unlocked) ? progressMarkup(stageHave, stageNeed) : ""}
           ${
             owned ? "" : `
             <div class="muted smallSans mono afterPurchase" style="margin-top:4px;">
@@ -3167,6 +2990,7 @@
       const nextUp = nextNoteUpgradeForBuilding(b.id);
 
       const label = instrumentBuyLabel(S.buyMode, k);
+      const perEachHover = `Produces ${fmtExact(perEachBase, useSuffix)} Notes/sec each (before multipliers)`;
 
       const instOpen = (S.ui.instrumentUpOpen[b.id] !== undefined) ? S.ui.instrumentUpOpen[b.id] : false;
 
@@ -3176,16 +3000,12 @@
       row.innerHTML = `
         <div class="name">
           <div class="top">
-            <b>${b.name}</b>
+            <b title="${perEachHover}">${b.name}</b>
             <span class="tag good">Owned: <span class="mono">${owned}</span></span>
             <span class="tag">NPS: <span class="mono">${fmtExact(instNps, useSuffix)}</span> • <span class="mono">${fmtPct(instPct)}</span></span>
           </div>
-          <div class="muted smallSans">
-            Produces <span class="mono"><b>${fmtExact(perEachBase, useSuffix)}</b></span> Notes/sec each
-            <span class="muted">(before global/meta/patrons)</span>
-          </div>
           <div class="muted smallSans mono">
-            ${nextUp ? `Next ladder: ${nextUp.requireOwned} owned • ${fmtExact(nextUp.costNotes, useSuffix)} Notes` : "Ladder complete"}
+            ${nextUp ? `Next upgrade: ${nextUp.requireOwned} owned • ${fmtExact(nextUp.costNotes, useSuffix)} Notes` : "Ladder complete"}
           </div>
 
           <details class="dropdown instrumentUpgrades" data-inst="${b.id}" ${instOpen ? "open" : ""} style="margin-top:10px;">
@@ -3257,21 +3077,31 @@
       });
 
       const div = document.createElement("div");
-      div.className = "mini" + (owned ? " purchased" : "");
-      div.innerHTML = `
-        <div class="name">
-          <div class="top">
-            <b>${u.name}${owned ? " ✅" : ""}</b>
-            <span class="tag ${tag.cls}">${tag.text}</span>
+      if (owned){
+        div.className = "mini purchased compactPurchased";
+        div.innerHTML = `
+          <div class="name">
+            <div class="top">
+              <b>${u.name} ✅</b>
+            </div>
           </div>
-          <div class="muted smallSans">${u.desc}</div>
-          ${(!owned && !unlocked) ? progressMarkup(have, u.requireOwned) : ""}
-        </div>
-        <div class="right">
-          <button data-nu="${u.id}" ${enabled ? "" : "disabled"}>Buy</button>
-          <div class="cost mono">${fmtExact(u.costNotes, useSuffix)} Notes</div>
-        </div>
-      `;
+        `;
+      } else {
+        div.className = "mini";
+        div.innerHTML = `
+          <div class="name">
+            <div class="top">
+              <b>${u.name}</b>
+              <span class="tag ${tag.cls}">${tag.text}</span>
+            </div>
+            <div class="muted smallSans">${u.desc}</div>
+          </div>
+          <div class="right">
+            <button data-nu="${u.id}" ${enabled ? "" : "disabled"}>Buy</button>
+            <div class="cost mono">${fmtExact(u.costNotes, useSuffix)} Notes</div>
+          </div>
+        `;
+      }
       el.appendChild(div);
     }
 
@@ -3318,7 +3148,6 @@
             <span class="tag ${tag.cls}">${tag.text}</span>
           </div>
           <div class="muted smallSans">${u.desc}</div>
-          ${(!owned && can && !afford) ? progressMarkup(S.notes || 0, u.costNotes) : ""}
         </div>
         <div class="right">
           <button data-syn="${u.id}" ${enabled ? "" : "disabled"}>Buy</button>
@@ -3432,12 +3261,11 @@
         div.className = "mini" + (owned ? " purchased" : "");
         div.innerHTML = `
           <div class="name">
-            <div class="top">
+          <div class="top">
               <b>${up.name}${owned ? " ✅" : ""}</b>
               <span class="tag ${tag.cls}">${tag.text}</span>
             </div>
           <div class="muted smallSans">${up.desc}</div>
-          ${(!owned && !afford) ? progressMarkup(S.patrons || 0, up.cost) : ""}
         </div>
         <div class="right">
           <button data-fup="${up.id}" ${enabled ? "" : "disabled"}>Buy</button>
@@ -3481,7 +3309,6 @@
           <div class="muted smallSans mono" style="margin-top:4px;">
             With current mastery (${carry.owned}/${carry.total}): x${boosted.nps.toFixed(2)} NPS • x${boosted.click.toFixed(2)} Click
           </div>
-          ${(!afford) ? progressMarkup(S.patrons || 0, f.patronCostToUnlock) : ""}
         </div>
         <div class="right">
           <button data-fac="${f.id}" ${enabled ? "" : "disabled"}>Buy Venue</button>
@@ -3646,7 +3473,6 @@
   function renderAll(){
     setPrestigeTabVisibility();
     renderHUD();
-    renderMilestoneRail();
     renderBatonShop();
     renderBatonUpgrades();
     renderFamilies();
@@ -3658,9 +3484,8 @@
       renderRecentUnlocks();
     }
     renderSettings();
-    pushSparkPoints();
-    renderSparks();
     refreshDynamicShopStates();
+    updateFloatingControls();
     // keep spotlight aligned if tutorial is open
     if (tutOverlay.classList.contains("show")) updateSpotlightFromSelector();
   }
@@ -3710,9 +3535,8 @@
         renderAchievements();
         renderRecentUnlocks();
       }
-      pushSparkPoints();
-      renderSparks();
       refreshDynamicShopStates();
+      updateFloatingControls();
       if (tutOverlay.classList.contains("show")) updateSpotlightFromSelector();
     }
   }
@@ -3770,11 +3594,15 @@
   document.querySelectorAll("button[data-mbuymode]").forEach(btn=>{
     btn.addEventListener("click", ()=> setBuyMode(btn.getAttribute("data-mbuymode")));
   });
-  const mBaton = $("#mBuyBatonBtn");
-  if (mBaton){
-    mBaton.addEventListener("click", ()=>{
-      const ok = buyBaton(S.buyMode);
-      if (ok) renderAll();
+  document.querySelectorAll("button[data-dbuymode]").forEach(btn=>{
+    btn.addEventListener("click", ()=> setBuyMode(btn.getAttribute("data-dbuymode")));
+  });
+  const mQuickNote = $("#mQuickNoteBtn");
+  if (mQuickNote){
+    mQuickNote.addEventListener("click", ()=>{
+      clickNote();
+      renderHUD();
+      refreshDynamicShopStates();
     });
   }
 
@@ -3795,6 +3623,8 @@
     save(false);
     renderAll();
   });
+  window.addEventListener("scroll", updateFloatingControls, { passive:true });
+  window.addEventListener("resize", updateFloatingControls, { passive:true });
 
   // ---------- Boot ----------
   applyOffline();
