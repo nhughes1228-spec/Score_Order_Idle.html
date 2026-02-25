@@ -1,0 +1,484 @@
+(() => {
+// Game content and progression tables for Score Order Idle.
+// This file is intentionally data-heavy to keep main.js focused on runtime logic/UI.
+
+// ---------- Real Note Art (from /assets) ----------
+const NOTE_STAGES = [
+  { id:"whole",         label:"Whole Note",        img:"assets/note-whole.png" },
+  { id:"dottedHalf",    label:"Dotted Half",       img:"assets/note-half-dotted.png" },
+  { id:"half",          label:"Half Note",         img:"assets/note-half.png" },
+  { id:"dottedQuarter", label:"Dotted Quarter",    img:"assets/note-quarter-dotted.png" },
+  { id:"quarter",       label:"Quarter Note",      img:"assets/note-quarter.png" },
+  { id:"dottedEighth",  label:"Dotted Eighth",     img:"assets/note-eighth-dotted.png" },
+  { id:"eighth",        label:"Eighth Note",       img:"assets/note-eighth.png" },
+];
+const BATON_ITEM = {
+  id: "baton",
+  name: "Conductor Baton",
+  baseCost: 12,
+  costMult: 1.15,
+  basePer: 0.10
+};
+const BATON_UPGRADES = [
+  { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.50.",         costNotes: 85,         requireBatons: 0,   setStage: 1, clickMult: 1.50 },
+  { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.25.",           costNotes: 650,        requireBatons: 10,  setStage: 2, clickMult: 1.25 },
+  { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.10.",      costNotes: 5200,       requireBatons: 25,  setStage: 3, clickMult: 1.10 },
+  { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x1.10.",        costNotes: 42000,      requireBatons: 50,  setStage: 4, clickMult: 1.10 },
+  { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x1.10.",       costNotes: 320000,     requireBatons: 100, setStage: 5, clickMult: 1.10 },
+  { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x1.10.",         costNotes: 2200000,    requireBatons: 200, setStage: 6, clickMult: 1.10 },
+  { id:"bt_legato",      name:"Legato Arc",             desc:"Advanced baton flow. Baton click x1.10.",             costNotes: 12000000,   requireBatons: 325,                    clickMult: 1.10 },
+  { id:"bt_marcato",     name:"Marcato Strike",         desc:"Accented strike control. Baton click x1.10.",         costNotes: 70000000,   requireBatons: 500,                    clickMult: 1.10 },
+  { id:"bt_prestissimo", name:"Prestissimo Pulse",      desc:"Rapid precision control. Baton click x1.10.",         costNotes: 420000000,  requireBatons: 750,                    clickMult: 1.10 },
+  { id:"bt_maestro",     name:"Maestro's Signature",    desc:"Signature conducting power. Baton click x1.10.",      costNotes: 2600000000, requireBatons: 1100,                   clickMult: 1.10 },
+];
+function hasBatonTechnique(s, id){
+  return !!(s?.batonUpgrades && (s.batonUpgrades[id] || 0) > 0);
+}
+function batonUpgradeUnlockedInState(s, u){
+  const idx = BATON_UPGRADES.findIndex(x => x.id === u.id);
+  if (idx < 0) return false;
+  const prevOk = (idx === 0) || hasBatonTechnique(s, BATON_UPGRADES[idx - 1].id);
+  return prevOk && ((s.batonOwned || 0) >= (u.requireBatons || 0));
+}
+
+
+// ---------- Buildings ----------
+const BUILDINGS = [
+  { id:"piccolo",     name:"Piccolo",       family:"Winds",   baseCost: 15,     costMult: 1.15, nps: 0.1 },
+  { id:"flute",       name:"Flute",         family:"Winds",   baseCost: 100,    costMult: 1.15, nps: 1   },
+  { id:"oboe",        name:"Oboe",          family:"Winds",   baseCost: 1100,   costMult: 1.15, nps: 8   },
+  { id:"enghorn",     name:"English Horn",  family:"Winds",   baseCost: 12000,  costMult: 1.15, nps: 47  },
+  { id:"bassoon",     name:"Bassoon",       family:"Winds",   baseCost: 130000, costMult: 1.15, nps: 260 },
+  { id:"clarinet",    name:"Clarinet",      family:"Winds",   baseCost: 1.4e6,  costMult: 1.15, nps: 1400},
+  { id:"basscl",      name:"Bass Clarinet", family:"Winds",   baseCost: 2.0e7,  costMult: 1.15, nps: 7800},
+
+  { id:"horn",        name:"Horn",          family:"Brass",   baseCost: 3.3e8,  costMult: 1.15, nps: 44000},
+  { id:"trumpet",     name:"Trumpet",       family:"Brass",   baseCost: 5.1e9,  costMult: 1.15, nps: 260000},
+  { id:"trombone",    name:"Trombone",      family:"Brass",   baseCost: 7.5e10, costMult: 1.15, nps: 1600000},
+  { id:"tuba",        name:"Tuba",          family:"Brass",   baseCost: 1.0e12, costMult: 1.15, nps: 1.0e7},
+
+  { id:"timpani",     name:"Timpani",       family:"Perc",    baseCost: 1.4e13, costMult: 1.15, nps: 6.5e7},
+  { id:"perc",        name:"Percussion",    family:"Perc",    baseCost: 2.2e14, costMult: 1.15, nps: 4.0e8},
+
+  { id:"harp",        name:"Harp",          family:"Other",   baseCost: 3.7e15, costMult: 1.15, nps: 2.5e9},
+  { id:"piano",       name:"Piano/Celesta", family:"Other",   baseCost: 6.0e16, costMult: 1.15, nps: 1.6e10},
+
+  { id:"vln1",        name:"Violin I",      family:"Strings", baseCost: 1.0e18, costMult: 1.15, nps: 1.0e11},
+  { id:"vln2",        name:"Violin II",     family:"Strings", baseCost: 1.7e19, costMult: 1.15, nps: 7.0e11},
+  { id:"viola",       name:"Viola",         family:"Strings", baseCost: 2.8e20, costMult: 1.15, nps: 5.0e12},
+  { id:"cello",       name:"Cello",         family:"Strings", baseCost: 4.6e21, costMult: 1.15, nps: 3.6e13},
+  { id:"bass",        name:"Bass",          family:"Strings", baseCost: 7.5e22, costMult: 1.15, nps: 2.6e14},
+];
+const FAMILY_ORDER = [
+  { id:"Winds",   label:"Woodwinds",  defaultOpen:true },
+  { id:"Brass",   label:"Brass",      defaultOpen:false },
+  { id:"Perc",    label:"Percussion", defaultOpen:false },
+  { id:"Strings", label:"Strings",    defaultOpen:false },
+  { id:"Other",   label:"Other",      defaultOpen:false },
+];
+
+// ---------- NOTE Upgrades (per-building ladder) ----------
+const UPGRADE_MILESTONES = [1, 5, 10, 25, 50, 100, 200, 400];
+const UPGRADE_COST_MULTS = [7, 33, 160, 900, 5200, 30000, 180000, 1100000];
+const UPGRADE_NAME_TEMPLATES = [
+  "Etude Book",
+  "Better Pads",
+  "Handcrafted Mouthpiece",
+  "Sectional Rehearsals",
+  "Masterclass Series",
+  "Principal Auditions",
+  "Touring Season",
+  "Legendary Legacy"
+];
+const noteUpgradeId = (buildingId, tierIdx) => `nu_${buildingId}_${tierIdx}`;
+function buildNoteUpgrades(){
+  const upgrades = [];
+  for (const b of BUILDINGS){
+    for (let i=0;i<UPGRADE_MILESTONES.length;i++){
+      const milestone = UPGRADE_MILESTONES[i];
+      const mult = UPGRADE_COST_MULTS[i];
+      upgrades.push({
+        id: noteUpgradeId(b.id, i),
+        buildingId: b.id,
+        family: b.family,
+        name: `${UPGRADE_NAME_TEMPLATES[i]}`,
+        desc: `${b.name} output x2 (requires ${milestone} owned)`,
+        costNotes: Math.floor(b.baseCost * mult),
+        requireOwned: milestone,
+        apply: (s)=>{ s.buildingMult[b.id] *= 2; }
+      });
+    }
+  }
+  return upgrades;
+}
+const NOTE_UPGRADES = buildNoteUpgrades();
+
+// ---------- Achievements ----------
+function countPurchased(obj){
+  if (!obj) return 0;
+  let n = 0;
+  for (const k of Object.keys(obj)){
+    if (obj[k]) n++;
+  }
+  return n;
+}
+
+function fmtInt(n){
+  return Math.floor(Math.max(0, n || 0)).toLocaleString();
+}
+
+function progressLine(cur, target){
+  return `${fmtInt(cur)} / ${fmtInt(target)}`;
+}
+
+function buildAchievements(){
+  const list = [];
+  const add = (a) => list.push(a);
+
+  const makeTiered = ({
+    idPrefix,
+    namePrefix,
+    descPrefix,
+    kind,
+    thresholds,
+    mults,
+    valueFn
+  }) => {
+    thresholds.forEach((target, i) => {
+      const mult = mults[i];
+      add({
+        id: `${idPrefix}_${i}`,
+        name: `${namePrefix} ${i + 1}`,
+        desc: `${descPrefix} ${fmtInt(target)}.`,
+        kind,
+        mult,
+        target,
+        unlocked: (s) => valueFn(s) >= target,
+        progress: (s) => progressLine(valueFn(s), target)
+      });
+    });
+  };
+
+  makeTiered({
+    idPrefix: "ach_life_notes",
+    namePrefix: "Archivist",
+    descPrefix: "Reach lifetime notes",
+    kind: "nps",
+    thresholds: [1e3, 1e5, 1e7, 1e9, 1e11, 1e13],
+    mults: [1.004, 1.005, 1.006, 1.008, 1.010, 1.012],
+    valueFn: (s) => s.lifetimeNotes || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_run_notes",
+    namePrefix: "Standing Ovation",
+    descPrefix: "Reach run notes",
+    kind: "click",
+    thresholds: [5e4, 2e5, 1e6, 5e6, 2e7],
+    mults: [1.004, 1.005, 1.006, 1.007, 1.009],
+    valueFn: (s) => s.runNotes || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_clicks",
+    namePrefix: "Conductor's Wrist",
+    descPrefix: "Reach total clicks",
+    kind: "click",
+    thresholds: [100, 1000, 10000, 50000, 200000],
+    mults: [1.004, 1.005, 1.006, 1.007, 1.009],
+    valueFn: (s) => s.stats?.clicks || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_owned",
+    namePrefix: "Full Ensemble",
+    descPrefix: "Own instruments (total)",
+    kind: "nps",
+    thresholds: [25, 100, 250, 600, 1200],
+    mults: [1.004, 1.005, 1.006, 1.007, 1.009],
+    valueFn: (s) => BUILDINGS.reduce((a,b)=>a+(s.owned?.[b.id]||0), 0)
+  });
+
+  makeTiered({
+    idPrefix: "ach_ink",
+    namePrefix: "Ink Keeper",
+    descPrefix: "Hold Ink",
+    kind: "click",
+    thresholds: [10, 100, 500, 2000],
+    mults: [1.003, 1.004, 1.005, 1.007],
+    valueFn: (s) => s.ink || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_patrons",
+    namePrefix: "Patron Circle",
+    descPrefix: "Earn patrons (lifetime)",
+    kind: "nps",
+    thresholds: [1, 5, 20, 60],
+    mults: [1.004, 1.005, 1.007, 1.010],
+    valueFn: (s) => s.patronsEver || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_baton",
+    namePrefix: "Technique Chain",
+    descPrefix: "Purchase baton techniques",
+    kind: "click",
+    thresholds: [1, 3, 6],
+    mults: [1.004, 1.006, 1.010],
+    valueFn: (s) => countPurchased(s.batonUpgrades)
+  });
+
+  makeTiered({
+    idPrefix: "ach_facility_up",
+    namePrefix: "Venue Steward",
+    descPrefix: "Purchase facility upgrades",
+    kind: "nps",
+    thresholds: [3, 10, 20, 35],
+    mults: [1.004, 1.006, 1.008, 1.011],
+    valueFn: (s) => countPurchased(s.facility?.purchasedUpgrades)
+  });
+
+  const woodwinds = BUILDINGS.filter(b => b.family === "Winds").map(b => b.id);
+  const windThresholds = [1, 10, 25, 50, 100];
+  const windMults = [1.010, 1.012, 1.014, 1.017, 1.020];
+  windThresholds.forEach((target, i) => {
+    add({
+      id: `ach_woodwind_all_${target}`,
+      name: `Woodwind Corps ${target}`,
+      desc: `Own ${target} of each woodwind instrument.`,
+      kind: "nps",
+      mult: windMults[i],
+      target,
+      unlocked: (s) => woodwinds.every(id => (s.owned?.[id] || 0) >= target),
+      progress: (s) => {
+        const minOwned = woodwinds.reduce((m,id)=>Math.min(m, s.owned?.[id] || 0), Number.POSITIVE_INFINITY);
+        return progressLine(minOwned, target);
+      }
+    });
+  });
+
+  return list;
+}
+const ACHIEVEMENTS = buildAchievements();
+
+// ---------- Section Synergy Upgrades (Notes) ----------
+function buildSynergyUpgrades(){
+  const idsByFamily = (fam) => BUILDINGS.filter(b=>b.family===fam).map(b=>b.id);
+
+  const WINDS = idsByFamily("Winds");
+  const BRASS = idsByFamily("Brass");
+  const STRINGS = idsByFamily("Strings");
+  const PERC = idsByFamily("Perc");
+
+  const groupCount = (s, ids) => ids.reduce((a,id)=>a+(s.owned[id]||0), 0);
+  const groupBaseCostSum = (ids) => ids.reduce((a,id)=>a+(BUILDINGS.find(b=>b.id===id)?.baseCost||0), 0);
+
+  const windsBase = groupBaseCostSum(WINDS);
+  const brassBase = groupBaseCostSum(BRASS);
+  const stringsBase = groupBaseCostSum(STRINGS);
+  const percBase = groupBaseCostSum(PERC);
+
+  const upgrades = [
+    { id:"syn_winds_1", families:["Winds"], name:"Wind Consort", desc:"All Winds output +10%", costNotes: Math.floor(windsBase * 2.5),
+      can: s => groupCount(s, WINDS) >= 25, apply: s => WINDS.forEach(id => s.buildingMult[id] *= 1.10) },
+    { id:"syn_winds_2", families:["Winds"], name:"Woodwind Orchestra", desc:"All Winds output +25%", costNotes: Math.floor(windsBase * 10),
+      can: s => groupCount(s, WINDS) >= 100, apply: s => WINDS.forEach(id => s.buildingMult[id] *= 1.25) },
+
+    { id:"syn_brass_1", families:["Brass"], name:"Brass Choir", desc:"All Brass output +10%", costNotes: Math.floor(brassBase * 2.5),
+      can: s => groupCount(s, BRASS) >= 25, apply: s => BRASS.forEach(id => s.buildingMult[id] *= 1.10) },
+    { id:"syn_brass_2", families:["Brass"], name:"Symphonic Brass", desc:"All Brass output +25%", costNotes: Math.floor(brassBase * 10),
+      can: s => groupCount(s, BRASS) >= 100, apply: s => BRASS.forEach(id => s.buildingMult[id] *= 1.25) },
+
+    { id:"syn_strings_1", families:["Strings"], name:"String Section", desc:"All Strings output +10%", costNotes: Math.floor(stringsBase * 2.5),
+      can: s => groupCount(s, STRINGS) >= 25, apply: s => STRINGS.forEach(id => s.buildingMult[id] *= 1.10) },
+    { id:"syn_strings_2", families:["Strings"], name:"Philharmonic Strings", desc:"All Strings output +25%", costNotes: Math.floor(stringsBase * 10),
+      can: s => groupCount(s, STRINGS) >= 100, apply: s => STRINGS.forEach(id => s.buildingMult[id] *= 1.25) },
+
+    { id:"syn_perc_1", families:["Perc"], name:"Percussion Battery", desc:"All Percussion output +20%", costNotes: Math.floor(percBase * 3.5),
+      can: s => groupCount(s, PERC) >= 10, apply: s => PERC.forEach(id => s.buildingMult[id] *= 1.20) },
+    { id:"syn_perc_2", families:["Perc"], name:"Rhythmic Engine", desc:"All Percussion output +40%", costNotes: Math.floor(percBase * 14),
+      can: s => groupCount(s, PERC) >= 50, apply: s => PERC.forEach(id => s.buildingMult[id] *= 1.40) },
+
+    { id:"syn_doublereeds", families:["Winds"], name:"Double Reeds Studio",
+      desc:"Oboe + English Horn + Bassoon output x2",
+      costNotes: Math.floor((BUILDINGS.find(b=>b.id==="oboe").baseCost + BUILDINGS.find(b=>b.id==="enghorn").baseCost + BUILDINGS.find(b=>b.id==="bassoon").baseCost) * 120),
+      can: s => ((s.owned.oboe||0) >= 10 && (s.owned.enghorn||0) >= 5 && (s.owned.bassoon||0) >= 10),
+      apply: s => ["oboe","enghorn","bassoon"].forEach(id => s.buildingMult[id] *= 2) },
+
+    { id:"syn_lowbrass", families:["Brass"], name:"Low Brass Foundation",
+      desc:"Trombone + Tuba output +60%",
+      costNotes: Math.floor((BUILDINGS.find(b=>b.id==="trombone").baseCost + BUILDINGS.find(b=>b.id==="tuba").baseCost) * 35),
+      can: s => ((s.owned.trombone||0) >= 10 && (s.owned.tuba||0) >= 10),
+      apply: s => ["trombone","tuba"].forEach(id => s.buildingMult[id] *= 1.60) },
+  ];
+
+  upgrades.forEach(u => u._can = u.can);
+  upgrades.forEach(u => u.can = (s)=>u._can(s));
+  return upgrades;
+}
+const SYNERGY_UPGRADES = buildSynergyUpgrades();
+
+// ---------- Ink (meta) Upgrades ----------
+function buildInkUpgrades(){
+  const ups = [];
+
+  const npsSteps = [
+    {cost:10,  mult:1.001, name:"Margin Notes", desc:"+0.1% Notes/sec permanently"},
+    {cost:25,  mult:1.002, name:"Clean Copy",   desc:"+0.2% Notes/sec permanently"},
+    {cost:60,  mult:1.005, name:"Illuminated Initials", desc:"+0.5% Notes/sec permanently"},
+    {cost:140, mult:1.01,  name:"Scribe Guild", desc:"+1% Notes/sec permanently"},
+    {cost:320, mult:1.02,  name:"Royal Archive", desc:"+2% Notes/sec permanently"},
+    {cost:800, mult:1.05,  name:"Endowment", desc:"+5% Notes/sec permanently"},
+  ];
+  npsSteps.forEach((s, idx)=>{
+    ups.push({
+      id:`iu_nps_${idx}`,
+      name:s.name,
+      desc:s.desc,
+      costInk:s.cost,
+      can: st => true,
+      apply: st => { st.metaNpsMult *= s.mult; }
+    });
+  });
+
+  const clickFromNpsSteps = [
+    {cost:25,  rate:0.001, name:"Quick Quill",  desc:"Each click gains +0.1% of your current Notes/sec"},
+    {cost:90,  rate:0.002, name:"Scribe Reflex",desc:"Each click gains +0.2% of your current Notes/sec"},
+    {cost:260, rate:0.005, name:"Ink & Tempo",  desc:"Each click gains +0.5% of your current Notes/sec"},
+    {cost:900, rate:0.01,  name:"Virtuoso Penmanship", desc:"Each click gains +1% of your current Notes/sec"},
+  ];
+  clickFromNpsSteps.forEach((s, idx)=>{
+    ups.push({
+      id:`iu_clicknps_${idx}`,
+      name:s.name,
+      desc:s.desc,
+      costInk:s.cost,
+      can: st => true,
+      apply: st => { st.clickFromNpsRate += s.rate; }
+    });
+  });
+
+  const clickMultSteps = [
+    {cost:40,  mult:1.02, name:"Sharper Quill", desc:"+2% click power permanently"},
+    {cost:150, mult:1.05, name:"Steel Nib",     desc:"+5% click power permanently"},
+    {cost:600, mult:1.12, name:"Gold Nib",      desc:"+12% click power permanently"},
+    {cost:2500,mult:1.30, name:"Mythic Pen",    desc:"+30% click power permanently"},
+  ];
+  clickMultSteps.forEach((s, idx)=>{
+    ups.push({
+      id:`iu_clickmult_${idx}`,
+      name:s.name,
+      desc:s.desc,
+      costInk:s.cost,
+      can: st => true,
+      apply: st => { st.metaClickMult *= s.mult; }
+    });
+  });
+
+  return ups;
+}
+const INK_UPGRADES = buildInkUpgrades();
+
+// ---------- Facilities (Prestige Spending) ----------
+const FACILITY_BASE = [
+  { id:"shed",    name:"Mildewy Shed",  desc:"A cramped shed behind the school. The stands wobble if you breathe too hard.",            patronCostToUnlock: 0,    globalMult:{ nps:1.00, click:1.00 } },
+  { id:"garage",  name:"One-Car Garage",desc:"Still echoey… but weatherproof, and you can fit a full section inside.",                  patronCostToUnlock: 100,  globalMult:{ nps:1.40, click:1.15 } },
+  { id:"bandroom",name:"Band Room",     desc:"Lockers. Posters. A metronome that survived three directors. It feels like home.",         patronCostToUnlock: 250,  globalMult:{ nps:1.85, click:1.25 } },
+  { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 600,  globalMult:{ nps:1.40, click:1.35 } },
+  { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },
+  { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },
+  { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },
+  { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },
+];
+const FACILITY_PREVIEW_IMAGE = {
+  shed: "assets/venue-shed-mildewy.png",
+  garage: "assets/venue-garage-car-1.png",
+  bandroom: "assets/venue-room-band.png",
+  gym: "assets/venue-gymnasium.png",
+  pac: "assets/venue-pac-school.png",
+  church: "assets/venue-church-stone.png",
+  hall: "assets/venue-hall-concert.png",
+  famous: "assets/venue-venue-famous.png",
+};
+
+const FACILITY_UPGRADE_TEMPLATES = [
+  { key:"stands",     name:"Engraved Stands",         kind:"nps"  },
+  { key:"podium",     name:"Carved Podium",           kind:"click"},
+  { key:"lighting",   name:"Warm Stage Lighting",     kind:"nps"  },
+  { key:"acoustics",  name:"Acoustic Treatment",      kind:"nps"  },
+  { key:"library",    name:"Score Library Catalog",   kind:"both" },
+  { key:"tech",       name:"Stage Tech Crew",         kind:"click"},
+  { key:"rehearsal",  name:"Sectional Program",       kind:"nps"  },
+  { key:"recording",  name:"Recording Rig",           kind:"both" },
+  { key:"patrons",    name:"Patron Experience",       kind:"nps"  },
+];
+
+function buildFacilities(){
+  const upgradesFor = (facId, nextCost) => {
+    const percents = [0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.13,0.15];
+    const ups = [];
+    for (let i=0;i<FACILITY_UPGRADE_TEMPLATES.length;i++){
+      const t = FACILITY_UPGRADE_TEMPLATES[i];
+      const pct = percents[i];
+      const cost = Math.max(1, Math.round(nextCost * pct));
+      const npsMult = 1 + pct * 2.2;
+      const clickMult = 1 + pct * 1.6;
+
+      let mult = {};
+      let desc = "";
+      if (t.kind === "nps"){
+        mult = { nps: +(npsMult.toFixed(3)) };
+        desc = `+${Math.round((npsMult-1)*100)}% Notes/sec`;
+      } else if (t.kind === "click"){
+        mult = { click: +(clickMult.toFixed(3)) };
+        desc = `+${Math.round((clickMult-1)*100)}% Click power`;
+      } else {
+        mult = { nps: +( (1 + pct*1.5).toFixed(3) ), click: +( (1 + pct*1.1).toFixed(3) ) };
+        desc = `+${Math.round((mult.nps-1)*100)}% Notes/sec & +${Math.round((mult.click-1)*100)}% Click`;
+      }
+
+      ups.push({
+        id:`${facId}_${t.key}`,
+        name:t.name,
+        cost,
+        desc,
+        mult
+      });
+    }
+    return ups;
+  };
+
+  const facilities = [];
+  for (let i=0;i<FACILITY_BASE.length;i++){
+    const f = FACILITY_BASE[i];
+    const next = FACILITY_BASE[i+1];
+    const nextCost = next ? next.patronCostToUnlock : Math.max(1000, Math.round(f.patronCostToUnlock * 1.5));
+    facilities.push({
+      ...f,
+      upgrades: upgradesFor(f.id, nextCost)
+    });
+  }
+  return facilities;
+}
+const FACILITIES = buildFacilities();
+function getFacility(id){ return FACILITIES.find(f => f.id === id); }
+
+window.ScoreData = {
+  NOTE_STAGES,
+  BATON_ITEM,
+  BATON_UPGRADES,
+  hasBatonTechnique,
+  batonUpgradeUnlockedInState,
+  BUILDINGS,
+  FAMILY_ORDER,
+  NOTE_UPGRADES,
+  countPurchased,
+  ACHIEVEMENTS,
+  SYNERGY_UPGRADES,
+  INK_UPGRADES,
+  FACILITY_PREVIEW_IMAGE,
+  FACILITIES,
+  getFacility
+};
+})();
