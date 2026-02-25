@@ -125,6 +125,11 @@
               <span class="tag">Meta</span>
             </summary>
             <div class="detailsBody">
+              <div class="seg inkTabSeg" id="inkTabSeg" style="margin-bottom:8px;">
+                <button data-inktab="nps" class="active">Notes/sec</button>
+                <button data-inktab="clicknps">Click % of NPS</button>
+                <button data-inktab="clickmult">Click Power</button>
+              </div>
               <div class="table" id="inkUpgradeList"></div>
             </div>
           </details>
@@ -310,6 +315,12 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="achievementBanner" id="achievementBanner" hidden>
+  <div class="shine"></div>
+  <div class="kicker">Achievement Unlocked</div>
+  <div class="name" id="achievementBannerName">—</div>
+  <div class="bonus" id="achievementBannerBonus">—</div>
+</div>
 
 <!-- Tutorial coach-marks -->
 <div class="overlay" id="tutorialOverlay" aria-hidden="true">

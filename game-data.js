@@ -134,6 +134,10 @@ function progressLine(cur, target){
 function buildAchievements(){
   const list = [];
   const add = (a) => list.push(a);
+  const NPS_MINOR = 1.004;
+  const NPS_MAJOR = 1.006;
+  const CLICK_MINOR = 1.004;
+  const CLICK_MAJOR = 1.006;
 
   const makeTiered = ({
     idPrefix,
@@ -141,17 +145,18 @@ function buildAchievements(){
     descPrefix,
     kind,
     thresholds,
+    mult,
     mults,
     valueFn
   }) => {
     thresholds.forEach((target, i) => {
-      const mult = mults[i];
+      const reward = (mults && mults[i] !== undefined) ? mults[i] : mult;
       add({
         id: `${idPrefix}_${i}`,
         name: `${namePrefix} ${i + 1}`,
         desc: `${descPrefix} ${fmtInt(target)}.`,
         kind,
-        mult,
+        mult: reward,
         target,
         unlocked: (s) => valueFn(s) >= target,
         progress: (s) => progressLine(valueFn(s), target)
@@ -165,7 +170,7 @@ function buildAchievements(){
     descPrefix: "Reach lifetime notes",
     kind: "nps",
     thresholds: [1e3, 1e5, 1e7, 1e9, 1e11, 1e13],
-    mults: [1.004, 1.005, 1.006, 1.008, 1.010, 1.012],
+    mult: NPS_MINOR,
     valueFn: (s) => s.lifetimeNotes || 0
   });
 
@@ -175,7 +180,7 @@ function buildAchievements(){
     descPrefix: "Reach run notes",
     kind: "click",
     thresholds: [5e4, 2e5, 1e6, 5e6, 2e7],
-    mults: [1.004, 1.005, 1.006, 1.007, 1.009],
+    mult: CLICK_MINOR,
     valueFn: (s) => s.runNotes || 0
   });
 
@@ -185,7 +190,7 @@ function buildAchievements(){
     descPrefix: "Reach total clicks",
     kind: "click",
     thresholds: [100, 1000, 10000, 50000, 200000],
-    mults: [1.004, 1.005, 1.006, 1.007, 1.009],
+    mult: CLICK_MINOR,
     valueFn: (s) => s.stats?.clicks || 0
   });
 
@@ -195,7 +200,7 @@ function buildAchievements(){
     descPrefix: "Own instruments (total)",
     kind: "nps",
     thresholds: [25, 100, 250, 600, 1200],
-    mults: [1.004, 1.005, 1.006, 1.007, 1.009],
+    mult: NPS_MINOR,
     valueFn: (s) => BUILDINGS.reduce((a,b)=>a+(s.owned?.[b.id]||0), 0)
   });
 
@@ -205,7 +210,7 @@ function buildAchievements(){
     descPrefix: "Hold Ink",
     kind: "click",
     thresholds: [10, 100, 500, 2000],
-    mults: [1.003, 1.004, 1.005, 1.007],
+    mult: CLICK_MINOR,
     valueFn: (s) => s.ink || 0
   });
 
@@ -215,7 +220,7 @@ function buildAchievements(){
     descPrefix: "Earn patrons (lifetime)",
     kind: "nps",
     thresholds: [1, 5, 20, 60],
-    mults: [1.004, 1.005, 1.007, 1.010],
+    mult: NPS_MAJOR,
     valueFn: (s) => s.patronsEver || 0
   });
 
@@ -224,8 +229,8 @@ function buildAchievements(){
     namePrefix: "Technique Chain",
     descPrefix: "Purchase baton techniques",
     kind: "click",
-    thresholds: [1, 3, 6],
-    mults: [1.004, 1.006, 1.010],
+    thresholds: [1, 3, 6, 8, 10],
+    mult: CLICK_MAJOR,
     valueFn: (s) => countPurchased(s.batonUpgrades)
   });
 
@@ -235,25 +240,150 @@ function buildAchievements(){
     descPrefix: "Purchase facility upgrades",
     kind: "nps",
     thresholds: [3, 10, 20, 35],
-    mults: [1.004, 1.006, 1.008, 1.011],
+    mult: NPS_MAJOR,
     valueFn: (s) => countPurchased(s.facility?.purchasedUpgrades)
   });
 
+  makeTiered({
+    idPrefix: "ach_batons_owned",
+    namePrefix: "Baton Stockpile",
+    descPrefix: "Own Conductor Batons",
+    kind: "click",
+    thresholds: [10, 50, 150, 400, 900],
+    mult: CLICK_MINOR,
+    valueFn: (s) => s.batonOwned || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_ink_earned",
+    namePrefix: "Ink Ledger",
+    descPrefix: "Earn total Ink",
+    kind: "click",
+    thresholds: [50, 500, 5000, 50000],
+    mult: CLICK_MINOR,
+    valueFn: (s) => s.stats?.inkEarned || 0
+  });
+
+  makeTiered({
+    idPrefix: "ach_archive",
+    namePrefix: "Archive Scholar",
+    descPrefix: "Purchase Archive upgrades",
+    kind: "nps",
+    thresholds: [2, 5, 9, 12, 14],
+    mult: NPS_MINOR,
+    valueFn: (s) => countPurchased(s.inkUpgrades)
+  });
+
+  makeTiered({
+    idPrefix: "ach_synergy",
+    namePrefix: "Synergy Architect",
+    descPrefix: "Purchase synergies",
+    kind: "nps",
+    thresholds: [1, 3, 6, 10],
+    mult: NPS_MAJOR,
+    valueFn: (s) => countPurchased(s.synergyUpgrades)
+  });
+
+  makeTiered({
+    idPrefix: "ach_note_stage",
+    namePrefix: "Note Evolution",
+    descPrefix: "Unlock note stage",
+    kind: "click",
+    thresholds: [1, 2, 3, 4, 5, 6],
+    mult: CLICK_MAJOR,
+    valueFn: (s) => s.noteStageIdx || 0
+  });
+
   const woodwinds = BUILDINGS.filter(b => b.family === "Winds").map(b => b.id);
+  const brass = BUILDINGS.filter(b => b.family === "Brass").map(b => b.id);
+  const strings = BUILDINGS.filter(b => b.family === "Strings").map(b => b.id);
+  const percussion = BUILDINGS.filter(b => b.family === "Perc").map(b => b.id);
   const windThresholds = [1, 10, 25, 50, 100];
-  const windMults = [1.010, 1.012, 1.014, 1.017, 1.020];
-  windThresholds.forEach((target, i) => {
+  windThresholds.forEach((target) => {
     add({
       id: `ach_woodwind_all_${target}`,
       name: `Woodwind Corps ${target}`,
       desc: `Own ${target} of each woodwind instrument.`,
       kind: "nps",
-      mult: windMults[i],
+      mult: NPS_MAJOR,
       target,
       unlocked: (s) => woodwinds.every(id => (s.owned?.[id] || 0) >= target),
       progress: (s) => {
         const minOwned = woodwinds.reduce((m,id)=>Math.min(m, s.owned?.[id] || 0), Number.POSITIVE_INFINITY);
         return progressLine(minOwned, target);
+      }
+    });
+  });
+
+  [1, 5, 15, 35, 75].forEach((target) => {
+    add({
+      id: `ach_brass_all_${target}`,
+      name: `Brass Line ${target}`,
+      desc: `Own ${target} of each brass instrument.`,
+      kind: "nps",
+      mult: NPS_MAJOR,
+      target,
+      unlocked: (s) => brass.every(id => (s.owned?.[id] || 0) >= target),
+      progress: (s) => {
+        const minOwned = brass.reduce((m,id)=>Math.min(m, s.owned?.[id] || 0), Number.POSITIVE_INFINITY);
+        return progressLine(minOwned, target);
+      }
+    });
+  });
+
+  [1, 5, 15, 35, 75].forEach((target) => {
+    add({
+      id: `ach_strings_all_${target}`,
+      name: `String Choir ${target}`,
+      desc: `Own ${target} of each string instrument.`,
+      kind: "nps",
+      mult: NPS_MAJOR,
+      target,
+      unlocked: (s) => strings.every(id => (s.owned?.[id] || 0) >= target),
+      progress: (s) => {
+        const minOwned = strings.reduce((m,id)=>Math.min(m, s.owned?.[id] || 0), Number.POSITIVE_INFINITY);
+        return progressLine(minOwned, target);
+      }
+    });
+  });
+
+  [1, 10, 25, 50, 100].forEach((target) => {
+    add({
+      id: `ach_perc_all_${target}`,
+      name: `Percussion Core ${target}`,
+      desc: `Own ${target} of each percussion instrument.`,
+      kind: "nps",
+      mult: NPS_MAJOR,
+      target,
+      unlocked: (s) => percussion.every(id => (s.owned?.[id] || 0) >= target),
+      progress: (s) => {
+        const minOwned = percussion.reduce((m,id)=>Math.min(m, s.owned?.[id] || 0), Number.POSITIVE_INFINITY);
+        return progressLine(minOwned, target);
+      }
+    });
+  });
+
+  const allFamilies = [
+    { ids: woodwinds, key: "Winds" },
+    { ids: brass, key: "Brass" },
+    { ids: strings, key: "Strings" },
+    { ids: percussion, key: "Perc" },
+  ];
+  [5, 20, 60].forEach((target) => {
+    add({
+      id: `ach_sections_balanced_${target}`,
+      name: `Balanced Sections ${target}`,
+      desc: `Own ${target} total instruments in each section.`,
+      kind: "nps",
+      mult: NPS_MAJOR,
+      target,
+      unlocked: (s) => allFamilies.every(f => f.ids.reduce((a,id)=>a + (s.owned?.[id] || 0), 0) >= target),
+      progress: (s) => {
+        const minSection = allFamilies.reduce((m,f) => {
+          const count = f.ids.reduce((a,id)=>a + (s.owned?.[id] || 0), 0);
+          return Math.min(m, count);
+        }, Number.POSITIVE_INFINITY);
+        return progressLine(minSection, target);
       }
     });
   });
@@ -324,16 +454,18 @@ function buildInkUpgrades(){
   const ups = [];
 
   const npsSteps = [
-    {cost:10,  mult:1.001, name:"Margin Notes", desc:"+0.1% Notes/sec permanently"},
-    {cost:25,  mult:1.002, name:"Clean Copy",   desc:"+0.2% Notes/sec permanently"},
-    {cost:60,  mult:1.005, name:"Illuminated Initials", desc:"+0.5% Notes/sec permanently"},
-    {cost:140, mult:1.01,  name:"Scribe Guild", desc:"+1% Notes/sec permanently"},
-    {cost:320, mult:1.02,  name:"Royal Archive", desc:"+2% Notes/sec permanently"},
-    {cost:800, mult:1.05,  name:"Endowment", desc:"+5% Notes/sec permanently"},
+    {cost:50,   mult:1.005, name:"Margin Notes",         desc:"+0.5% Notes/sec permanently"},
+    {cost:100,  mult:1.006, name:"Clean Copy",           desc:"+0.6% Notes/sec permanently"},
+    {cost:250,  mult:1.008, name:"Illuminated Initials", desc:"+0.8% Notes/sec permanently"},
+    {cost:500,  mult:1.010, name:"Scribe Guild",         desc:"+1% Notes/sec permanently"},
+    {cost:1000, mult:1.012, name:"Royal Archive",        desc:"+1.2% Notes/sec permanently"},
+    {cost:2500, mult:1.015, name:"Endowment",            desc:"+1.5% Notes/sec permanently"},
+    {cost:5000, mult:1.020, name:"Grand Conservatory",   desc:"+2% Notes/sec permanently"},
   ];
   npsSteps.forEach((s, idx)=>{
     ups.push({
       id:`iu_nps_${idx}`,
+      group: "nps",
       name:s.name,
       desc:s.desc,
       costInk:s.cost,
@@ -343,14 +475,18 @@ function buildInkUpgrades(){
   });
 
   const clickFromNpsSteps = [
-    {cost:25,  rate:0.001, name:"Quick Quill",  desc:"Each click gains +0.1% of your current Notes/sec"},
-    {cost:90,  rate:0.002, name:"Scribe Reflex",desc:"Each click gains +0.2% of your current Notes/sec"},
-    {cost:260, rate:0.005, name:"Ink & Tempo",  desc:"Each click gains +0.5% of your current Notes/sec"},
-    {cost:900, rate:0.01,  name:"Virtuoso Penmanship", desc:"Each click gains +1% of your current Notes/sec"},
+    {cost:50,   rate:0.0010, name:"Quick Quill",          desc:"Each click gains +0.1% of your current Notes/sec"},
+    {cost:100,  rate:0.0015, name:"Scribe Reflex",        desc:"Each click gains +0.15% of your current Notes/sec"},
+    {cost:250,  rate:0.0020, name:"Ink & Tempo",          desc:"Each click gains +0.2% of your current Notes/sec"},
+    {cost:500,  rate:0.0030, name:"Virtuoso Penmanship",  desc:"Each click gains +0.3% of your current Notes/sec"},
+    {cost:1000, rate:0.0040, name:"Counterpoint Script",  desc:"Each click gains +0.4% of your current Notes/sec"},
+    {cost:2500, rate:0.0050, name:"Orchestration Notes",  desc:"Each click gains +0.5% of your current Notes/sec"},
+    {cost:5000, rate:0.0070, name:"Maestro Margin",       desc:"Each click gains +0.7% of your current Notes/sec"},
   ];
   clickFromNpsSteps.forEach((s, idx)=>{
     ups.push({
       id:`iu_clicknps_${idx}`,
+      group: "clicknps",
       name:s.name,
       desc:s.desc,
       costInk:s.cost,
@@ -360,14 +496,18 @@ function buildInkUpgrades(){
   });
 
   const clickMultSteps = [
-    {cost:40,  mult:1.02, name:"Sharper Quill", desc:"+2% click power permanently"},
-    {cost:150, mult:1.05, name:"Steel Nib",     desc:"+5% click power permanently"},
-    {cost:600, mult:1.12, name:"Gold Nib",      desc:"+12% click power permanently"},
-    {cost:2500,mult:1.30, name:"Mythic Pen",    desc:"+30% click power permanently"},
+    {cost:75,   mult:1.020, name:"Sharper Quill",      desc:"+2% click power permanently"},
+    {cost:150,  mult:1.025, name:"Steel Nib",          desc:"+2.5% click power permanently"},
+    {cost:300,  mult:1.030, name:"Gold Nib",           desc:"+3% click power permanently"},
+    {cost:600,  mult:1.040, name:"Ivory Baton Grip",   desc:"+4% click power permanently"},
+    {cost:1200, mult:1.050, name:"Conductor Focus",    desc:"+5% click power permanently"},
+    {cost:3000, mult:1.070, name:"Virtuoso Wrist",     desc:"+7% click power permanently"},
+    {cost:7000, mult:1.100, name:"Mythic Pen",         desc:"+10% click power permanently"},
   ];
   clickMultSteps.forEach((s, idx)=>{
     ups.push({
       id:`iu_clickmult_${idx}`,
+      group: "clickmult",
       name:s.name,
       desc:s.desc,
       costInk:s.cost,

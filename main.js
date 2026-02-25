@@ -88,13 +88,59 @@ const {
   const now = ()=>Date.now();
   const fmtInt = (n) => Math.floor(Math.max(0, n || 0)).toLocaleString();
 
-  function toast(msg){
-    const t = document.createElement("div");
-    t.className = "t";
+  const toastRegistry = new Map();
+  function toast(msg, opts = {}){
+    const wrap = $("#toast");
+    if (!wrap) return;
+
+    const key = opts.key || null;
+    const ttl = Math.max(900, opts.ttl ?? 2200);
+    const fadeMs = Math.max(180, Math.min(500, opts.fadeMs ?? 320));
+    const maxStack = window.matchMedia("(max-width: 980px)").matches ? 2 : 4;
+
+    let t = key ? toastRegistry.get(key)?.el : null;
+    if (!t){
+      t = document.createElement("div");
+      t.className = "t";
+      wrap.appendChild(t);
+      if (key) toastRegistry.set(key, { el: t, fadeTimer: null, removeTimer: null });
+    }
+
     t.textContent = msg;
-    $("#toast").appendChild(t);
-    setTimeout(()=>{ t.style.opacity="0"; t.style.transform="translateY(4px)"; t.style.transition="all .35s ease"; }, 2600);
-    setTimeout(()=>t.remove(), 3200);
+    t.style.opacity = "1";
+    t.style.transform = "translateY(0)";
+    t.style.transition = "";
+
+    const rec = key ? toastRegistry.get(key) : { el: t, fadeTimer: null, removeTimer: null };
+    if (rec.fadeTimer) clearTimeout(rec.fadeTimer);
+    if (rec.removeTimer) clearTimeout(rec.removeTimer);
+
+    rec.fadeTimer = setTimeout(()=>{
+      t.style.opacity = "0";
+      t.style.transform = "translateY(4px)";
+      t.style.transition = `all ${fadeMs}ms ease`;
+    }, Math.max(200, ttl - fadeMs));
+
+    rec.removeTimer = setTimeout(()=>{
+      if (key && toastRegistry.get(key)?.el === t) toastRegistry.delete(key);
+      if (t.parentNode) t.remove();
+    }, ttl);
+
+    if (key) toastRegistry.set(key, rec);
+
+    while (wrap.children.length > maxStack){
+      const first = wrap.firstElementChild;
+      if (!first) break;
+      for (const [k, v] of toastRegistry.entries()){
+        if (v.el === first){
+          if (v.fadeTimer) clearTimeout(v.fadeTimer);
+          if (v.removeTimer) clearTimeout(v.removeTimer);
+          toastRegistry.delete(k);
+          break;
+        }
+      }
+      first.remove();
+    }
   }
 
   // ---------- Real Note Art (from /assets) ----------
@@ -765,7 +811,7 @@ const {
     S.stats.buildingsBought += k;
     S.stats.inkEarned += k;
 
-    toast(`Bought ${k} × ${b.name} (+${k} Ink).`);
+    toast(`Bought ${k} × ${b.name} (+${k} Ink).`, { key:`buy:${b.id}`, ttl: 2100 });
     return true;
   }
 
@@ -785,7 +831,7 @@ const {
     S.stats.inkEarned += k;
 
     addRecentUnlock("Baton", `Bought ${k} baton${k===1?"":"s"}`);
-    toast(`Bought ${k} × Baton (+${fmtExact(k * BATON_ITEM.basePer, false)} base click, +${k} Ink).`);
+    toast(`Bought ${k} × Baton (+${fmtExact(k * BATON_ITEM.basePer, false)} base click, +${k} Ink).`, { key:"buy:baton", ttl: 2100 });
     return true;
   }
 
@@ -979,6 +1025,39 @@ const {
     updateFloatingControls();
   }
 
+  const INK_TAB_LABELS = {
+    nps: "Notes/sec",
+    clicknps: "Click % of NPS",
+    clickmult: "Click Power",
+  };
+  function inkUpgradeCategory(u){
+    if (u.group) return u.group;
+    if (u.id.startsWith("iu_clicknps_")) return "clicknps";
+    if (u.id.startsWith("iu_clickmult_")) return "clickmult";
+    return "nps";
+  }
+  function normalizeInkTab(tab){
+    return INK_TAB_LABELS[tab] ? tab : "nps";
+  }
+  function syncInkTabButtons(){
+    const active = normalizeInkTab(S.ui.inkTab);
+    $$("button[data-inktab]").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("data-inktab") === active);
+    });
+  }
+  function setInkTab(tab){
+    const next = normalizeInkTab(tab);
+    if (S.ui.inkTab === next){
+      syncInkTabButtons();
+      return;
+    }
+    S.ui.inkTab = next;
+    syncInkTabButtons();
+    renderInkUpgrades();
+    refreshDynamicShopStates();
+    save(false);
+  }
+
   function updateFloatingControls(){
     const mainActive = (S.ui.tab === "main") && !!S.ui.hasStarted && !!S.ui.tutorialCompleted && !tutOverlay.classList.contains("show");
     const mobile = $("#mobileActionBar");
@@ -1009,9 +1088,68 @@ const {
     return f ? f.label : familyId;
   }
 
+  const achievementBanner = $("#achievementBanner");
+  const achievementBannerName = $("#achievementBannerName");
+  const achievementBannerBonus = $("#achievementBannerBonus");
+  let achievementBannerActive = false;
+  const achievementBannerQueue = [];
+
+  function achievementCategory(a){
+    const id = a?.id || "";
+    if (id.startsWith("ach_woodwind_all_") || id.startsWith("ach_brass_all_") || id.startsWith("ach_strings_all_") || id.startsWith("ach_perc_all_") || id.startsWith("ach_sections_balanced_")){
+      return "Section Sets";
+    }
+    if (id.startsWith("ach_baton") || id.startsWith("ach_batons_owned") || id.startsWith("ach_note_stage")){
+      return "Baton Progression";
+    }
+    if (id.startsWith("ach_ink") || id.startsWith("ach_archive")){
+      return "Ink & Archive";
+    }
+    if (id.startsWith("ach_patrons") || id.startsWith("ach_facility_up")){
+      return "Prestige & Venue";
+    }
+    if (id.startsWith("ach_synergy")){
+      return "Synergies";
+    }
+    return "Core Milestones";
+  }
+
   function achievementBonusText(a){
     const pct = ((a.mult - 1) * 100).toFixed(2);
     return a.kind === "click" ? `+${pct}% click power` : `+${pct}% Notes/sec`;
+  }
+
+  function playNextAchievementBanner(){
+    if (achievementBannerActive) return;
+    if (!achievementBanner || achievementBannerQueue.length === 0) return;
+    const a = achievementBannerQueue.shift();
+    if (!a) return;
+
+    achievementBannerActive = true;
+    achievementBannerName.textContent = a.name;
+    achievementBannerBonus.textContent = achievementBonusText(a);
+
+    achievementBanner.hidden = false;
+    achievementBanner.classList.remove("show");
+    void achievementBanner.offsetWidth;
+    achievementBanner.classList.add("show");
+
+    const liveMs = S.settings.reduceMotion ? 1400 : 2400;
+    const outMs = S.settings.reduceMotion ? 100 : 260;
+    setTimeout(()=>{
+      achievementBanner.classList.remove("show");
+      setTimeout(()=>{
+        if (!achievementBanner.classList.contains("show")) achievementBanner.hidden = true;
+        achievementBannerActive = false;
+        playNextAchievementBanner();
+      }, outMs);
+    }, liveMs);
+  }
+
+  function queueAchievementBanner(a){
+    if (!a) return;
+    achievementBannerQueue.push(a);
+    playNextAchievementBanner();
   }
 
   function applyAchievementReward(a){
@@ -1037,11 +1175,7 @@ const {
 
     if (unlockedNow.length > 0){
       if (showToast){
-        if (unlockedNow.length === 1){
-          toast(`Achievement: ${unlockedNow[0].name}`);
-        } else {
-          toast(`Achievements unlocked: ${unlockedNow.length}`);
-        }
+        unlockedNow.forEach(a => queueAchievementBanner(a));
       }
       save(false);
     }
@@ -1687,7 +1821,19 @@ const {
   function renderInkUpgrades(){
     const el = $("#inkUpgradeList");
     el.innerHTML = "";
-    for (const u of INK_UPGRADES){
+    S.ui.inkTab = normalizeInkTab(S.ui.inkTab);
+    syncInkTabButtons();
+    const activeTab = S.ui.inkTab;
+    const filtered = INK_UPGRADES.filter(u => inkUpgradeCategory(u) === activeTab);
+    const unlockedInTab = filtered.reduce((n, u) => n + (S.inkUpgrades?.[u.id] ? 1 : 0), 0);
+
+    const meta = document.createElement("div");
+    meta.className = "muted smallSans";
+    meta.style.margin = "0 2px 6px";
+    meta.textContent = `${INK_TAB_LABELS[activeTab]} • ${unlockedInTab} / ${filtered.length} purchased`;
+    el.appendChild(meta);
+
+    for (const u of filtered){
       const owned = !!S.inkUpgrades[u.id];
       const afford = S.ink >= u.costInk;
       const enabled = (!owned && afford && !isBlocked());
@@ -1925,7 +2071,42 @@ const {
     $("#achBonusLine").textContent =
       `Bonuses: x${(S.achNpsMult || 1).toFixed(3)} Notes/sec • x${(S.achClickMult || 1).toFixed(3)} Click`;
 
+    const categoryOrder = {
+      "Core Milestones": 0,
+      "Baton Progression": 1,
+      "Ink & Archive": 2,
+      "Synergies": 3,
+      "Prestige & Venue": 4,
+      "Section Sets": 5
+    };
+    const ordered = ACHIEVEMENTS.slice().sort((a, b) => {
+      const ca = achievementCategory(a);
+      const cb = achievementCategory(b);
+      const oa = categoryOrder[ca] ?? 99;
+      const ob = categoryOrder[cb] ?? 99;
+      if (oa !== ob) return oa - ob;
+      return a.name.localeCompare(b.name);
+    });
+
+    const catTotals = {};
+    const catUnlocked = {};
     for (const a of ACHIEVEMENTS){
+      const cat = achievementCategory(a);
+      catTotals[cat] = (catTotals[cat] || 0) + 1;
+      if (S.achievements?.[a.id]) catUnlocked[cat] = (catUnlocked[cat] || 0) + 1;
+    }
+
+    let currentCat = "";
+    for (const a of ordered){
+      const cat = achievementCategory(a);
+      if (cat !== currentCat){
+        currentCat = cat;
+        const h = document.createElement("div");
+        h.className = "achGroupLabel";
+        h.innerHTML = `<span>${cat}</span><span class="tag">${catUnlocked[cat] || 0} / ${catTotals[cat] || 0}</span>`;
+        el.appendChild(h);
+      }
+
       const owned = !!S.achievements?.[a.id];
       const unlocked = !!a.unlocked(S);
       const status = upgradeTagState({
@@ -2117,6 +2298,9 @@ const {
   });
   document.querySelectorAll("button[data-dbuymode]").forEach(btn=>{
     btn.addEventListener("click", ()=> setBuyMode(btn.getAttribute("data-dbuymode")));
+  });
+  document.querySelectorAll("button[data-inktab]").forEach(btn=>{
+    btn.addEventListener("click", ()=> setInkTab(btn.getAttribute("data-inktab")));
   });
   const mQuickNote = $("#mQuickNoteBtn");
   if (mQuickNote){

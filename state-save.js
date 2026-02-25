@@ -55,6 +55,7 @@ function createDefaultState(buildings, nowFn){
       facilityUpOpen: false,
       facilityNextOpen: false,
       batonOpen: false,
+      inkTab: "nps",
       hasStarted: false,
       tutorialCompleted: false,
       tutorialStep: 0,
@@ -110,6 +111,7 @@ function normalizeLoadedState(s, defaults, buildings, batonClickMultForState){
   if (!s.ui.familyOpen) s.ui.familyOpen = {};
   if (!s.ui.instrumentUpOpen) s.ui.instrumentUpOpen = {};
   if (!s.ui.synergyOpen) s.ui.synergyOpen = {};
+  if (!s.ui.inkTab) s.ui.inkTab = "nps";
   if (!s.ui.tab) s.ui.tab = "main";
   if (!s.ui.lastTab) s.ui.lastTab = (s.ui.tab && s.ui.tab !== "start") ? s.ui.tab : "main";
 
