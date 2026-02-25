@@ -428,56 +428,54 @@
     }
 
     /* ---- Start Screen (REAL SCREEN, not overlay) ---- */
+    body.start-screen header{display:none}
+    body.start-screen #mobileActionBar,
+    body.start-screen #desktopBuyDock{display:none !important}
+    body.start-screen main{
+      max-width:none;
+      margin:0;
+      padding:0;
+    }
     .startWrap{
+      min-height:100vh;
+      width:100%;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:18px;
-      min-height: calc(100vh - 110px);
-    }
-    .startCard{
-      width:min(720px, calc(100% - 24px));
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(35,29,24,.25);
-      border-radius: 22px;
-      box-shadow: 0 24px 70px rgba(0,0,0,.35);
-      padding:18px 18px 16px;
-      text-align:center;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    }
-    .startTitle{
-      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
-      font-size:26px;
-      letter-spacing:.4px;
-      margin:0 0 6px 0;
-      color: rgba(43,36,30,.95);
-    }
-    .startSub{
-      margin:0 0 14px 0;
-      color: rgba(90,79,69,.95);
-      font-size:13px;
-      line-height:1.35;
+      padding:0;
+      position:relative;
+      background: url("assets/screen-start.png") center/cover no-repeat;
     }
     .startBtn{
-      font-size:14px !important;
-      padding:12px 16px !important;
-      border-radius: 999px !important;
+      position:absolute;
+      left:50%;
+      top:53%;
+      transform: translate(-50%, -50%);
+      padding:0 !important;
+      margin:0;
+      border:none;
+      background: transparent !important;
+      box-shadow:none;
+      border-radius:0 !important;
+      line-height:0;
     }
-    .centerButtons{
-      display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
+    .startBtn:hover{
+      background: transparent !important;
+      border:none;
     }
-    .sub, .pill, .card h2, .tag, .cost, .smallSans, .footer, button, details > summary, .settingRow, .startSub{
+    .startBtn img{
+      width:min(480px, 92vw);
+      height:auto;
+      display:block;
+      filter: drop-shadow(0 10px 26px rgba(0,0,0,.40));
+    }
+    .sub, .pill, .card h2, .tag, .cost, .smallSans, .footer, button, details > summary, .settingRow{
       font-family: var(--font-ui) !important;
     }
-    h1, .startTitle{
+    h1{
       font-family: var(--font-display) !important;
     }
     h1{font-size:22px; letter-spacing:.2px}
-    .startTitle{font-size:30px}
     .emptyState{
       border:1px dashed rgba(35,29,24,.24);
       border-radius:12px;
@@ -497,6 +495,18 @@
       font-family:var(--font-ui);
       font-weight:900;
       margin-bottom:6px;
+    }
+    .venuePreview{
+      width:100%;
+      height:220px;
+      border-radius:14px;
+      border:1px solid rgba(35,29,24,.24);
+      background-color: rgba(16,12,10,.28);
+      background-position:center;
+      background-size:cover;
+      background-repeat:no-repeat;
+      box-shadow: 0 14px 34px rgba(0,0,0,.22);
+      margin-bottom:10px;
     }
     .mobileBar{
       position:fixed;
@@ -567,6 +577,7 @@
     @media (max-width: 980px){
       body{padding-bottom:86px;}
       .desktopBuyDock{display:none;}
+      .venuePreview{height:170px;}
     }
     @media (min-width: 981px){
       .mobileBar{display:none;}
@@ -601,27 +612,11 @@
 <main>
   <!-- START SCREEN (real screen) -->
   <div class="tab" id="tab-start" hidden>
-    <section class="card">
-      <h2><span>Welcome</span><span class="tag">First Play</span></h2>
-      <div class="content">
-        <div class="startWrap">
-          <div class="startCard">
-            <h2 class="startTitle">Score Order Idle</h2>
-            <p class="startSub">
-              Conduct with your baton. Build an orchestra. Earn Ink (permanent).<br/>
-              When you’re ready, <b>Take a bow</b> to court Patrons and begin again—stronger.
-            </p>
-            <div class="centerButtons">
-              <button class="primary startBtn" id="startBtn">Start</button>
-              <button id="startSkipBtn">Skip tutorial</button>
-            </div>
-            <div class="muted" style="margin-top:12px; font-size:12px;">
-              This screen shows on your first playthrough (or after Hard Reset).
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="startWrap">
+      <button class="startBtn" id="startBtn" aria-label="Start">
+        <img src="assets/button-start.png" alt="Start" draggable="false"/>
+      </button>
+    </div>
   </div>
 
   <div class="tab" id="tab-main">
@@ -690,7 +685,7 @@
             <button id="buy1"  class="active" data-buymode="1">x1</button>
             <button id="buy10" data-buymode="10">x10</button>
             <button id="buy100" data-buymode="100">x100</button>
-            <button id="buyMax" data-buymode="max">Max</button>
+            <button id="buyMax" data-buymode="max">Next</button>
           </span>
         </h2>
         <div class="content">
@@ -777,6 +772,7 @@
             <div class="cost mono" id="facilityEarned">Earned: —</div>
           </div>
         </div>
+        <div class="venuePreview" id="facilityPreview" role="img" aria-label="Current venue"></div>
 
         <details class="dropdown" id="facilityUpgradesDetails">
           <summary>
@@ -871,13 +867,13 @@
   <button id="mBuy10" data-mbuymode="10">x10</button>
   <button class="primary noteDockBtn" id="mQuickNoteBtn" aria-label="Tap note"></button>
   <button id="mBuy100" data-mbuymode="100">x100</button>
-  <button id="mBuyMax" data-mbuymode="max">Max</button>
+  <button id="mBuyMax" data-mbuymode="max">Next</button>
 </div>
 <div class="desktopBuyDock" id="desktopBuyDock" hidden>
   <button id="dBuy1" data-dbuymode="1">x1</button>
   <button id="dBuy10" data-dbuymode="10">x10</button>
   <button id="dBuy100" data-dbuymode="100">x100</button>
-  <button id="dBuyMax" data-dbuymode="max">Max</button>
+  <button id="dBuyMax" data-dbuymode="max">Next</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1028,13 +1024,28 @@
   };
 
   const BATON_UPGRADES = [
-    { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.35.",      costNotes: 85,      requireStage: 0, setStage: 1, clickMult: 1.35 },
-    { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.55.",        costNotes: 650,     requireStage: 1, setStage: 2, clickMult: 1.55 },
-    { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.85.",   costNotes: 5200,    requireStage: 2, setStage: 3, clickMult: 1.85 },
-    { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x2.20.",     costNotes: 42000,   requireStage: 3, setStage: 4, clickMult: 2.20 },
-    { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x2.60.",    costNotes: 320000,  requireStage: 4, setStage: 5, clickMult: 2.60 },
-    { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x3.00.",      costNotes: 2200000, requireStage: 5, setStage: 6, clickMult: 3.00 },
+    { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.50.",         costNotes: 85,         requireBatons: 0,   setStage: 1, clickMult: 1.50 },
+    { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.25.",           costNotes: 650,        requireBatons: 10,  setStage: 2, clickMult: 1.25 },
+    { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.10.",      costNotes: 5200,       requireBatons: 25,  setStage: 3, clickMult: 1.10 },
+    { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x1.10.",        costNotes: 42000,      requireBatons: 50,  setStage: 4, clickMult: 1.10 },
+    { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x1.10.",       costNotes: 320000,     requireBatons: 100, setStage: 5, clickMult: 1.10 },
+    { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x1.10.",         costNotes: 2200000,    requireBatons: 200, setStage: 6, clickMult: 1.10 },
+    { id:"bt_legato",      name:"Legato Arc",             desc:"Advanced baton flow. Baton click x1.10.",             costNotes: 12000000,   requireBatons: 325,                    clickMult: 1.10 },
+    { id:"bt_marcato",     name:"Marcato Strike",         desc:"Accented strike control. Baton click x1.10.",         costNotes: 70000000,   requireBatons: 500,                    clickMult: 1.10 },
+    { id:"bt_prestissimo", name:"Prestissimo Pulse",      desc:"Rapid precision control. Baton click x1.10.",         costNotes: 420000000,  requireBatons: 750,                    clickMult: 1.10 },
+    { id:"bt_maestro",     name:"Maestro's Signature",    desc:"Signature conducting power. Baton click x1.10.",      costNotes: 2600000000, requireBatons: 1100,                   clickMult: 1.10 },
   ];
+
+  function hasBatonTechnique(s, id){
+    return !!(s?.batonUpgrades && (s.batonUpgrades[id] || 0) > 0);
+  }
+
+  function batonUpgradeUnlockedInState(s, u){
+    const idx = BATON_UPGRADES.findIndex(x => x.id === u.id);
+    if (idx < 0) return false;
+    const prevOk = (idx === 0) || hasBatonTechnique(s, BATON_UPGRADES[idx - 1].id);
+    return prevOk && ((s.batonOwned || 0) >= (u.requireBatons || 0));
+  }
 
   function batonBaseClick(){
     return batonBaseClickForState(S);
@@ -1394,6 +1405,16 @@
     { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },
     { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },
   ];
+  const FACILITY_PREVIEW_IMAGE = {
+    shed: "assets/venue-shed-mildewy.png",
+    garage: "assets/venue-garage-car-1.png",
+    bandroom: "assets/venue-room-band.png",
+    gym: "assets/venue-gymnasium.png",
+    pac: "assets/venue-pac-school.png",
+    church: "assets/venue-church-stone.png",
+    hall: "assets/venue-hall-concert.png",
+    famous: "assets/venue-venue-famous.png",
+  };
 
   const FACILITY_UPGRADE_TEMPLATES = [
     { key:"stands",     name:"Engraved Stands",         kind:"nps"  },
@@ -1658,6 +1679,7 @@
     buyMode: "1",
     ui: {
       tab: "main",
+      lastTab: "main",
       familyOpen: {},
       instrumentUpOpen: {},
       synergyOpen: {},
@@ -1732,6 +1754,7 @@
       if (!s.ui.instrumentUpOpen) s.ui.instrumentUpOpen = {};
       if (!s.ui.synergyOpen) s.ui.synergyOpen = {};
       if (!s.ui.tab) s.ui.tab = "main";
+      if (!s.ui.lastTab) s.ui.lastTab = (s.ui.tab && s.ui.tab !== "start") ? s.ui.tab : "main";
 
       if (s.ui.hasStarted === undefined) s.ui.hasStarted = false;
       if (s.ui.tutorialCompleted === undefined) s.ui.tutorialCompleted = false;
@@ -1763,9 +1786,13 @@
 
       if (s.noteStageIdx === undefined) s.noteStageIdx = 0;
       if (!s.batonUpgrades) s.batonUpgrades = {};
+      for (const k of Object.keys(s.batonUpgrades)){
+        const raw = s.batonUpgrades[k];
+        s.batonUpgrades[k] = (raw && raw > 0) ? 1 : 0;
+      }
       if (s.batonOwned === undefined) s.batonOwned = 0;
       if (s.batonBaseExtra === undefined) s.batonBaseExtra = 0;
-      if (s.batonClickMult === undefined) s.batonClickMult = 1;
+      s.batonClickMult = batonClickMultForState(s);
 
       if (s.runNotes === undefined) s.runNotes = 0;
 
@@ -1875,8 +1902,14 @@
       ensure: () => {}
     },
     {
+      title: "Buy Conductor Batons",
+      msg: "Conductor Batons increase your base click power and each Baton also grants +1 Ink.",
+      target: "[data-baton-row='true']",
+      ensure: () => {}
+    },
+    {
       title: "Upgrade your conducting",
-      msg: "Purchase Baton Techniques to upgrade your click power (and change the note symbol).",
+      msg: "Baton Techniques unlock in order as you buy more Batons. They multiply click power and change the note symbol.",
       target: "#batonDropdown summary",
       ensure: () => { $("#batonDropdown").open = true; }
     },
@@ -1970,23 +2003,13 @@
 
   $("#startBtn").addEventListener("click", ()=>{
     S.ui.hasStarted = true;
-    // Always go to main after start
-    setTab("main");
-    // start tutorial unless already completed
+    const resumeTab = (S.ui.lastTab && S.ui.lastTab !== "start") ? S.ui.lastTab : "main";
     if (!S.ui.tutorialCompleted){
       showTutorial();
+    } else {
+      setTab(resumeTab);
+      hideTutorial();
     }
-    save(false);
-    renderAll();
-  });
-
-  $("#startSkipBtn").addEventListener("click", ()=>{
-    S.ui.hasStarted = true;
-    S.ui.tutorialCompleted = true;
-    S.ui.tutorialStep = 0;
-    // Always go to main after skip
-    setTab("main");
-    hideTutorial();
     save(false);
     renderAll();
   });
@@ -2065,10 +2088,40 @@
     return kEst;
   }
 
+  function nextInstrumentUpgradeOwnedTarget(buildingId, owned){
+    let next = Infinity;
+    for (const u of NOTE_UPGRADES){
+      if (u.buildingId !== buildingId) continue;
+      if (u.requireOwned > owned && u.requireOwned < next) next = u.requireOwned;
+    }
+    return Number.isFinite(next) ? next : null;
+  }
+
+  function nextBatonTechniqueOwnedTarget(owned){
+    let next = Infinity;
+    for (const u of BATON_UPGRADES){
+      const req = u.requireBatons || 0;
+      if (req > owned && req < next) next = req;
+    }
+    return Number.isFinite(next) ? next : null;
+  }
+
+  function buyCountForNextMode(b, affordable){
+    const owned = ownedCountForEconomy(b);
+    if (b.id === BATON_ITEM.id){
+      const target = nextBatonTechniqueOwnedTarget(owned);
+      if (target === null) return affordable;
+      return Math.min(Math.max(0, target - owned), affordable);
+    }
+    const target = nextInstrumentUpgradeOwnedTarget(b.id, owned);
+    if (target === null) return affordable;
+    return Math.min(Math.max(0, target - owned), affordable);
+  }
+
   // For x10/x100 modes, buy as many as affordable up to the mode cap.
   function buyCountForMode(b, mode){
     const affordable = maxAffordableCount(b);
-    if (mode === "max") return affordable;
+    if (mode === "max") return buyCountForNextMode(b, affordable);
     if (mode === "100") return Math.min(100, affordable);
     if (mode === "10") return Math.min(10, affordable);
     return Math.min(1, affordable);
@@ -2083,7 +2136,11 @@
   }
 
   function batonClickMultForState(s){
-    return s.batonClickMult || 1;
+    let mult = 1;
+    for (const u of BATON_UPGRADES){
+      if (hasBatonTechnique(s, u.id)) mult *= (u.clickMult || 1);
+    }
+    return +mult.toFixed(6);
   }
 
   function globalNpsMultiplierForState(s){
@@ -2184,9 +2241,11 @@
     S.notes -= cost;
     S.batonOwned = (S.batonOwned || 0) + k;
     S.batonBaseExtra = +(((S.batonBaseExtra || 0) + (k * BATON_ITEM.basePer)).toFixed(4));
+    S.ink += k;
+    S.stats.inkEarned += k;
 
     addRecentUnlock("Baton", `Bought ${k} baton${k===1?"":"s"}`);
-    toast(`Bought ${k} × Baton (+${fmtExact(k * BATON_ITEM.basePer, false)} base click).`);
+    toast(`Bought ${k} × Baton (+${fmtExact(k * BATON_ITEM.basePer, false)} base click, +${k} Ink).`);
     return true;
   }
 
@@ -2242,20 +2301,19 @@
 
     const u = BATON_UPGRADES.find(x=>x.id===id);
     if (!u) return;
-    if (S.batonUpgrades[id]) return;
+    if (hasBatonTechnique(S, id)) return;
 
-    const stageIdx = S.noteStageIdx || 0;
-    if (stageIdx < u.requireStage) return;
+    if (!batonUpgradeUnlockedInState(S, u)) return;
     if (S.notes < u.costNotes) return;
 
     S.notes -= u.costNotes;
-    S.batonUpgrades[id] = true;
+    S.batonUpgrades[id] = 1;
 
-    if (u.setStage !== undefined && u.setStage > stageIdx){
+    if (u.setStage !== undefined && u.setStage > (S.noteStageIdx || 0)){
       S.noteStageIdx = u.setStage;
     }
 
-    S.batonClickMult = +(((S.batonClickMult || 1) * (u.clickMult || 1)).toFixed(6));
+    S.batonClickMult = batonClickMultForState(S);
 
     addRecentUnlock("Technique", u.name);
     toast(`Baton: ${u.name}`);
@@ -2350,6 +2408,8 @@
 
   function setTab(tab){
     S.ui.tab = tab;
+    if (tab !== "start") S.ui.lastTab = tab;
+    document.body.classList.toggle("start-screen", tab === "start");
 
     $("#tab-start").hidden = tab !== "start";
     $("#tab-main").hidden = tab !== "main";
@@ -2403,7 +2463,7 @@
   }
 
   function updateFloatingControls(){
-    const mainActive = (S.ui.tab === "main") && !!S.ui.hasStarted;
+    const mainActive = (S.ui.tab === "main") && !!S.ui.hasStarted && !!S.ui.tutorialCompleted && !tutOverlay.classList.contains("show");
     const mobile = $("#mobileActionBar");
     const desktopDock = $("#desktopBuyDock");
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
@@ -2550,7 +2610,7 @@
 
   function instrumentBuyLabel(mode, k){
     if (mode === "max"){
-      return (k > 0) ? `Buy Max (${k})` : "Buy Max";
+      return (k > 0) ? `Buy Next (${k})` : "Buy Next";
     }
     const target = buyModeTarget(mode);
     if (k > 0 && k < target) return `Buy x${k}`;
@@ -2559,7 +2619,7 @@
 
   function batonBuyLabel(mode, k){
     if (mode === "max"){
-      return (k > 0) ? `Buy Batons (${k})` : "Buy Batons";
+      return (k > 0) ? `Buy Baton Next (${k})` : "Buy Baton Next";
     }
     const target = buyModeTarget(mode);
     if (k > 0 && k < target) return `Buy Baton x${k}`;
@@ -2586,7 +2646,8 @@
       const cost = (k > 0) ? sumCostForK(BATON_ITEM, k) : buildingCostAtOwned(BATON_ITEM, owned);
       const gain = (k > 0 ? k : 1) * BATON_ITEM.basePer;
       const deltaClick = (gain * S.runClickMult * batonClickMult()) * clickScalar;
-      const tip = formatDeltaTip(0, deltaClick);
+      const qty = (k > 0) ? k : 1;
+      const tip = `${formatDeltaTip(0, deltaClick)} • +${qty} Ink`;
 
       batonBtn.textContent = batonBuyLabel(S.buyMode, k);
 
@@ -2644,8 +2705,8 @@
     document.querySelectorAll("button[data-bt]").forEach(btn=>{
       const u = BATON_UPGRADES.find(x => x.id === btn.getAttribute("data-bt"));
       if (!u) return;
-      const owned = !!S.batonUpgrades[u.id];
-      const unlocked = (S.noteStageIdx || 0) >= u.requireStage;
+      const owned = hasBatonTechnique(S, u.id);
+      const unlocked = batonUpgradeUnlockedInState(S, u);
       const afford = S.notes >= u.costNotes;
       const enabled = !blocked && !owned && unlocked && afford;
       const deltaClick = notesPerClick() * ((u.clickMult || 1) - 1);
@@ -2653,7 +2714,12 @@
       let reason = "";
       if (owned) reason = "Already purchased.";
       else if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!unlocked) reason = `Need ${NOTE_STAGES[u.requireStage].label} (current: ${NOTE_STAGES[S.noteStageIdx || 0].label}).`;
+      else if (!unlocked){
+        const idx = BATON_UPGRADES.findIndex(x => x.id === u.id);
+        const prevId = idx > 0 ? BATON_UPGRADES[idx - 1].id : null;
+        if (prevId && !hasBatonTechnique(S, prevId)) reason = "Buy the previous Baton Technique first.";
+        else reason = `Need ${u.requireBatons || 0} Batons (${fmtInt(S.batonOwned || 0)}/${fmtInt(u.requireBatons || 0)}).`;
+      }
       else if (!afford) reason = `Need ${fmtExact(u.costNotes, useSuffix)} Notes (${fmtExact(S.notes, useSuffix)}/${fmtExact(u.costNotes, useSuffix)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
@@ -2819,7 +2885,7 @@
           <span class="tag">Base click: <span class="mono">${fmtExact(batonBaseClick(), false)}</span></span>
         </div>
         <div class="muted smallSans">
-          Permanent run purchase. Each baton adds <span class="mono">+${BATON_ITEM.basePer.toFixed(2)}</span> base click.
+          Permanent run purchase. Each baton adds <span class="mono">+${BATON_ITEM.basePer.toFixed(2)}</span> base click and <span class="mono">+1 Ink</span>.
         </div>
       </div>
       <div class="right">
@@ -2856,11 +2922,9 @@
       bd._bound = true;
     }
 
-    const stageIdx = S.noteStageIdx || 0;
-
     for (const u of BATON_UPGRADES){
-      const owned = !!S.batonUpgrades[u.id];
-      const unlocked = stageIdx >= u.requireStage;
+      const owned = hasBatonTechnique(S, u.id);
+      const unlocked = batonUpgradeUnlockedInState(S, u);
       const afford = S.notes >= u.costNotes;
       const tag = upgradeTagState({
         owned,
@@ -2880,6 +2944,11 @@
             <span class="tag ${tag.cls}">${tag.text}</span>
           </div>
           <div class="muted smallSans">${u.desc}</div>
+          ${
+            (!owned && !unlocked)
+              ? `<div class="muted smallSans mono" style="margin-top:4px;">Requires ${(u.requireBatons || 0)} Batons • You have ${fmtInt(S.batonOwned || 0)}</div>`
+              : ""
+          }
           ${
             owned ? "" : `
             <div class="muted smallSans mono afterPurchase" style="margin-top:4px;">
@@ -3004,9 +3073,7 @@
             <span class="tag good">Owned: <span class="mono">${owned}</span></span>
             <span class="tag">NPS: <span class="mono">${fmtExact(instNps, useSuffix)}</span> • <span class="mono">${fmtPct(instPct)}</span></span>
           </div>
-          <div class="muted smallSans mono">
-            ${nextUp ? `Next upgrade: ${nextUp.requireOwned} owned • ${fmtExact(nextUp.costNotes, useSuffix)} Notes` : "Ladder complete"}
-          </div>
+          ${nextUp ? "" : `<div class="muted smallSans mono">Full Upgraded!</div>`}
 
           <details class="dropdown instrumentUpgrades" data-inst="${b.id}" ${instOpen ? "open" : ""} style="margin-top:10px;">
             <summary>
@@ -3212,6 +3279,12 @@
     const current = getFacility(S.facility.currentId);
     $("#facilityName").textContent = current ? current.name : "—";
     $("#facilityDesc").textContent = current ? current.desc : "—";
+    const preview = $("#facilityPreview");
+    if (preview){
+      const img = FACILITY_PREVIEW_IMAGE[S.facility.currentId] || FACILITY_PREVIEW_IMAGE.shed;
+      preview.style.backgroundImage = `url("${img}")`;
+      preview.setAttribute("aria-label", current ? `${current.name} venue preview` : "Current venue");
+    }
 
     const fac = facilityMults(S);
     $("#facilityBonus").textContent = `Global: x${fac.nps.toFixed(2)} NPS • x${fac.click.toFixed(2)} Click`;
