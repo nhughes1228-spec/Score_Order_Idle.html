@@ -169,7 +169,7 @@
       user-select:none;
     }
     button:hover{background: rgba(255,255,255,.90); border-color: rgba(44,110,122,.35)}
-    button:active{transform: translateY(1px)}
+    button:active:not(.startBtn){transform: translateY(1px)}
     button:disabled{opacity:.45}
     .primary{
       background: linear-gradient(135deg, rgba(44,110,122,.45), rgba(255,255,255,.80));
@@ -281,13 +281,13 @@
       position: fixed;
       top: 16px;
       left: 50%;
-      transform: translate(-50%, -14px) scale(.98);
+      transform: translate(-50%, -22px) scale(.90);
       min-width: min(560px, calc(100vw - 24px));
       max-width: calc(100vw - 24px);
       padding: 12px 18px 13px;
       border-radius: 16px;
       background: linear-gradient(135deg, rgba(255,248,223,.96), rgba(255,255,255,.92));
-      border: 1px solid rgba(196,152,58,.42);
+      border: 1px solid rgba(43,151,171,.42);
       box-shadow: 0 20px 38px rgba(0,0,0,.22), 0 0 0 1px rgba(255,255,255,.55) inset;
       backdrop-filter: blur(6px);
       text-align: center;
@@ -295,22 +295,22 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity .26s ease, transform .26s ease;
-      overflow: hidden;
+      overflow: visible;
+      isolation: isolate;
+    }
+    .achievementBanner::before{
+      content: none;
+    }
+    .achievementBanner::after{
+      content: none;
     }
     .achievementBanner.show{
       opacity: 1;
       transform: translate(-50%, 0) scale(1);
+      animation: ach-pop .58s cubic-bezier(.22,.8,.2,1), ach-boxglow 1.5s ease-in-out infinite;
     }
     .achievementBanner .shine{
-      position: absolute;
-      top: -30%;
-      left: -42%;
-      width: 34%;
-      height: 180%;
-      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.65), rgba(255,255,255,0));
-      transform: rotate(20deg);
-      animation: ach-shine 2.1s ease-in-out infinite;
-      pointer-events:none;
+      display: none;
     }
     .achievementBanner .kicker{
       position: relative;
@@ -325,7 +325,13 @@
       font: 900 18px var(--font-ui);
       letter-spacing: .2px;
       color: #3a2714;
-      text-shadow: 0 1px 0 rgba(255,255,255,.65);
+      text-shadow: none;
+    }
+    .achievementBanner .desc{
+      position: relative;
+      margin-top: 2px;
+      font: 600 12px var(--font-ui);
+      color: rgba(68,52,35,.86);
     }
     .achievementBanner .bonus{
       position: relative;
@@ -333,10 +339,28 @@
       font: 700 12px var(--font-ui);
       color: rgba(73,57,41,.88);
     }
-    @keyframes ach-shine{
-      0% { left: -42%; opacity:.2; }
-      50% { left: 115%; opacity:.9; }
-      100% { left: 115%; opacity:0; }
+    @keyframes ach-pop{
+      0% { transform: translate(-50%, -26px) scale(.86); }
+      55% { transform: translate(-50%, 2px) scale(1.04); }
+      100% { transform: translate(-50%, 0) scale(1); }
+    }
+    @keyframes ach-boxglow{
+      0%, 100% {
+        border-color: rgba(43,151,171,.40);
+        box-shadow:
+          0 20px 38px rgba(0,0,0,.22),
+          0 0 0 1px rgba(255,255,255,.55) inset,
+          0 0 0 0 rgba(43,151,171,0),
+          0 0 0 0 rgba(43,151,171,0);
+      }
+      50% {
+        border-color: rgba(56,191,217,.95);
+        box-shadow:
+          0 28px 52px rgba(0,0,0,.28),
+          0 0 0 1px rgba(255,255,255,.70) inset,
+          0 0 0 3px rgba(56,191,217,.55),
+          0 0 36px 8px rgba(56,191,217,.45);
+      }
     }
     .footer{
       margin-top:10px; padding:10px 14px;
@@ -564,6 +588,15 @@
     }
 
     /* ---- Start Screen (REAL SCREEN, not overlay) ---- */
+    html.tutorial-lock,
+    body.tutorial-lock{
+      overflow: hidden;
+      height: 100%;
+      overscroll-behavior: none;
+    }
+    body.tutorial-lock{
+      touch-action: none;
+    }
     body.start-screen header{display:none}
     body.start-screen #mobileActionBar,
     body.start-screen #desktopBuyDock{display:none !important}
@@ -598,6 +631,9 @@
     .startBtn:hover{
       background: transparent !important;
       border:none;
+    }
+    .startBtn:active{
+      transform: translate(-50%, -50%) scale(.97);
     }
     .startBtn img{
       width:min(480px, 92vw);

@@ -579,9 +579,15 @@ const {
     }
   ];
 
+  function setTutorialScrollLock(locked){
+    document.documentElement.classList.toggle("tutorial-lock", !!locked);
+    document.body.classList.toggle("tutorial-lock", !!locked);
+  }
+
   function showTutorial(){
     // FORCE tutorial to run on Main screen
     setTab("main");
+    setTutorialScrollLock(true);
     tutOverlay.classList.add("show");
     tutOverlay.setAttribute("aria-hidden","false");
     advanceTutorial(0, true);
@@ -589,6 +595,7 @@ const {
   function hideTutorial(){
     tutOverlay.classList.remove("show");
     tutOverlay.setAttribute("aria-hidden","true");
+    setTutorialScrollLock(false);
     clearHighlight();
     spotlightTargetSelector = null;
     setSpotlightToElement(null);
@@ -1090,6 +1097,7 @@ const {
 
   const achievementBanner = $("#achievementBanner");
   const achievementBannerName = $("#achievementBannerName");
+  const achievementBannerDesc = $("#achievementBannerDesc");
   const achievementBannerBonus = $("#achievementBannerBonus");
   let achievementBannerActive = false;
   const achievementBannerQueue = [];
@@ -1127,6 +1135,7 @@ const {
 
     achievementBannerActive = true;
     achievementBannerName.textContent = a.name;
+    achievementBannerDesc.textContent = a.desc || achievementCategory(a);
     achievementBannerBonus.textContent = achievementBonusText(a);
 
     achievementBanner.hidden = false;
@@ -1134,7 +1143,7 @@ const {
     void achievementBanner.offsetWidth;
     achievementBanner.classList.add("show");
 
-    const liveMs = S.settings.reduceMotion ? 1400 : 2400;
+    const liveMs = S.settings.reduceMotion ? 2100 : 3600;
     const outMs = S.settings.reduceMotion ? 100 : 260;
     setTimeout(()=>{
       achievementBanner.classList.remove("show");
@@ -1659,6 +1668,7 @@ const {
             <span class="tag">NPS: <span class="mono">${fmtExact(instNps, useSuffix)}</span> • <span class="mono">${fmtPct(instPct)}</span></span>
           </div>
           <div class="muted smallSans mono">+${fmtExact(gainPerBuy, useSuffix)} Notes/sec per instrument</div>
+          <div class="muted smallSans mono" data-buy-ink="${b.id}">${k>0 ? `+${k} Ink` : "+1 Ink"}</div>
           ${nextUp ? "" : `<div class="muted smallSans mono">Full Upgraded!</div>`}
 
           <details class="dropdown instrumentUpgrades" data-inst="${b.id}" ${instOpen ? "open" : ""} style="margin-top:10px;">
@@ -1675,7 +1685,6 @@ const {
         <div class="right">
           <button class="primary" data-buy="${b.id}" ${afford ? "" : "disabled"}>${label}</button>
           <div class="cost mono" data-buy-cost="${b.id}">Cost: ${fmtExact(cost, useSuffix)} Notes</div>
-          <div class="cost" data-buy-ink="${b.id}">${k>0 ? `+${k} Ink` : "+1 Ink"}</div>
         </div>
       `;
 
