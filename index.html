@@ -20,6 +20,7 @@
       <button data-tab="stats">Stats</button>
       <button data-tab="achievements">Achievements</button>
       <button data-tab="prestige" id="prestigeTabBtn" hidden>Prestige</button>
+      <button data-tab="library">Music Library</button>
       <button data-tab="settings">Settings</button>
     </div>
 
@@ -231,6 +232,57 @@
     </section>
   </div>
 
+  <div class="tab" id="tab-library" hidden>
+    <section class="card">
+      <h2><span>Music Library</span><span class="tag">MusicXML MVP</span></h2>
+      <div class="content libraryWrap">
+        <div class="libraryListView" id="libraryListView">
+          <div class="libraryToolbar">
+            <label class="libraryFileLabel" for="libraryImportInput">Import MusicXML</label>
+            <input type="file" id="libraryImportInput" accept=".musicxml,.xml,application/xml,text/xml"/>
+            <button id="libraryAddDemoBtn">Add Demo Work</button>
+          </div>
+          <div class="muted smallSans" id="libraryListMeta">Import a work to begin unlocking note events.</div>
+          <div class="table" id="libraryWorksList"></div>
+        </div>
+
+        <div class="libraryWorkView" id="libraryWorkView" hidden>
+          <div class="libraryWorkHead">
+            <button id="libraryBackBtn">Back</button>
+            <div>
+              <div class="libraryWorkTitle" id="libraryWorkTitle">—</div>
+              <div class="libraryWorkComposer muted smallSans" id="libraryWorkComposer">—</div>
+            </div>
+          </div>
+
+          <div class="libraryProgress">
+            <div class="libraryProgressMeta">
+              <span class="mono" id="libraryWorkProgressText">0 / 0</span>
+              <span class="tag warn" id="libraryWorkCompletedTag" hidden>Completed!</span>
+            </div>
+            <div class="libraryProgressBar">
+              <div class="libraryProgressFill" id="libraryWorkProgressFill"></div>
+            </div>
+          </div>
+
+          <div class="libraryEconomyRow">
+            <span>Practice: <b class="mono" id="libraryWorkPractice">0</b></span>
+            <span>Practice/sec: <b class="mono" id="libraryWorkPps">0</b></span>
+            <span>Tempo: <b class="mono" id="libraryWorkBpm">120</b> BPM</span>
+          </div>
+
+          <div class="libraryActions">
+            <button class="primary" id="libraryUnlockNextBtn">Unlock Next</button>
+            <button id="libraryPlayBtn">Play Unlocked</button>
+            <button id="libraryStopBtn">Stop</button>
+          </div>
+
+          <div class="libraryScoreMap" id="libraryScoreMap"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="tab" id="tab-settings" hidden>
     <section class="card">
       <h2><span>Settings</span><span class="tag warn">Be careful</span></h2>
@@ -370,6 +422,7 @@
 <script src="economy.js"></script>
 <script src="state-save.js"></script>
 <script src="ui-events.js"></script>
+<script src="library.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

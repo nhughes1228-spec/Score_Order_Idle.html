@@ -56,6 +56,14 @@ const {
   wireNoteButtonOnce: wireNoteButtonOnceCore,
 } = window.ScoreUIEvents || {};
 
+const {
+  ensureLibraryState: ensureLibraryStateCore,
+  tickLibrary: tickLibraryCore,
+  renderLibrary: renderLibraryCore,
+  stopPlayback: stopLibraryPlaybackCore,
+  bindUI: bindLibraryUICore,
+} = window.ScoreLibrary || {};
+
   // iOS Safari: prevent double-tap zoom on the main click target
   (() => {
     const btn = document.getElementById("noteBtn");
@@ -340,6 +348,7 @@ const {
   }
 
   let S = load();
+  if (ensureLibraryStateCore) ensureLibraryStateCore(S);
   checkAchievements(false);
 
   function save(showToast=true){
@@ -583,6 +592,10 @@ const {
     document.documentElement.classList.toggle("tutorial-lock", !!locked);
     document.body.classList.toggle("tutorial-lock", !!locked);
   }
+  function setTutorialRepositioning(isRepositioning){
+    if (!tutVeil) return;
+    tutVeil.classList.toggle("repositioning", !!isRepositioning);
+  }
 
   function showTutorial(){
     // FORCE tutorial to run on Main screen
@@ -596,6 +609,7 @@ const {
     tutOverlay.classList.remove("show");
     tutOverlay.setAttribute("aria-hidden","true");
     setTutorialScrollLock(false);
+    setTutorialRepositioning(false);
     clearHighlight();
     spotlightTargetSelector = null;
     setSpotlightToElement(null);
@@ -627,15 +641,36 @@ const {
     $("#tutMsg").textContent = step.msg;
 
     spotlightTargetSelector = step.target;
+    setTutorialRepositioning(true);
 
     requestAnimationFrame(() => {
       step.ensure();
-      const el = highlight(step.target);
-      // Make sure it's on screen (especially for later steps)
-      if (el && el.scrollIntoView){
-        el.scrollIntoView({ behavior: S.settings.reduceMotion ? "auto" : "smooth", block:"center", inline:"center" });
-        // after scroll, re-sync spotlight
-        setTimeout(updateSpotlightFromSelector, 220);
+      clearHighlight();
+
+      const targetEl = $(step.target);
+      if (!targetEl){
+        setTutorialRepositioning(false);
+        setSpotlightToElement(null);
+        return;
+      }
+
+      const behavior = S.settings.reduceMotion ? "auto" : "smooth";
+
+      // Scroll first, then reveal the spotlight to avoid a visible "snap" from stale coordinates.
+      if (targetEl.scrollIntoView){
+        targetEl.scrollIntoView({ behavior, block:"center", inline:"center" });
+      }
+
+      const finalizeSpotlight = () => {
+        highlight(step.target);
+        updateSpotlightFromSelector();
+        setTutorialRepositioning(false);
+      };
+
+      if (behavior === "smooth"){
+        setTimeout(finalizeSpotlight, 260);
+      } else {
+        requestAnimationFrame(finalizeSpotlight);
       }
     });
 
@@ -976,6 +1011,7 @@ const {
   }
 
   function setTab(tab){
+    const prevTab = S.ui.tab;
     S.ui.tab = tab;
     if (tab !== "start") S.ui.lastTab = tab;
     document.body.classList.toggle("start-screen", tab === "start");
@@ -985,6 +1021,7 @@ const {
     $("#tab-stats").hidden = tab !== "stats";
     $("#tab-achievements").hidden = tab !== "achievements";
     $("#tab-prestige").hidden = tab !== "prestige";
+    $("#tab-library").hidden = tab !== "library";
     $("#tab-settings").hidden = tab !== "settings";
 
     // Only highlight actual nav buttons (no start button)
@@ -995,6 +1032,12 @@ const {
     if (tab === "achievements"){
       renderAchievements();
       renderRecentUnlocks();
+    }
+    if (tab === "library" && renderLibraryCore){
+      renderLibraryCore(S, { fmtExact, useSuffix: !!S.settings.abbrevLarge });
+    }
+    if (prevTab === "library" && tab !== "library" && stopLibraryPlaybackCore){
+      stopLibraryPlaybackCore();
     }
     updateFloatingControls();
     maybeShowCoachTip();
@@ -1143,8 +1186,8 @@ const {
     void achievementBanner.offsetWidth;
     achievementBanner.classList.add("show");
 
-    const liveMs = S.settings.reduceMotion ? 2100 : 3600;
-    const outMs = S.settings.reduceMotion ? 100 : 260;
+    const liveMs = S.settings.reduceMotion ? 2160 : 3900;
+    const outMs = S.settings.reduceMotion ? 108 : 290;
     setTimeout(()=>{
       achievementBanner.classList.remove("show");
       setTimeout(()=>{
@@ -1466,6 +1509,7 @@ const {
     const cost = (k > 0) ? sumCostForK(BATON_ITEM, k) : buildingCostAtOwned(BATON_ITEM, owned);
     const afford = (k > 0) && !isBlocked();
     const gain = (k > 0 ? k : 1) * BATON_ITEM.basePer;
+    const nextTech = BATON_UPGRADES.find(u => !hasBatonTechnique(S, u.id)) || null;
 
     const row = document.createElement("div");
     row.className = "mini";
@@ -1479,6 +1523,13 @@ const {
         </div>
         <div class="muted smallSans">
           Permanent run purchase. Each baton adds <span class="mono">+${BATON_ITEM.basePer.toFixed(2)}</span> base click and <span class="mono">+1 Ink</span>.
+        </div>
+        <div class="muted smallSans mono" style="margin-top:4px;">
+          ${
+            nextTech
+              ? `Next Technique: ${nextTech.name} • Req ${fmtInt(nextTech.requireBatons || 0)} Batons (${fmtInt(owned)}/${fmtInt(nextTech.requireBatons || 0)}) • ${fmtExact(nextTech.costNotes, useSuffix)} Notes`
+              : "All Baton Techniques purchased."
+          }
         </div>
       </div>
       <div class="right">
@@ -1515,7 +1566,11 @@ const {
       bd._bound = true;
     }
 
-    for (const u of BATON_UPGRADES){
+    const ordered = BATON_UPGRADES.slice();
+    const next = ordered.find(u => !hasBatonTechnique(S, u.id)) || null;
+    const relevant = ordered.filter(u => hasBatonTechnique(S, u.id) || (next && u.id === next.id));
+
+    for (const u of relevant){
       const owned = hasBatonTechnique(S, u.id);
       const unlocked = batonUpgradeUnlockedInState(S, u);
       const afford = S.notes >= u.costNotes;
@@ -1538,7 +1593,7 @@ const {
           </div>
           <div class="muted smallSans">${u.desc}</div>
           ${
-            (!owned && !unlocked)
+            (!owned)
               ? `<div class="muted smallSans mono" style="margin-top:4px;">Requires ${(u.requireBatons || 0)} Batons • You have ${fmtInt(S.batonOwned || 0)}</div>`
               : ""
           }
@@ -1669,7 +1724,11 @@ const {
           </div>
           <div class="muted smallSans mono">+${fmtExact(gainPerBuy, useSuffix)} Notes/sec per instrument</div>
           <div class="muted smallSans mono" data-buy-ink="${b.id}">${k>0 ? `+${k} Ink` : "+1 Ink"}</div>
-          ${nextUp ? "" : `<div class="muted smallSans mono">Full Upgraded!</div>`}
+          ${
+            nextUp
+              ? `<div class="muted smallSans mono">Next upgrade: ${nextUp.name} • Req ${nextUp.requireOwned} (${fmtInt(owned)}/${fmtInt(nextUp.requireOwned)}) • ${fmtExact(nextUp.costNotes, useSuffix)} Notes</div>`
+              : `<div class="muted smallSans mono">Full Upgraded!</div>`
+          }
 
           <details class="dropdown instrumentUpgrades" data-inst="${b.id}" ${instOpen ? "open" : ""} style="margin-top:10px;">
             <summary>
@@ -1711,15 +1770,14 @@ const {
     el.innerHTML = "";
 
     const useSuffix = !!S.settings.abbrevLarge;
-    const relevant = NOTE_UPGRADES.filter(u => u.buildingId === buildingId)
-      .filter(u=>{
-        if (S.noteUpgrades[u.id]) return true;
-        const owned = S.owned[u.buildingId] || 0;
-        return owned >= Math.max(0, u.requireOwned - 4);
-      });
+    const ordered = NOTE_UPGRADES
+      .filter(u => u.buildingId === buildingId)
+      .sort((a,b)=>a.requireOwned - b.requireOwned);
+    const next = ordered.find(u => !S.noteUpgrades[u.id]) || null;
+    const relevant = ordered.filter(u => S.noteUpgrades[u.id] || (next && u.id === next.id));
 
     if (relevant.length === 0){
-      el.innerHTML = renderEmptyState("Buy this instrument to unlock its first upgrades.");
+      el.innerHTML = renderEmptyState("Full Upgraded!");
       return;
     }
 
@@ -1757,6 +1815,7 @@ const {
               <span class="tag ${tag.cls}">${tag.text}</span>
             </div>
             <div class="muted smallSans">${u.desc}</div>
+            <div class="muted smallSans mono" style="margin-top:4px;">Requires ${u.requireOwned} owned • You have ${fmtInt(have)}</div>
           </div>
           <div class="right">
             <button data-nu="${u.id}" ${enabled ? "" : "disabled"}>Buy</button>
@@ -2200,6 +2259,9 @@ const {
       renderAchievements();
       renderRecentUnlocks();
     }
+    if (S.ui.tab === "library" && renderLibraryCore){
+      renderLibraryCore(S, { fmtExact, useSuffix: !!S.settings.abbrevLarge });
+    }
     renderSettings();
     refreshDynamicShopStates();
     maybeShowCoachTip();
@@ -2227,6 +2289,9 @@ const {
       S.notes += gained;
       S.lifetimeNotes += gained;
       S.runNotes += gained;
+    }
+    if (tickLibraryCore){
+      tickLibraryCore(S, dt);
     }
 
     if (!S.settings.disableTooltips && !S.ui.prestigeExplained && (S.patronsEver || 0) === 0 && (S.runNotes || 0) >= 500000){
@@ -2262,6 +2327,14 @@ const {
 
   // ---------- Wire Buttons (ONCE) ----------
   wireNoteButtonOnce();
+  if (bindLibraryUICore){
+    bindLibraryUICore({
+      getState: () => S,
+      save: () => save(false),
+      renderAll,
+      toast
+    });
+  }
 
   $("#prestigeBtn").addEventListener("click", ()=>{
     doPrestige();
@@ -2278,6 +2351,8 @@ const {
     clearSaveState(localStorage, SAVE_KEY, LEGACY_SAVE_KEYS);
 
     S = stateDefault();
+    if (ensureLibraryStateCore) ensureLibraryStateCore(S);
+    if (stopLibraryPlaybackCore) stopLibraryPlaybackCore();
 
     // replace the note button node to guarantee only one set of listeners
     const oldBtn = document.getElementById("noteBtn");

@@ -314,10 +314,16 @@
     }
     .achievementBanner .kicker{
       position: relative;
+      display: inline-block;
       font: 900 11px var(--font-ui);
       letter-spacing: .9px;
       text-transform: uppercase;
       color: rgba(150,105,20,.95);
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+    .achievementBanner.show .kicker{
+      animation: ach-kicker-focus 1.30s cubic-bezier(.16,.82,.22,1) both;
     }
     .achievementBanner .name{
       position: relative;
@@ -326,6 +332,11 @@
       letter-spacing: .2px;
       color: #3a2714;
       text-shadow: none;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+    .achievementBanner.show .name{
+      animation: ach-name-focus 1.30s cubic-bezier(.18,.78,.2,1) both;
     }
     .achievementBanner .desc{
       position: relative;
@@ -343,6 +354,38 @@
       0% { transform: translate(-50%, -26px) scale(.86); }
       55% { transform: translate(-50%, 2px) scale(1.04); }
       100% { transform: translate(-50%, 0) scale(1); }
+    }
+    @keyframes ach-kicker-focus{
+      0% {
+        transform: translateY(-4px) scale(2.08);
+        opacity: 1;
+        letter-spacing: 1.7px;
+      }
+      55% {
+        transform: translateY(-2px) scale(2.08);
+        opacity: 1;
+        letter-spacing: 1.7px;
+      }
+      90% {
+        transform: translateY(0) scale(1.12);
+        letter-spacing: 1px;
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        letter-spacing: .9px;
+      }
+    }
+    @keyframes ach-name-focus{
+      0% {
+        transform: translateY(2px) scale(.92);
+      }
+      70% {
+        transform: translateY(0) scale(1.03);
+      }
+      100% {
+        transform: translateY(0) scale(1.08);
+      }
     }
     @keyframes ach-boxglow{
       0%, 100% {
@@ -495,7 +538,10 @@
         0 0 0 8px rgba(44,110,122,.14),
         0 0 0 9999px rgba(20,16,12,.62);
       pointer-events:none;
-      transition:left .16s ease, top .16s ease, width .16s ease, height .16s ease, border-radius .16s ease;
+      transition:left .16s ease, top .16s ease, width .16s ease, height .16s ease, border-radius .16s ease, opacity .08s linear;
+    }
+    #tutorialVeil.repositioning .hole{
+      opacity: 0;
     }
 
     /* Panel always sits above veil */
@@ -680,6 +726,179 @@
       box-shadow: 0 14px 34px rgba(0,0,0,.22);
       margin-bottom:10px;
     }
+    .libraryWrap{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .libraryToolbar{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .libraryFileLabel{
+      font: 900 12px var(--font-ui);
+      color: var(--muted);
+    }
+    #libraryImportInput{
+      flex:1 1 280px;
+      max-width:440px;
+      font: 700 12px var(--font-ui);
+      color: var(--ink2);
+      background: rgba(255,255,255,.8);
+      border:1px solid rgba(35,29,24,.26);
+      border-radius:10px;
+      padding:8px 10px;
+    }
+    .libraryWorkHead{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      margin-bottom:8px;
+    }
+    .libraryWorkTitle{
+      font: 900 16px var(--font-ui);
+      color: var(--ink2);
+    }
+    .libraryProgress{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:8px;
+    }
+    .libraryProgressMeta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font: 700 12px var(--font-ui);
+      color: var(--muted);
+    }
+    .libraryProgressBar{
+      height:10px;
+      border-radius:999px;
+      background: rgba(35,29,24,.12);
+      border:1px solid rgba(35,29,24,.2);
+      overflow:hidden;
+    }
+    .libraryProgressFill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(44,110,122,.85), rgba(44,110,122,.45));
+      transition: width .16s ease;
+    }
+    .libraryEconomyRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:8px;
+      font: 700 12px var(--font-ui);
+      color: var(--muted);
+    }
+    .libraryActions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .libraryScoreMap{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+      max-height:52vh;
+      overflow:auto;
+      padding-right:2px;
+    }
+    .libraryMeasureRow{
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .libraryMeasureLabel{
+      min-width:58px;
+      padding-top:3px;
+      font: 900 11px var(--font-ui);
+      color: var(--muted);
+      text-align:right;
+    }
+    .libraryMeasureEvents{
+      flex:1;
+      display:flex;
+      flex-wrap:wrap;
+      gap:5px;
+    }
+    .libraryEventBox{
+      width:19px;
+      height:19px;
+      border-radius:6px;
+      border:1px solid rgba(35,29,24,.24);
+      background: rgba(35,29,24,.12);
+      color: rgba(35,29,24,.38);
+      display:grid;
+      place-items:center;
+      font: 900 10px var(--font-ui);
+      user-select:none;
+      cursor: help !important;
+    }
+    .libraryEventBox.unlocked{
+      background: linear-gradient(135deg, rgba(44,110,122,.84), rgba(44,110,122,.46));
+      border-color: rgba(26,91,104,.55);
+      color: rgba(255,255,255,.95);
+      box-shadow: 0 4px 10px rgba(44,110,122,.25);
+    }
+    .libraryEventBox.rest{
+      background: rgba(125,114,103,.22);
+      color: rgba(77,66,56,.56);
+    }
+    .libraryEventBox.unlocked.rest{
+      background: linear-gradient(135deg, rgba(94,109,114,.7), rgba(112,128,134,.5));
+      border-color: rgba(62,74,78,.45);
+      color: rgba(255,255,255,.95);
+    }
+    .libraryEventBox.chord{
+      border-style:dashed;
+    }
+    .libraryListRow{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      padding:10px;
+      border:1px solid rgba(35,29,24,.24);
+      border-radius:12px;
+      background: rgba(255,255,255,.58);
+    }
+    .libraryListName{
+      font:900 13px var(--font-ui);
+      color: var(--ink2);
+    }
+    .libraryListMeta{
+      font:600 12px var(--font-ui);
+      color: var(--muted);
+    }
+    .libraryListProgress{
+      margin-top:6px;
+      font:700 11px var(--font-ui);
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .libraryListProgress .bar{
+      flex:1;
+      max-width:220px;
+      height:7px;
+      border-radius:999px;
+      border:1px solid rgba(35,29,24,.2);
+      background: rgba(35,29,24,.1);
+      overflow:hidden;
+    }
+    .libraryListProgress .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(44,110,122,.86), rgba(44,110,122,.5));
+    }
     .mobileBar{
       position:fixed;
       left:10px;
@@ -750,6 +969,14 @@
       body{padding-bottom:86px;}
       .desktopBuyDock{display:none;}
       .venuePreview{height:170px;}
+      .libraryMeasureLabel{
+        min-width:48px;
+      }
+      .libraryEventBox{
+        width:17px;
+        height:17px;
+        font-size:9px;
+      }
       .toast{
         left: 10px;
         right: 10px;

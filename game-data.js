@@ -17,20 +17,96 @@ const BATON_ITEM = {
   name: "Conductor Baton",
   baseCost: 12,
   costMult: 1.15,
-  basePer: 0.10
+  basePer: 0.07
 };
-const BATON_UPGRADES = [
-  { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.50.",         costNotes: 85,         requireBatons: 0,   setStage: 1, clickMult: 1.50 },
-  { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.25.",           costNotes: 650,        requireBatons: 10,  setStage: 2, clickMult: 1.25 },
-  { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.10.",      costNotes: 5200,       requireBatons: 25,  setStage: 3, clickMult: 1.10 },
-  { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x1.10.",        costNotes: 42000,      requireBatons: 50,  setStage: 4, clickMult: 1.10 },
-  { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x1.10.",       costNotes: 320000,     requireBatons: 100, setStage: 5, clickMult: 1.10 },
-  { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x1.10.",         costNotes: 2200000,    requireBatons: 200, setStage: 6, clickMult: 1.10 },
-  { id:"bt_legato",      name:"Legato Arc",             desc:"Advanced baton flow. Baton click x1.10.",             costNotes: 12000000,   requireBatons: 325,                    clickMult: 1.10 },
-  { id:"bt_marcato",     name:"Marcato Strike",         desc:"Accented strike control. Baton click x1.10.",         costNotes: 70000000,   requireBatons: 500,                    clickMult: 1.10 },
-  { id:"bt_prestissimo", name:"Prestissimo Pulse",      desc:"Rapid precision control. Baton click x1.10.",         costNotes: 420000000,  requireBatons: 750,                    clickMult: 1.10 },
-  { id:"bt_maestro",     name:"Maestro's Signature",    desc:"Signature conducting power. Baton click x1.10.",      costNotes: 2600000000, requireBatons: 1100,                   clickMult: 1.10 },
-];
+const MUSIC_LIBRARY_CONFIG = {
+  defaultBpm: 120,
+  defaultPracticePerSecond: 1,
+  unlockBaseCost: 10,
+  unlockCostGrowth: 1.08,
+  defaultVelocity: 0.6,
+};
+const MUSIC_LIBRARY_DEMO_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <work>
+    <work-title>Codex Miniature</work-title>
+  </work>
+  <identification>
+    <creator type="composer">Demo Composer</creator>
+  </identification>
+  <part-list>
+    <score-part id="P1">
+      <part-name>Piano</part-name>
+    </score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>2</divisions>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+      <note>
+        <chord/>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+      <note>
+        <rest/>
+        <duration>2</duration>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+    </measure>
+    <measure number="2">
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>4</duration>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>4</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>`;
+function totalCostToOwnUnits(baseCost, costMult, units){
+  if (!units || units <= 0) return 0;
+  if (Math.abs(costMult - 1) < 1e-9) return Math.floor(baseCost * units);
+  return Math.floor(baseCost * ((Math.pow(costMult, units) - 1) / (costMult - 1)));
+}
+function scaledUnlockCost(baseCost, costMult, units, ratio){
+  const totalToUnlock = totalCostToOwnUnits(baseCost, costMult, units);
+  return Math.max(1, Math.floor(totalToUnlock * ratio));
+}
+function buildBatonUpgrades(){
+  const defs = [
+    { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.30.",         requireBatons: 10,   setStage: 1, clickMult: 1.30, priceRatio: 0.32 },
+    { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.15.",           requireBatons: 25,   setStage: 2, clickMult: 1.15, priceRatio: 0.34 },
+    { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.06.",      requireBatons: 50,   setStage: 3, clickMult: 1.06, priceRatio: 0.36 },
+    { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x1.06.",        requireBatons: 100,  setStage: 4, clickMult: 1.06, priceRatio: 0.38 },
+    { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x1.06.",       requireBatons: 150,  setStage: 5, clickMult: 1.06, priceRatio: 0.40 },
+    { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x1.06.",         requireBatons: 200,  setStage: 6, clickMult: 1.06, priceRatio: 0.42 },
+    { id:"bt_legato",      name:"Legato Arc",             desc:"Advanced baton flow. Baton click x1.06.",             requireBatons: 250,                 clickMult: 1.06, priceRatio: 0.44 },
+    { id:"bt_marcato",     name:"Marcato Strike",         desc:"Accented strike control. Baton click x1.06.",         requireBatons: 500,                 clickMult: 1.06, priceRatio: 0.46 },
+    { id:"bt_prestissimo", name:"Prestissimo Pulse",      desc:"Rapid precision control. Baton click x1.06.",         requireBatons: 750,                 clickMult: 1.06, priceRatio: 0.48 },
+    { id:"bt_maestro",     name:"Maestro's Signature",    desc:"Signature conducting power. Baton click x1.06.",      requireBatons: 1000,                clickMult: 1.06, priceRatio: 0.50 },
+  ];
+
+  return defs.map(u => ({
+    ...u,
+    costNotes: scaledUnlockCost(BATON_ITEM.baseCost, BATON_ITEM.costMult, u.requireBatons || 0, u.priceRatio || 0.4)
+  }));
+}
+const BATON_UPGRADES = buildBatonUpgrades();
 function hasBatonTechnique(s, id){
   return !!(s?.batonUpgrades && (s.batonUpgrades[id] || 0) > 0);
 }
@@ -78,8 +154,8 @@ const FAMILY_ORDER = [
 ];
 
 // ---------- NOTE Upgrades (per-building ladder) ----------
-const UPGRADE_MILESTONES = [1, 5, 10, 25, 50, 100, 200, 400];
-const UPGRADE_COST_MULTS = [7, 33, 160, 900, 5200, 30000, 180000, 1100000];
+const UPGRADE_MILESTONES = [10, 25, 50, 100, 150, 200, 250, 500, 1000];
+const UPGRADE_PRICE_RATIOS = [0.30, 0.32, 0.34, 0.36, 0.38, 0.40, 0.42, 0.45, 0.48];
 const UPGRADE_NAME_TEMPLATES = [
   "Etude Book",
   "Better Pads",
@@ -88,7 +164,8 @@ const UPGRADE_NAME_TEMPLATES = [
   "Masterclass Series",
   "Principal Auditions",
   "Touring Season",
-  "Legendary Legacy"
+  "Legendary Legacy",
+  "Immortal Repertoire"
 ];
 const noteUpgradeId = (buildingId, tierIdx) => `nu_${buildingId}_${tierIdx}`;
 function buildNoteUpgrades(){
@@ -96,14 +173,14 @@ function buildNoteUpgrades(){
   for (const b of BUILDINGS){
     for (let i=0;i<UPGRADE_MILESTONES.length;i++){
       const milestone = UPGRADE_MILESTONES[i];
-      const mult = UPGRADE_COST_MULTS[i];
+      const ratio = UPGRADE_PRICE_RATIOS[i] || 0.4;
       upgrades.push({
         id: noteUpgradeId(b.id, i),
         buildingId: b.id,
         family: b.family,
         name: `${UPGRADE_NAME_TEMPLATES[i]}`,
         desc: `${b.name} output x2 (requires ${milestone} owned)`,
-        costNotes: Math.floor(b.baseCost * mult),
+        costNotes: scaledUnlockCost(b.baseCost, b.costMult, milestone, ratio),
         requireOwned: milestone,
         apply: (s)=>{ s.buildingMult[b.id] *= 2; }
       });
@@ -475,13 +552,13 @@ function buildInkUpgrades(){
   });
 
   const clickFromNpsSteps = [
-    {cost:50,   rate:0.0010, name:"Quick Quill",          desc:"Each click gains +0.1% of your current Notes/sec"},
-    {cost:100,  rate:0.0015, name:"Scribe Reflex",        desc:"Each click gains +0.15% of your current Notes/sec"},
-    {cost:250,  rate:0.0020, name:"Ink & Tempo",          desc:"Each click gains +0.2% of your current Notes/sec"},
-    {cost:500,  rate:0.0030, name:"Virtuoso Penmanship",  desc:"Each click gains +0.3% of your current Notes/sec"},
-    {cost:1000, rate:0.0040, name:"Counterpoint Script",  desc:"Each click gains +0.4% of your current Notes/sec"},
-    {cost:2500, rate:0.0050, name:"Orchestration Notes",  desc:"Each click gains +0.5% of your current Notes/sec"},
-    {cost:5000, rate:0.0070, name:"Maestro Margin",       desc:"Each click gains +0.7% of your current Notes/sec"},
+    {cost:45,   rate:0.0040, name:"Quick Quill",          desc:"Each click gains +0.4% of your current Notes/sec"},
+    {cost:90,   rate:0.0055, name:"Scribe Reflex",        desc:"Each click gains +0.55% of your current Notes/sec"},
+    {cost:225,  rate:0.0070, name:"Ink & Tempo",          desc:"Each click gains +0.7% of your current Notes/sec"},
+    {cost:450,  rate:0.0085, name:"Virtuoso Penmanship",  desc:"Each click gains +0.85% of your current Notes/sec"},
+    {cost:900,  rate:0.0100, name:"Counterpoint Script",  desc:"Each click gains +1% of your current Notes/sec"},
+    {cost:2250, rate:0.0120, name:"Orchestration Notes",  desc:"Each click gains +1.2% of your current Notes/sec"},
+    {cost:4500, rate:0.0145, name:"Maestro Margin",       desc:"Each click gains +1.45% of your current Notes/sec"},
   ];
   clickFromNpsSteps.forEach((s, idx)=>{
     ups.push({
@@ -496,13 +573,13 @@ function buildInkUpgrades(){
   });
 
   const clickMultSteps = [
-    {cost:75,   mult:1.020, name:"Sharper Quill",      desc:"+2% click power permanently"},
-    {cost:150,  mult:1.025, name:"Steel Nib",          desc:"+2.5% click power permanently"},
-    {cost:300,  mult:1.030, name:"Gold Nib",           desc:"+3% click power permanently"},
-    {cost:600,  mult:1.040, name:"Ivory Baton Grip",   desc:"+4% click power permanently"},
-    {cost:1200, mult:1.050, name:"Conductor Focus",    desc:"+5% click power permanently"},
-    {cost:3000, mult:1.070, name:"Virtuoso Wrist",     desc:"+7% click power permanently"},
-    {cost:7000, mult:1.100, name:"Mythic Pen",         desc:"+10% click power permanently"},
+    {cost:75,   mult:1.013, name:"Sharper Quill",      desc:"+1.3% click power permanently"},
+    {cost:150,  mult:1.017, name:"Steel Nib",          desc:"+1.7% click power permanently"},
+    {cost:300,  mult:1.021, name:"Gold Nib",           desc:"+2.1% click power permanently"},
+    {cost:600,  mult:1.027, name:"Ivory Baton Grip",   desc:"+2.7% click power permanently"},
+    {cost:1200, mult:1.034, name:"Conductor Focus",    desc:"+3.4% click power permanently"},
+    {cost:3000, mult:1.043, name:"Virtuoso Wrist",     desc:"+4.3% click power permanently"},
+    {cost:7000, mult:1.052, name:"Mythic Pen",         desc:"+5.2% click power permanently"},
   ];
   clickMultSteps.forEach((s, idx)=>{
     ups.push({
@@ -607,6 +684,8 @@ function getFacility(id){ return FACILITIES.find(f => f.id === id); }
 window.ScoreData = {
   NOTE_STAGES,
   BATON_ITEM,
+  MUSIC_LIBRARY_CONFIG,
+  MUSIC_LIBRARY_DEMO_XML,
   BATON_UPGRADES,
   hasBatonTechnique,
   batonUpgradeUnlockedInState,

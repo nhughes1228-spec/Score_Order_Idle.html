@@ -12,7 +12,7 @@ const LEGACY_SAVE_KEYS = [
 ];
 function createDefaultState(buildings, nowFn){
   return {
-    version: 10,
+    version: 11,
     notes: 0,
     lifetimeNotes: 0,
     runNotes: 0,
@@ -44,6 +44,12 @@ function createDefaultState(buildings, nowFn){
       baseBonus: {
         shed: { nps: 1, click: 1 }
       }
+    },
+    library: {
+      works: {},
+      order: [],
+      activeWorkId: null,
+      view: "list"
     },
     buyMode: "1",
     ui: {
@@ -143,6 +149,40 @@ function normalizeLoadedState(s, defaults, buildings, batonClickMultForState){
   if (!s.facility.purchasedUpgrades) s.facility.purchasedUpgrades = {};
   if (!s.facility.baseBonus) s.facility.baseBonus = {};
   if (!s.facility.baseBonus.shed) s.facility.baseBonus.shed = { nps: 1, click: 1 };
+
+  if (!s.library || typeof s.library !== "object") s.library = defaults.library;
+  if (!s.library.works || typeof s.library.works !== "object") s.library.works = {};
+  if (!Array.isArray(s.library.order)) s.library.order = Object.keys(s.library.works);
+  s.library.order = s.library.order.filter(id => !!s.library.works[id]);
+  for (const id of Object.keys(s.library.works)){
+    const work = s.library.works[id];
+    if (!work || typeof work !== "object"){
+      delete s.library.works[id];
+      continue;
+    }
+    if (!work.id) work.id = id;
+    if (!work.title) work.title = "Untitled Work";
+    if (!work.composer) work.composer = "";
+    if (work.createdAt === undefined) work.createdAt = Date.now();
+    if (typeof work.xmlText !== "string") work.xmlText = "";
+    if (!Array.isArray(work.events)) work.events = [];
+    if (work.unlockedCount === undefined) work.unlockedCount = 0;
+    work.unlockedCount = Math.max(0, Math.min(Math.floor(work.unlockedCount || 0), work.events.length));
+    if (work.practice === undefined) work.practice = 0;
+    if (work.practicePerSecond === undefined) work.practicePerSecond = 1;
+    if (work.bpm === undefined) work.bpm = 120;
+    work.practice = Math.max(0, Number(work.practice) || 0);
+    work.practicePerSecond = Math.max(0, Number(work.practicePerSecond) || 0);
+    work.bpm = Math.max(20, Number(work.bpm) || 120);
+    if (work.completed === undefined) work.completed = (work.unlockedCount >= work.events.length && work.events.length > 0);
+  }
+  for (const id of Object.keys(s.library.works)){
+    if (!s.library.order.includes(id)) s.library.order.push(id);
+  }
+  if (!s.library.activeWorkId || !s.library.works[s.library.activeWorkId]){
+    s.library.activeWorkId = s.library.order[0] || null;
+  }
+  if (s.library.view !== "work" && s.library.view !== "list") s.library.view = "list";
 
   if (s.patronsEver === undefined) s.patronsEver = s.patrons || 0;
   if (s.patrons === undefined) s.patrons = s.patronsEver;
