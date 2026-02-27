@@ -20,7 +20,7 @@
       <button data-tab="stats">Stats</button>
       <button data-tab="achievements">Achievements</button>
       <button data-tab="prestige" id="prestigeTabBtn" hidden>Prestige</button>
-      <button data-tab="library">Music Library</button>
+      <button data-tab="library" id="libraryTabBtn" hidden>Music Library</button>
       <button data-tab="settings">Settings</button>
     </div>
 
@@ -69,7 +69,7 @@
 
           <details class="dropdown" id="batonDropdown">
             <summary>
-              <span>Baton Techniques (Notes)</span>
+              <span>Conducting Skills</span>
               <span class="tag" id="batonTag">Whole Note</span>
             </summary>
             <div class="detailsBody">
@@ -84,7 +84,7 @@
           <div class="row">
             <div>
               <b>Take a bow: Court Patrons</b>
-              <div class="muted smallSans">Patron gains are based on <b>Notes earned this run</b>. Ink persists.</div>
+              <div class="muted smallSans">Patron gains are based on <b>Notes earned this run</b>.</div>
               <div class="muted smallSans mono" id="runNotesLine">Run Notes: 0</div>
               <div class="muted smallSans mono" id="lifetimeNotesLine">Lifetime Notes: 0</div>
               <div class="muted smallSans mono" id="patronLine">You have: 0 Patron(s) • Take-a-bow Gain: +0</div>
@@ -223,6 +223,19 @@
             <div class="table" id="facilityNextList"></div>
           </div>
         </details>
+
+        <div class="endowmentPanel" id="endowmentPanel" hidden>
+          <div class="endowmentHead">
+            <span class="endowmentMark">?</span>
+            <span class="endowmentTitle" id="endowmentTitle">Unknown Patron Rite</span>
+          </div>
+          <div class="muted smallSans" id="endowmentBody">—</div>
+          <div class="row" style="margin-top:10px;">
+            <div class="mono smallSans" id="endowmentProgress">—</div>
+            <button class="primary" id="endowmentOfferBtn">Offer Patrons</button>
+          </div>
+          <div class="mono smallSans" id="endowmentCostLine" style="margin-top:6px;">—</div>
+        </div>
 
         <div class="footer">
           <span class="muted">This hall appears after your first “Take a bow.”</span>
@@ -396,7 +409,7 @@
   <div class="panel">
     <h3>Prestige: “Take a bow”</h3>
     <div class="msg" style="margin-top:6px;">
-      When you <b>Take a bow</b>, you reset your run (Notes, instruments, NOTE-upgrades, Synergies, Baton Techniques)…<br/>
+      When you <b>Take a bow</b>, you reset your run (Notes, instruments, NOTE-upgrades, Synergies, Conducting Skills)…<br/>
       but you keep <b>Ink</b> and your <b>Archive Upgrades</b> permanently.<br/><br/>
       Your <b>Patron</b> gains are based on <b>Notes earned this run</b>. After you bow, you start earning Patrons from the beginning again (500,000 → …), while keeping all Patrons you’ve already earned overall.<br/><br/>
       Patrons unlock your <b>Performance Facility</b>—big global bonuses that grow over time.
@@ -404,6 +417,19 @@
     <div class="actions">
       <button id="prestigeExplainGoHallBtn">Open Prestige Hall</button>
       <button class="primary" id="prestigeExplainOkBtn">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="libraryMysteryOverlay" aria-hidden="true">
+  <div class="veil"></div>
+  <div class="panel">
+    <h3 id="libraryMysteryTitle">A Whispered Opportunity</h3>
+    <div class="msg" id="libraryMysteryMsg">
+      Patrons are beginning to ask for something bigger than performances alone.
+    </div>
+    <div class="actions">
+      <button class="primary" id="libraryMysteryOkBtn">Understood</button>
     </div>
   </div>
 </div>

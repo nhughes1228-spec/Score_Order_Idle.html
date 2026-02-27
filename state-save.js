@@ -12,7 +12,7 @@ const LEGACY_SAVE_KEYS = [
 ];
 function createDefaultState(buildings, nowFn){
   return {
-    version: 11,
+    version: 12,
     notes: 0,
     lifetimeNotes: 0,
     runNotes: 0,
@@ -49,7 +49,10 @@ function createDefaultState(buildings, nowFn){
       works: {},
       order: [],
       activeWorkId: null,
-      view: "list"
+      view: "list",
+      unlocked: false,
+      endowmentStage: 0,
+      endowments: 0
     },
     buyMode: "1",
     ui: {
@@ -69,6 +72,9 @@ function createDefaultState(buildings, nowFn){
       tooltipAckStep: -1,
       tooltipsDone: false,
       prestigeExplained: false,
+      firstPrestigePromptShown: false,
+      libraryForeshadowShown: false,
+      endowmentReadyShown: false,
       blocked: false,
       hasPrestiged: false
     },
@@ -128,6 +134,9 @@ function normalizeLoadedState(s, defaults, buildings, batonClickMultForState){
   if (s.ui.tooltipAckStep === undefined) s.ui.tooltipAckStep = -1;
   if (s.ui.tooltipsDone === undefined) s.ui.tooltipsDone = !!s.ui.hasStarted;
   if (s.ui.prestigeExplained === undefined) s.ui.prestigeExplained = false;
+  if (s.ui.firstPrestigePromptShown === undefined) s.ui.firstPrestigePromptShown = false;
+  if (s.ui.libraryForeshadowShown === undefined) s.ui.libraryForeshadowShown = false;
+  if (s.ui.endowmentReadyShown === undefined) s.ui.endowmentReadyShown = false;
   if (s.ui.blocked === undefined) s.ui.blocked = false;
   if (s.ui.hasPrestiged === undefined) s.ui.hasPrestiged = (s.patronsEver || 0) > 0;
 
@@ -183,6 +192,12 @@ function normalizeLoadedState(s, defaults, buildings, batonClickMultForState){
     s.library.activeWorkId = s.library.order[0] || null;
   }
   if (s.library.view !== "work" && s.library.view !== "list") s.library.view = "list";
+  if (s.library.unlocked === undefined) s.library.unlocked = (s.library.order.length > 0);
+  s.library.unlocked = !!s.library.unlocked;
+  if (s.library.endowmentStage === undefined) s.library.endowmentStage = 0;
+  s.library.endowmentStage = Math.max(0, Math.floor(Number(s.library.endowmentStage) || 0));
+  if (s.library.endowments === undefined) s.library.endowments = 0;
+  s.library.endowments = Math.max(0, Math.floor(Number(s.library.endowments) || 0));
 
   if (s.patronsEver === undefined) s.patronsEver = s.patrons || 0;
   if (s.patrons === undefined) s.patrons = s.patronsEver;

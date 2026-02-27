@@ -20,7 +20,10 @@ function ensureLibraryState(state){
       works: {},
       order: [],
       activeWorkId: null,
-      view: "list"
+      view: "list",
+      unlocked: false,
+      endowmentStage: 0,
+      endowments: 0
     };
   }
   if (!state.library.works || typeof state.library.works !== "object") state.library.works = {};
@@ -58,6 +61,12 @@ function ensureLibraryState(state){
     state.library.activeWorkId = state.library.order[0] || null;
   }
   if (state.library.view !== "work" && state.library.view !== "list") state.library.view = "list";
+  if (state.library.unlocked === undefined) state.library.unlocked = (state.library.order.length > 0);
+  state.library.unlocked = !!state.library.unlocked;
+  if (state.library.endowmentStage === undefined) state.library.endowmentStage = 0;
+  state.library.endowmentStage = Math.max(0, Math.floor(Number(state.library.endowmentStage) || 0));
+  if (state.library.endowments === undefined) state.library.endowments = 0;
+  state.library.endowments = Math.max(0, Math.floor(Number(state.library.endowments) || 0));
 }
 
 function workList(state){

@@ -204,6 +204,42 @@
     }
     .mini .name{display:flex; flex-direction:column; gap:2px}
     .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+    .instrumentRow{
+      position: relative;
+      overflow: hidden;
+      background: rgba(255,255,255,.60);
+    }
+    .instrumentRow::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--inst-art);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity:.28;
+      filter: saturate(1.05) contrast(1.03);
+      pointer-events:none;
+      z-index:0;
+    }
+    .instrumentRow::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: transparent;
+      pointer-events:none;
+      z-index:0;
+    }
+    .instrumentRow .name,
+    .instrumentRow .right{
+      position:relative;
+      z-index:1;
+    }
+    @media (max-width: 980px){
+      .instrumentRow::before{
+        opacity:.24;
+      }
+    }
     .tag{
       font-size:11px; padding:2px 8px; border-radius:999px;
       border:1px solid rgba(35,29,24,.30);
@@ -229,12 +265,14 @@
       user-select:none;
       background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.88), rgba(255,255,255,.40));
       border:1px solid rgba(44,110,122,.26);
-      box-shadow: 0 20px 60px rgba(0,0,0,.20);
+      box-shadow: 0 30px 62px rgba(0,0,0,.22);
       color: var(--ink2);
       padding:0;
     }
     .noteBtn:hover{border-color: rgba(44,110,122,.55)}
-    .noteBtn:active{transform: translateY(2px)}
+    .noteBtn:active{
+      transform: translateY(12px) scale(.92);
+    }
     .noteBtn{
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -449,7 +487,58 @@
       background: rgba(44,110,122,.18);
       border-color: rgba(44,110,122,.35);
     }
+    .tabs button.mysteryTab{
+      background: rgba(5,5,7,.92);
+      color: rgba(245,245,245,.95);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+      min-width: 40px;
+      letter-spacing: .04em;
+    }
+    .tabs button.mysteryTab:disabled{
+      opacity: 1;
+      cursor: default;
+      pointer-events: auto;
+    }
     .tab[hidden]{display:none !important}
+
+    .endowmentPanel{
+      margin-top:10px;
+      border:1px solid rgba(35,29,24,.22);
+      border-radius:14px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.48), rgba(245,238,226,.58));
+    }
+    .endowmentPanel.locked{
+      background: linear-gradient(180deg, rgba(10,10,12,.96), rgba(20,20,24,.96));
+      border-color: rgba(255,255,255,.14);
+      color: rgba(235,235,235,.95);
+    }
+    .endowmentPanel.ready{
+      box-shadow: 0 0 0 1px rgba(255,215,130,.22), 0 12px 28px rgba(0,0,0,.28);
+    }
+    .endowmentHead{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .endowmentMark{
+      width:28px;
+      height:28px;
+      border-radius:10px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.24);
+    }
+    .endowmentTitle{
+      font-family: var(--font-ui);
+      font-weight:900;
+      letter-spacing:.3px;
+    }
 
     details{
       border:1px solid rgba(35,29,24,.16);
@@ -516,6 +605,19 @@
     #prestigeExplainOverlay .veil{
       background: rgba(20,16,12,.62);
       backdrop-filter: blur(5px);
+    }
+    #libraryMysteryOverlay .veil{
+      background: rgba(6,6,8,.78);
+      backdrop-filter: blur(6px);
+    }
+    #libraryMysteryOverlay .panel{
+      background: rgba(14,14,18,.94);
+      color: rgba(245,244,240,.95);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 28px 72px rgba(0,0,0,.55);
+    }
+    #libraryMysteryOverlay .panel .msg{
+      color: rgba(230,230,230,.90);
     }
 
     /* Tutorial veil with rectangular spotlight that matches target shape */

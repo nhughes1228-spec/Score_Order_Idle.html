@@ -14,7 +14,7 @@ const NOTE_STAGES = [
 ];
 const BATON_ITEM = {
   id: "baton",
-  name: "Conductor Baton",
+  name: "Baton",
   baseCost: 12,
   costMult: 1.15,
   basePer: 0.07
@@ -25,6 +25,10 @@ const MUSIC_LIBRARY_CONFIG = {
   unlockBaseCost: 10,
   unlockCostGrowth: 1.08,
   defaultVelocity: 0.6,
+};
+const ENDGAME_LIBRARY_UNLOCK = {
+  requiredPatrons: 10000,
+  patronOfferSteps: [2500, 5000, 10000]
 };
 const MUSIC_LIBRARY_DEMO_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="3.1">
@@ -324,9 +328,9 @@ function buildAchievements(){
   makeTiered({
     idPrefix: "ach_batons_owned",
     namePrefix: "Baton Stockpile",
-    descPrefix: "Own Conductor Batons",
+    descPrefix: "Own Batons",
     kind: "click",
-    thresholds: [10, 50, 150, 400, 900],
+    thresholds: [24, 34, 44, 68, 98, 128],
     mult: CLICK_MINOR,
     valueFn: (s) => s.batonOwned || 0
   });
@@ -366,7 +370,7 @@ function buildAchievements(){
     namePrefix: "Note Evolution",
     descPrefix: "Unlock note stage",
     kind: "click",
-    thresholds: [1, 2, 3, 4, 5, 6],
+    thresholds: [1, 3, 6],
     mult: CLICK_MAJOR,
     valueFn: (s) => s.noteStageIdx || 0
   });
@@ -424,7 +428,7 @@ function buildAchievements(){
     });
   });
 
-  [1, 10, 25, 50, 100].forEach((target) => {
+  [1, 8, 20, 45, 90].forEach((target) => {
     add({
       id: `ach_perc_all_${target}`,
       name: `Percussion Core ${target}`,
@@ -685,6 +689,7 @@ window.ScoreData = {
   NOTE_STAGES,
   BATON_ITEM,
   MUSIC_LIBRARY_CONFIG,
+  ENDGAME_LIBRARY_UNLOCK,
   MUSIC_LIBRARY_DEMO_XML,
   BATON_UPGRADES,
   hasBatonTechnique,
