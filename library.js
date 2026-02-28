@@ -6,13 +6,15 @@ const LIB_CFG = (window.ScoreData && window.ScoreData.MUSIC_LIBRARY_CONFIG) || {
   unlockCostGrowth: 1.08,
   defaultVelocity: 0.6,
 };
-const DEMO_XML = (window.ScoreData && window.ScoreData.MUSIC_LIBRARY_DEMO_XML) || "";
+const MANIFEST_PATH = "assets/music/manifest.json";
+const MUSIC_BASE_PATH = "assets/music/";
 
 let audioCtx = null;
 let activeNodes = [];
 let playbackTimer = null;
 let isPlaying = false;
 let uiBound = false;
+let catalogPromise = null;
 
 function ensureLibraryState(state){
   if (!state.library || typeof state.library !== "object"){
@@ -200,38 +202,44 @@ function newWorkId(state){
   return `work_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function importMusicXML(state, xmlText){
+function upsertMusicXML(state, xmlText, overrides = {}){
   ensureLibraryState(state);
   const parsed = parseMusicXML(xmlText);
   if (!parsed.events.length){
     throw new Error("This MusicXML has no note events in the first part.");
   }
 
-  const id = newWorkId(state);
+  const preferredId = (overrides.id || "").trim();
+  const id = preferredId || newWorkId(state);
+  const existing = state.library.works[id] || null;
   const work = {
     id,
-    title: parsed.title,
-    composer: parsed.composer,
-    createdAt: Date.now(),
+    title: overrides.title || parsed.title,
+    composer: overrides.composer || parsed.composer,
+    createdAt: existing?.createdAt || Date.now(),
     xmlText,
     events: parsed.events,
-    unlockedCount: 0,
-    practice: 0,
-    practicePerSecond: LIB_CFG.defaultPracticePerSecond,
-    bpm: LIB_CFG.defaultBpm,
+    unlockedCount: Math.max(0, Math.min(existing?.unlockedCount || 0, parsed.events.length)),
+    practice: Math.max(0, Number(existing?.practice) || 0),
+    practicePerSecond: Math.max(0, Number(overrides.practicePerSecond ?? existing?.practicePerSecond ?? LIB_CFG.defaultPracticePerSecond) || 0),
+    bpm: Math.max(20, Number(overrides.bpm ?? existing?.bpm ?? LIB_CFG.defaultBpm) || LIB_CFG.defaultBpm),
     completed: false,
   };
+  work.completed = (work.events.length > 0 && work.unlockedCount >= work.events.length);
 
   state.library.works[id] = work;
-  state.library.order.push(id);
+  if (!state.library.order.includes(id)) state.library.order.push(id);
   state.library.activeWorkId = id;
   state.library.view = "work";
   return work;
 }
 
+function importMusicXML(state, xmlText){
+  return upsertMusicXML(state, xmlText);
+}
+
 function addDemoWork(state){
-  if (!DEMO_XML) throw new Error("No demo MusicXML is configured.");
-  return importMusicXML(state, DEMO_XML);
+  throw new Error("Demo import is disabled. Use assets/music/manifest.json.");
 }
 
 function setLibraryView(state, view){
@@ -270,6 +278,63 @@ function unlockNext(state, workId){
   work.unlockedCount = Math.min(work.events.length, (work.unlockedCount || 0) + 1);
   work.completed = work.unlockedCount >= work.events.length;
   return { ok:true, cost, completed: work.completed };
+}
+
+async function loadManifest(state, options = {}){
+  ensureLibraryState(state);
+  const force = !!options.force;
+  if (catalogPromise && !force) return catalogPromise;
+
+  const task = (async () => {
+    const stamp = force ? `?t=${Date.now()}` : "";
+    const resp = await fetch(`${MANIFEST_PATH}${stamp}`, { cache: "no-store" });
+    if (!resp.ok){
+      throw new Error(`Unable to load music manifest (${resp.status}).`);
+    }
+
+    const manifest = await resp.json();
+    const items = Array.isArray(manifest) ? manifest : [];
+    let added = 0;
+    let updated = 0;
+
+    for (const entry of items){
+      if (!entry || typeof entry !== "object") continue;
+      const file = typeof entry.file === "string" ? entry.file.trim() : "";
+      if (!file) continue;
+      const id = typeof entry.id === "string" && entry.id.trim()
+        ? entry.id.trim()
+        : file.replace(/\.[^.]+$/, "");
+
+      const xmlResp = await fetch(`${MUSIC_BASE_PATH}${file}${stamp}`, { cache: "no-store" });
+      if (!xmlResp.ok){
+        throw new Error(`Unable to load ${file} (${xmlResp.status}).`);
+      }
+      const xmlText = await xmlResp.text();
+      const exists = !!state.library.works[id];
+      upsertMusicXML(state, xmlText, {
+        id,
+        title: entry.title || "",
+        composer: entry.composer || "",
+        bpm: entry.bpm,
+        practicePerSecond: entry.practicePerSecond
+      });
+      if (exists) updated++;
+      else added++;
+    }
+
+    if (!state.library.activeWorkId && state.library.order.length){
+      state.library.activeWorkId = state.library.order[0];
+    }
+
+    return { ok:true, count: items.length, added, updated };
+  })();
+
+  catalogPromise = task;
+  try{
+    return await task;
+  }finally{
+    if (catalogPromise === task) catalogPromise = null;
+  }
 }
 
 function tickLibrary(state, dt){
@@ -340,10 +405,10 @@ function renderList(state, helpers = {}){
   if (!listEl) return;
 
   const works = workList(state);
-  if (meta) meta.textContent = `${works.length} work(s) in library`;
+  if (meta) meta.textContent = `${works.length} work(s) in library • Source: ${MANIFEST_PATH}`;
 
   if (works.length === 0){
-    listEl.innerHTML = `<div class="emptyState">No works yet. Import a MusicXML file or add the demo work.</div>`;
+    listEl.innerHTML = `<div class="emptyState">No works found. Add MusicXML entries to ${MANIFEST_PATH}.</div>`;
     return;
   }
 
@@ -562,39 +627,28 @@ function bindUI({ getState, save, renderAll, toast }){
     if (typeof toast === "function") toast(msg);
   };
 
-  const importInput = document.getElementById("libraryImportInput");
-  if (importInput){
-    importInput.addEventListener("change", async (e) => {
-      const input = e.target;
-      const file = input && input.files && input.files[0];
-      if (!file) return;
-      try {
-        const text = await file.text();
-        const state = getState();
-        importMusicXML(state, text);
-        save();
-        renderAll();
-        safeToast(`Imported: ${file.name}`);
-      } catch (err){
-        safeToast(err && err.message ? err.message : "Failed to import MusicXML.");
-      } finally {
-        input.value = "";
+  const syncCatalog = async (force = false, announce = false) => {
+    try {
+      const state = getState();
+      const res = await loadManifest(state, { force });
+      save();
+      renderAll();
+      if (announce) safeToast(`Catalog synced: ${res.count} work(s) (${res.added} added, ${res.updated} updated).`);
+    } catch (err){
+      const meta = document.getElementById("libraryListMeta");
+      if (meta){
+        meta.textContent = "No catalog loaded yet. Add assets/music/manifest.json and reload.";
       }
-    });
-  }
+      if (announce) safeToast(err && err.message ? err.message : "Failed to load music catalog.");
+    }
+  };
 
-  const demoBtn = document.getElementById("libraryAddDemoBtn");
-  if (demoBtn){
-    demoBtn.addEventListener("click", () => {
-      try {
-        const state = getState();
-        addDemoWork(state);
-        save();
-        renderAll();
-        safeToast("Demo work added.");
-      } catch (err){
-        safeToast(err && err.message ? err.message : "Failed to add demo work.");
-      }
+  syncCatalog(false, false);
+
+  const reloadBtn = document.getElementById("libraryReloadBtn");
+  if (reloadBtn){
+    reloadBtn.addEventListener("click", () => {
+      syncCatalog(true, true);
     });
   }
 
@@ -662,6 +716,7 @@ function bindUI({ getState, save, renderAll, toast }){
 
 window.ScoreLibrary = {
   ensureLibraryState,
+  loadManifest,
   parseMusicXML,
   importMusicXML,
   addDemoWork,

@@ -113,8 +113,13 @@ function notesPerClickForState(s, deps){
   const fac = facilityMults(s);
   const baseClick = batonBaseClickForState(s);
   const batonMult = batonClickMultForState(s, batonUpgrades, hasBatonTechnique);
+  const clickMeta = s.metaClickMult * (s.achClickMult || 1);
+  const patron = patronBonus(s.patrons);
 
-  return ((((baseClick * s.runClickMult) + fromNps) * batonMult) * s.metaClickMult * (s.achClickMult || 1) * patronBonus(s.patrons)) * fac.click;
+  const manualBase = (((baseClick * s.runClickMult) * batonMult) * clickMeta * patron) * fac.click;
+  const assistedClick = fromNps * (1 + ((clickMeta - 1) * 0.35)) * (1 + ((patron - 1) * 0.25)) * (1 + ((fac.click - 1) * 0.25));
+
+  return manualBase + assistedClick;
 }
 function previewDelta(state, mutator, deps){
   const beforeNps = totalNpsForState(state, deps.buildings, deps.facilityMults, deps.patronBonus);

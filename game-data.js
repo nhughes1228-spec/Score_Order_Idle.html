@@ -15,9 +15,9 @@ const NOTE_STAGES = [
 const BATON_ITEM = {
   id: "baton",
   name: "Baton",
-  baseCost: 12,
+  baseCost: 10,
   costMult: 1.15,
-  basePer: 0.07
+  basePer: 0.12
 };
 const MUSIC_LIBRARY_CONFIG = {
   defaultBpm: 120,
@@ -27,8 +27,8 @@ const MUSIC_LIBRARY_CONFIG = {
   defaultVelocity: 0.6,
 };
 const ENDGAME_LIBRARY_UNLOCK = {
-  requiredPatrons: 10000,
-  patronOfferSteps: [2500, 5000, 10000]
+  requiredPatrons: 1000000,
+  gainBasePatrons: 1000000
 };
 const MUSIC_LIBRARY_DEMO_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="3.1">
@@ -93,16 +93,16 @@ function scaledUnlockCost(baseCost, costMult, units, ratio){
 }
 function buildBatonUpgrades(){
   const defs = [
-    { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.30.",         requireBatons: 10,   setStage: 1, clickMult: 1.30, priceRatio: 0.32 },
-    { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.15.",           requireBatons: 25,   setStage: 2, clickMult: 1.15, priceRatio: 0.34 },
-    { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.06.",      requireBatons: 50,   setStage: 3, clickMult: 1.06, priceRatio: 0.36 },
-    { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x1.06.",        requireBatons: 100,  setStage: 4, clickMult: 1.06, priceRatio: 0.38 },
-    { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x1.06.",       requireBatons: 150,  setStage: 5, clickMult: 1.06, priceRatio: 0.40 },
-    { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x1.06.",         requireBatons: 200,  setStage: 6, clickMult: 1.06, priceRatio: 0.42 },
-    { id:"bt_legato",      name:"Legato Arc",             desc:"Advanced baton flow. Baton click x1.06.",             requireBatons: 250,                 clickMult: 1.06, priceRatio: 0.44 },
+    { id:"bt_fermata",     name:"Fermata Hold",           desc:"Upgrade to Dotted Half. Baton click x1.55.",         requireBatons: 10,   setStage: 1, clickMult: 1.55, priceRatio: 0.32 },
+    { id:"bt_cue",         name:"Confident Cue",          desc:"Upgrade to Half Note. Baton click x1.30.",           requireBatons: 25,   setStage: 2, clickMult: 1.30, priceRatio: 0.34 },
+    { id:"bt_crescendo",   name:"Crescendo Sweep",        desc:"Upgrade to Dotted Quarter. Baton click x1.16.",      requireBatons: 50,   setStage: 3, clickMult: 1.16, priceRatio: 0.36 },
+    { id:"bt_syncopation", name:"Gesture of Syncopation", desc:"Upgrade to Quarter Note. Baton click x1.12.",        requireBatons: 100,  setStage: 4, clickMult: 1.12, priceRatio: 0.38 },
+    { id:"bt_ritardando",  name:"Ritardando Control",     desc:"Upgrade to Dotted Eighth. Baton click x1.10.",       requireBatons: 150,  setStage: 5, clickMult: 1.10, priceRatio: 0.40 },
+    { id:"bt_precision",   name:"Precision Flick",        desc:"Upgrade to Eighth Note. Baton click x1.08.",         requireBatons: 200,  setStage: 6, clickMult: 1.08, priceRatio: 0.42 },
+    { id:"bt_legato",      name:"Legato Arc",             desc:"Advanced baton flow. Baton click x1.07.",             requireBatons: 250,                 clickMult: 1.07, priceRatio: 0.44 },
     { id:"bt_marcato",     name:"Marcato Strike",         desc:"Accented strike control. Baton click x1.06.",         requireBatons: 500,                 clickMult: 1.06, priceRatio: 0.46 },
-    { id:"bt_prestissimo", name:"Prestissimo Pulse",      desc:"Rapid precision control. Baton click x1.06.",         requireBatons: 750,                 clickMult: 1.06, priceRatio: 0.48 },
-    { id:"bt_maestro",     name:"Maestro's Signature",    desc:"Signature conducting power. Baton click x1.06.",      requireBatons: 1000,                clickMult: 1.06, priceRatio: 0.50 },
+    { id:"bt_prestissimo", name:"Prestissimo Pulse",      desc:"Rapid precision control. Baton click x1.05.",         requireBatons: 750,                 clickMult: 1.05, priceRatio: 0.48 },
+    { id:"bt_maestro",     name:"Maestro's Signature",    desc:"Signature conducting power. Baton click x1.05.",      requireBatons: 1000,                clickMult: 1.05, priceRatio: 0.50 },
   ];
 
   return defs.map(u => ({
@@ -129,25 +129,41 @@ const BUILDINGS = [
   { id:"oboe",        name:"Oboe",          family:"Winds",   baseCost: 1100,   costMult: 1.15, nps: 8   },
   { id:"enghorn",     name:"English Horn",  family:"Winds",   baseCost: 12000,  costMult: 1.15, nps: 47  },
   { id:"bassoon",     name:"Bassoon",       family:"Winds",   baseCost: 130000, costMult: 1.15, nps: 260 },
-  { id:"clarinet",    name:"Clarinet",      family:"Winds",   baseCost: 1.4e6,  costMult: 1.15, nps: 1400},
-  { id:"basscl",      name:"Bass Clarinet", family:"Winds",   baseCost: 2.0e7,  costMult: 1.15, nps: 7800},
+  { id:"contrabassoon", name:"Contrabassoon", family:"Winds", baseCost: 1.4e6,  costMult: 1.15, nps: 1400},
+  { id:"clarinet",       name:"Clarinet",         family:"Winds",   baseCost: 2.0e7,   costMult: 1.15, nps: 7.8e3 },
+  { id:"basscl",         name:"Bass Clarinet",    family:"Winds",   baseCost: 1.0e8,   costMult: 1.15, nps: 3.9e4 },
 
-  { id:"horn",        name:"Horn",          family:"Brass",   baseCost: 3.3e8,  costMult: 1.15, nps: 44000},
-  { id:"trumpet",     name:"Trumpet",       family:"Brass",   baseCost: 5.1e9,  costMult: 1.15, nps: 260000},
-  { id:"trombone",    name:"Trombone",      family:"Brass",   baseCost: 7.5e10, costMult: 1.15, nps: 1600000},
-  { id:"tuba",        name:"Tuba",          family:"Brass",   baseCost: 1.0e12, costMult: 1.15, nps: 1.0e7},
+  { id:"horn",           name:"French Horn",      family:"Brass",   baseCost: 5.0e8,   costMult: 1.15, nps: 1.95e5 },
+  { id:"posthorn",       name:"Post Horn",        family:"Brass",   baseCost: 2.5e9,   costMult: 1.15, nps: 9.75e5 },
+  { id:"trumpet",        name:"Trumpet",          family:"Brass",   baseCost: 1.25e10, costMult: 1.15, nps: 4.88e6 },
+  { id:"picctrumpet",    name:"Piccolo Trumpet",  family:"Brass",   baseCost: 6.25e10, costMult: 1.15, nps: 2.44e7 },
+  { id:"rotarytrumpet",  name:"Rotary Trumpet",   family:"Brass",   baseCost: 3.1e11,  costMult: 1.15, nps: 1.22e8 },
+  { id:"trombone",       name:"Trombone",         family:"Brass",   baseCost: 1.56e12, costMult: 1.15, nps: 6.1e8 },
+  { id:"basstrombone",   name:"Bass Trombone",    family:"Brass",   baseCost: 7.8e12,  costMult: 1.15, nps: 3.05e9 },
+  { id:"cimbasso",       name:"Cimbasso",         family:"Brass",   baseCost: 3.9e13,  costMult: 1.15, nps: 1.53e10 },
+  { id:"tuba",           name:"Tuba",             family:"Brass",   baseCost: 1.95e14, costMult: 1.15, nps: 7.63e10 },
+  { id:"wagnertuba",     name:"Wagner Tuba",      family:"Brass",   baseCost: 9.75e14, costMult: 1.15, nps: 3.81e11 },
 
-  { id:"timpani",     name:"Timpani",       family:"Perc",    baseCost: 1.4e13, costMult: 1.15, nps: 6.5e7},
-  { id:"perc",        name:"Percussion",    family:"Perc",    baseCost: 2.2e14, costMult: 1.15, nps: 4.0e8},
+  { id:"timpani",        name:"Timpani",          family:"Perc",    baseCost: 4.9e15,  costMult: 1.15, nps: 1.91e12 },
+  { id:"xylophone",      name:"Xylophone",        family:"Perc",    baseCost: 2.45e16, costMult: 1.15, nps: 9.53e12 },
+  { id:"marimba",        name:"Marimba",          family:"Perc",    baseCost: 1.23e17, costMult: 1.15, nps: 4.77e13 },
+  { id:"perc",           name:"Snare Drum",       family:"Perc",    baseCost: 6.15e17, costMult: 1.15, nps: 2.38e14 },
+  { id:"bassdrum",       name:"Bass Drum",        family:"Perc",    baseCost: 3.08e18, costMult: 1.15, nps: 1.19e15 },
+  { id:"crashcymbals",   name:"Crash Cymbals",    family:"Perc",    baseCost: 1.54e19, costMult: 1.15, nps: 5.96e15 },
+  { id:"tambourine",     name:"Tambourine",       family:"Perc",    baseCost: 7.7e19,  costMult: 1.15, nps: 2.98e16 },
+  { id:"triangle",       name:"Triangle",         family:"Perc",    baseCost: 3.85e20, costMult: 1.15, nps: 1.49e17 },
 
-  { id:"harp",        name:"Harp",          family:"Other",   baseCost: 3.7e15, costMult: 1.15, nps: 2.5e9},
-  { id:"piano",       name:"Piano/Celesta", family:"Other",   baseCost: 6.0e16, costMult: 1.15, nps: 1.6e10},
+  { id:"harp",           name:"Harp",             family:"Other",   baseCost: 1.93e21, costMult: 1.15, nps: 7.45e17 },
+  { id:"harpsichord",    name:"Harpsichord",      family:"Other",   baseCost: 9.65e21, costMult: 1.15, nps: 3.73e18 },
+  { id:"piano",          name:"Piano",            family:"Other",   baseCost: 4.83e22, costMult: 1.15, nps: 1.86e19 },
+  { id:"celeste",        name:"Celeste",          family:"Other",   baseCost: 2.42e23, costMult: 1.15, nps: 9.31e19 },
+  { id:"organ",          name:"Organ",            family:"Other",   baseCost: 1.21e24, costMult: 1.15, nps: 4.66e20 },
 
-  { id:"vln1",        name:"Violin I",      family:"Strings", baseCost: 1.0e18, costMult: 1.15, nps: 1.0e11},
-  { id:"vln2",        name:"Violin II",     family:"Strings", baseCost: 1.7e19, costMult: 1.15, nps: 7.0e11},
-  { id:"viola",       name:"Viola",         family:"Strings", baseCost: 2.8e20, costMult: 1.15, nps: 5.0e12},
-  { id:"cello",       name:"Cello",         family:"Strings", baseCost: 4.6e21, costMult: 1.15, nps: 3.6e13},
-  { id:"bass",        name:"Bass",          family:"Strings", baseCost: 7.5e22, costMult: 1.15, nps: 2.6e14},
+  { id:"vln1",           name:"Violin I",         family:"Strings", baseCost: 6.05e24, costMult: 1.15, nps: 2.33e21 },
+  { id:"vln2",           name:"Violin II",        family:"Strings", baseCost: 3.03e25, costMult: 1.15, nps: 1.16e22 },
+  { id:"viola",          name:"Viola",            family:"Strings", baseCost: 1.52e26, costMult: 1.15, nps: 5.82e22 },
+  { id:"cello",          name:"Cello",            family:"Strings", baseCost: 7.6e26,  costMult: 1.15, nps: 2.91e23 },
+  { id:"bass",           name:"Bass",             family:"Strings", baseCost: 3.8e27,  costMult: 1.15, nps: 1.45e24 },
 ];
 const FAMILY_ORDER = [
   { id:"Winds",   label:"Woodwinds",  defaultOpen:true },
@@ -512,16 +528,33 @@ function buildSynergyUpgrades(){
       can: s => groupCount(s, PERC) >= 50, apply: s => PERC.forEach(id => s.buildingMult[id] *= 1.40) },
 
     { id:"syn_doublereeds", families:["Winds"], name:"Double Reeds Studio",
-      desc:"Oboe + English Horn + Bassoon output x2",
-      costNotes: Math.floor((BUILDINGS.find(b=>b.id==="oboe").baseCost + BUILDINGS.find(b=>b.id==="enghorn").baseCost + BUILDINGS.find(b=>b.id==="bassoon").baseCost) * 120),
-      can: s => ((s.owned.oboe||0) >= 10 && (s.owned.enghorn||0) >= 5 && (s.owned.bassoon||0) >= 10),
-      apply: s => ["oboe","enghorn","bassoon"].forEach(id => s.buildingMult[id] *= 2) },
+      desc:"Oboe + English Horn + Bassoon + Contrabassoon output x2",
+      costNotes: Math.floor((
+        BUILDINGS.find(b=>b.id==="oboe").baseCost +
+        BUILDINGS.find(b=>b.id==="enghorn").baseCost +
+        BUILDINGS.find(b=>b.id==="bassoon").baseCost +
+        BUILDINGS.find(b=>b.id==="contrabassoon").baseCost
+      ) * 120),
+      can: s => ((s.owned.oboe||0) >= 10 && (s.owned.enghorn||0) >= 5 && (s.owned.bassoon||0) >= 10 && (s.owned.contrabassoon||0) >= 5),
+      apply: s => ["oboe","enghorn","bassoon","contrabassoon"].forEach(id => s.buildingMult[id] *= 2) },
 
     { id:"syn_lowbrass", families:["Brass"], name:"Low Brass Foundation",
-      desc:"Trombone + Tuba output +60%",
-      costNotes: Math.floor((BUILDINGS.find(b=>b.id==="trombone").baseCost + BUILDINGS.find(b=>b.id==="tuba").baseCost) * 35),
-      can: s => ((s.owned.trombone||0) >= 10 && (s.owned.tuba||0) >= 10),
-      apply: s => ["trombone","tuba"].forEach(id => s.buildingMult[id] *= 1.60) },
+      desc:"Trombone + Bass Trombone + Cimbasso + Tuba + Wagner Tuba output +60%",
+      costNotes: Math.floor((
+        BUILDINGS.find(b=>b.id==="trombone").baseCost +
+        BUILDINGS.find(b=>b.id==="basstrombone").baseCost +
+        BUILDINGS.find(b=>b.id==="cimbasso").baseCost +
+        BUILDINGS.find(b=>b.id==="tuba").baseCost +
+        BUILDINGS.find(b=>b.id==="wagnertuba").baseCost
+      ) * 10),
+      can: s => (
+        (s.owned.trombone||0) >= 10 &&
+        (s.owned.basstrombone||0) >= 5 &&
+        (s.owned.cimbasso||0) >= 5 &&
+        (s.owned.tuba||0) >= 10 &&
+        (s.owned.wagnertuba||0) >= 5
+      ),
+      apply: s => ["trombone","basstrombone","cimbasso","tuba","wagnertuba"].forEach(id => s.buildingMult[id] *= 1.60) },
   ];
 
   upgrades.forEach(u => u._can = u.can);
@@ -556,13 +589,13 @@ function buildInkUpgrades(){
   });
 
   const clickFromNpsSteps = [
-    {cost:45,   rate:0.0040, name:"Quick Quill",          desc:"Each click gains +0.4% of your current Notes/sec"},
-    {cost:90,   rate:0.0055, name:"Scribe Reflex",        desc:"Each click gains +0.55% of your current Notes/sec"},
-    {cost:225,  rate:0.0070, name:"Ink & Tempo",          desc:"Each click gains +0.7% of your current Notes/sec"},
-    {cost:450,  rate:0.0085, name:"Virtuoso Penmanship",  desc:"Each click gains +0.85% of your current Notes/sec"},
-    {cost:900,  rate:0.0100, name:"Counterpoint Script",  desc:"Each click gains +1% of your current Notes/sec"},
-    {cost:2250, rate:0.0120, name:"Orchestration Notes",  desc:"Each click gains +1.2% of your current Notes/sec"},
-    {cost:4500, rate:0.0145, name:"Maestro Margin",       desc:"Each click gains +1.45% of your current Notes/sec"},
+    {cost:45,   rate:0.0020, name:"Quick Quill",          desc:"Each click gains +0.2% of your current Notes/sec"},
+    {cost:90,   rate:0.0025, name:"Scribe Reflex",        desc:"Each click gains +0.25% of your current Notes/sec"},
+    {cost:225,  rate:0.0030, name:"Ink & Tempo",          desc:"Each click gains +0.3% of your current Notes/sec"},
+    {cost:450,  rate:0.0035, name:"Virtuoso Penmanship",  desc:"Each click gains +0.35% of your current Notes/sec"},
+    {cost:900,  rate:0.0040, name:"Counterpoint Script",  desc:"Each click gains +0.4% of your current Notes/sec"},
+    {cost:2250, rate:0.0045, name:"Orchestration Notes",  desc:"Each click gains +0.45% of your current Notes/sec"},
+    {cost:4500, rate:0.0050, name:"Maestro Margin",       desc:"Each click gains +0.5% of your current Notes/sec"},
   ];
   clickFromNpsSteps.forEach((s, idx)=>{
     ups.push({

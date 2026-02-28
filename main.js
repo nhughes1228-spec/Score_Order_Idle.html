@@ -90,6 +90,11 @@ const {
     window.addEventListener("load", kick, { once: true });
   })();
 
+  // Disable browser context menu on the game page.
+  document.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+  });
+
 (() => {
   // ---------- Utilities ----------
   const $ = (sel)=>document.querySelector(sel);
@@ -266,14 +271,14 @@ const {
     renderAll();
   }
 
-  function finishEndowmentAndReset(){
+  function finishEndowmentAndReset(gain){
     const settingsKeep = {
       abbrevLarge: !!S.settings?.abbrevLarge,
       reduceMotion: !!S.settings?.reduceMotion,
       highContrast: !!S.settings?.highContrast,
       disableTooltips: !!S.settings?.disableTooltips
     };
-    const totalEndowments = Math.max(0, (S.library?.endowments || 0)) + 1;
+    const totalEndowments = Math.max(0, (S.library?.endowments || 0)) + Math.max(0, Math.floor(gain || 0));
 
     S = stateDefault();
     if (ensureLibraryStateCore) ensureLibraryStateCore(S);
@@ -292,34 +297,28 @@ const {
     setTab("start");
     save(false);
     renderAll();
-    toast("Endowment founded. The Music Library is now open.");
+    toast(`Endowment gained: +${fmtInt(gain)}. The Music Library is now open.`);
   }
 
   function offerPatronsToEndowment(){
     if (isBlocked()) return;
     if (isLibraryUnlocked(S)) return;
-    const stage = endowmentStage(S);
-    const cost = nextEndowmentCost(S);
-    if (cost === null) return;
-    if (!canStartEndowment(S) && stage === 0){
+    if (!canStartEndowment(S)){
       toast("The Endowment Rite is not ready yet.");
       return;
     }
-    if ((S.patrons || 0) < cost){
-      toast(`Need ${fmtInt(cost)} Patrons for this offering.`);
+    const gain = endowmentGainFromPatrons(S.patrons || 0);
+    if (gain <= 0){
+      toast(`Need ${fmtInt(ENDOWMENT_BASE_PATRONS)} held Patrons to gain an Endowment.`);
       return;
     }
-
-    S.patrons -= cost;
-    S.library.endowmentStage = stage + 1;
-    save(false);
-    renderAll();
-
-    if (S.library.endowmentStage >= ENDOWMENT_STEP_COSTS.length){
-      finishEndowmentAndReset();
-      return;
-    }
-    toast(`Offering accepted. Stage ${S.library.endowmentStage}/${ENDOWMENT_STEP_COSTS.length}.`);
+    const ok = confirm(
+      `Establishing an Endowment will reset Notes, Ink, Patrons, Facilities, and your current run.\n` +
+      `You will gain +${fmtInt(gain)} Endowment.\n` +
+      `Music Library access will remain unlocked.\n\nProceed?`
+    );
+    if (!ok) return;
+    finishEndowmentAndReset(gain);
   }
 
   function renderEndowmentPanel(){
@@ -336,14 +335,13 @@ const {
     panel.hidden = !canSee;
     if (!canSee) return;
 
-    const stage = endowmentStage(S);
-    const totalStages = ENDOWMENT_STEP_COSTS.length;
-    const nextCost = nextEndowmentCost(S);
     const fullUp = finalVenueFullyUpgraded(S);
     const hasPatrons = (S.patrons || 0) >= ENDOWMENT_REQUIRED_PATRONS;
-    const unlocked = stage > 0 || (fullUp && hasPatrons);
+    const unlocked = fullUp && hasPatrons;
+    const gain = endowmentGainFromPatrons(S.patrons || 0);
+    const nextGainPatrons = patronsForEndowmentGain(gain + 1);
 
-    if (unlocked && stage === 0 && !S.ui.endowmentReadyShown && !libraryMysteryOverlay.classList.contains("show")){
+    if (unlocked && !S.ui.endowmentReadyShown && !libraryMysteryOverlay.classList.contains("show")){
       showEndowmentReadyReveal();
     }
 
@@ -351,13 +349,13 @@ const {
     panel.classList.toggle("ready", unlocked);
 
     if (titleEl){
-      titleEl.textContent = unlocked ? "Patron Endowment Rite" : "Unknown Patron Rite";
+      titleEl.textContent = unlocked ? "Endowment" : "Unknown Patron Rite";
     }
     if (bodyEl){
       if (unlocked){
         bodyEl.innerHTML =
-          `Trade patrons in escalating offerings. Completing all offerings forms an endowment, ` +
-          `resets the run completely, and unlocks the Music Library permanently.`;
+          `This is your double-prestige. Convert your <b>currently held Patrons</b> into Endowment, ` +
+          `reset all the way to the start, and keep the Music Library unlocked forever.`;
       } else {
         bodyEl.innerHTML =
           `A hidden process is sealed here. Fully upgrade <b>${getFacility(FINAL_FACILITY_ID)?.name || "the final venue"}</b> and hold at least ` +
@@ -365,31 +363,33 @@ const {
       }
     }
     if (progressEl){
-      progressEl.textContent = `Offering progress: ${Math.min(stage, totalStages)} / ${totalStages}`;
+      progressEl.textContent = unlocked
+        ? `Held Patrons: ${fmtInt(S.patrons || 0)} • Endowment gain: +${fmtInt(gain)} • Total Endowment: ${fmtInt(S.library?.endowments || 0)}`
+        : `Held Patrons: ${fmtInt(S.patrons || 0)} / ${fmtInt(ENDOWMENT_REQUIRED_PATRONS)} • Total Endowment: ${fmtInt(S.library?.endowments || 0)}`;
     }
     if (costEl){
-      costEl.textContent = nextCost === null
-        ? "Rite complete."
-        : `Next offering: ${fmtInt(nextCost)} Patrons • You have ${fmtInt(S.patrons || 0)}`;
+      costEl.textContent = unlocked
+        ? `Next +1 Endowment at ${fmtInt(nextGainPatrons)} held Patrons`
+        : `Need ${fmtInt(ENDOWMENT_REQUIRED_PATRONS)} held Patrons`;
     }
     if (offerBtn){
-      offerBtn.textContent = nextCost === null ? "Complete" : "Offer Patrons";
-      const enabled = unlocked && nextCost !== null && (S.patrons || 0) >= nextCost && !isBlocked();
+      offerBtn.textContent = "Establish Endowment";
+      const enabled = unlocked && gain > 0 && !isBlocked();
       let reason = "";
       if (!unlocked) reason = "Reveal requirements not met yet.";
-      else if (nextCost === null) reason = "All offerings complete.";
-      else if ((S.patrons || 0) < nextCost) reason = `Need ${fmtInt(nextCost)} Patrons.`;
+      else if (gain <= 0) reason = `Need ${fmtInt(ENDOWMENT_BASE_PATRONS)} held Patrons.`;
       setButtonState(offerBtn, enabled, reason);
     }
   }
 
   // ---------- Prestige (Patrons reset ladder each run) ----------
   const patronBonus = (patrons) => (1 + patrons * 0.05);
+  const PATRON_NOTES_BASE = 200000;
+  const PATRON_NOTES_EXP = 0.4;
+  const PATRON_NOTES_INV_EXP = 1 / PATRON_NOTES_EXP;
   const FINAL_FACILITY_ID = FACILITIES?.[FACILITIES.length - 1]?.id || "famous";
   const ENDOWMENT_REQUIRED_PATRONS = Math.max(1, Math.floor(ENDGAME_LIBRARY_UNLOCK?.requiredPatrons || 10000));
-  const ENDOWMENT_STEP_COSTS = Array.isArray(ENDGAME_LIBRARY_UNLOCK?.patronOfferSteps) && ENDGAME_LIBRARY_UNLOCK.patronOfferSteps.length
-    ? ENDGAME_LIBRARY_UNLOCK.patronOfferSteps.map(v => Math.max(1, Math.floor(Number(v) || 0)))
-    : [2500, 5000, 10000];
+  const ENDOWMENT_BASE_PATRONS = Math.max(1, Math.floor(ENDGAME_LIBRARY_UNLOCK?.gainBasePatrons || ENDOWMENT_REQUIRED_PATRONS));
 
   function isLibraryUnlocked(s = S){
     return !!(s?.library?.unlocked);
@@ -404,25 +404,28 @@ const {
     const purchased = s?.facility?.purchasedUpgrades || {};
     return f.upgrades.every(up => !!purchased[up.id]);
   }
-  function endowmentStage(s = S){
-    return Math.max(0, Math.floor(s?.library?.endowmentStage || 0));
-  }
-  function nextEndowmentCost(s = S){
-    const stage = endowmentStage(s);
-    return ENDOWMENT_STEP_COSTS[stage] || null;
-  }
   function canStartEndowment(s = S){
     return !isLibraryUnlocked(s) &&
       hasFinalVenueUnlocked(s) &&
       finalVenueFullyUpgraded(s) &&
       (s.patrons || 0) >= ENDOWMENT_REQUIRED_PATRONS;
   }
+  function endowmentGainFromPatrons(patrons){
+    const scaled = Math.max(0, Number(patrons || 0) / ENDOWMENT_BASE_PATRONS);
+    return Math.floor(Math.sqrt(scaled));
+  }
+  function patronsForEndowmentGain(target){
+    const t = Math.max(0, Number(target) || 0);
+    return Math.ceil(t * t * ENDOWMENT_BASE_PATRONS);
+  }
 
   function patronsFromRun(runNotes){
-    return Math.floor(Math.sqrt((runNotes || 0) / 500000));
+    const scaled = Math.max(0, (runNotes || 0) / PATRON_NOTES_BASE);
+    return Math.floor(Math.pow(scaled, PATRON_NOTES_EXP));
   }
   function runNotesForPatrons(p){
-    return (p * p) * 500000;
+    const target = Math.max(0, Number(p) || 0);
+    return Math.ceil(Math.pow(target, PATRON_NOTES_INV_EXP) * PATRON_NOTES_BASE);
   }
   function runNotesUntilNextPatron(s){
     const possibleNow = patronsFromRun(s.runNotes || 0);
@@ -883,26 +886,24 @@ const {
   }
 
   function showLibraryMystery(){
-    const nextCost = nextEndowmentCost(S);
     showLibraryOverlay(
       "A Whispered Opportunity",
       `Patrons are looking for a way to secure the orchestra forever.<br/><br/>` +
       `When the <b>${getFacility(FINAL_FACILITY_ID)?.name || "final venue"}</b> is fully upgraded and you hold at least <b>${fmtInt(ENDOWMENT_REQUIRED_PATRONS)}</b> Patrons, ` +
       `a hidden Endowment Rite can begin.<br/><br/>` +
-      `Current progress: ${fmtInt(S.patrons || 0)} / ${fmtInt(ENDOWMENT_REQUIRED_PATRONS)} Patrons` +
-      (nextCost ? ` • First offering: ${fmtInt(nextCost)} Patrons` : "")
+      `Current progress: ${fmtInt(S.patrons || 0)} / ${fmtInt(ENDOWMENT_REQUIRED_PATRONS)} held Patrons`
     );
     S.ui.libraryForeshadowShown = true;
     save(false);
   }
 
   function showEndowmentReadyReveal(){
-    const nextCost = nextEndowmentCost(S);
+    const gain = endowmentGainFromPatrons(S.patrons || 0);
     showLibraryOverlay(
-      "The Endowment Rite Awakes",
+      "The Endowment Awakes",
       `Your patrons are ready.<br/><br/>` +
-      `You can now begin the Endowment Rite in the Prestige Hall. Each offering demands more patrons than the last.<br/><br/>` +
-      `First offering: <b>${fmtInt(nextCost || 0)}</b> Patrons.`
+      `You can now perform a double-prestige in the Prestige Hall and convert held Patrons into Endowment.<br/><br/>` +
+      `Current result: <b>+${fmtInt(gain)}</b> Endowment.`
     );
     S.ui.endowmentReadyShown = true;
     save(false);
@@ -1069,7 +1070,11 @@ const {
   }
 
   function previewDelta(mutator){
-    return previewDeltaCore(S, mutator, {
+    return previewDeltaForState(S, mutator);
+  }
+
+  function previewDeltaForState(state, mutator){
+    return previewDeltaCore(state, mutator, {
       buildings: BUILDINGS,
       batonUpgrades: BATON_UPGRADES,
       hasBatonTechnique,
@@ -1143,7 +1148,7 @@ const {
     return true;
   }
 
-  function buyNoteUpgrade(id){
+  function buyNoteUpgrade(id, silent=false){
     if (isBlocked()) return;
 
     const u = NOTE_UPGRADES.find(x=>x.id===id);
@@ -1156,10 +1161,11 @@ const {
     S.noteUpgrades[id] = true;
     u.apply(S);
     addRecentUnlock("Upgrade", u.name);
-    toast(`Upgrade: ${u.name}`);
+    if (!silent) toast(`Upgrade: ${u.name}`);
+    return true;
   }
 
-  function buySynergyUpgrade(id){
+  function buySynergyUpgrade(id, silent=false){
     if (isBlocked()) return;
 
     const u = SYNERGY_UPGRADES.find(x=>x.id===id);
@@ -1172,10 +1178,11 @@ const {
     S.synergyUpgrades[id] = true;
     u.apply(S);
     addRecentUnlock("Synergy", u.name);
-    toast(`Synergy: ${u.name}`);
+    if (!silent) toast(`Synergy: ${u.name}`);
+    return true;
   }
 
-  function buyInkUpgrade(id){
+  function buyInkUpgrade(id, silent=false){
     if (isBlocked()) return;
 
     const u = INK_UPGRADES.find(x=>x.id===id);
@@ -1187,10 +1194,11 @@ const {
     S.inkUpgrades[id] = true;
     u.apply(S);
     addRecentUnlock("Archive", u.name);
-    toast(`Archive: ${u.name}`);
+    if (!silent) toast(`Archive: ${u.name}`);
+    return true;
   }
 
-  function buyBatonUpgrade(id){
+  function buyBatonUpgrade(id, silent=false){
     if (isBlocked()) return;
 
     const u = BATON_UPGRADES.find(x=>x.id===id);
@@ -1210,7 +1218,104 @@ const {
     S.batonClickMult = batonClickMultForState(S);
 
     addRecentUnlock("Technique", u.name);
-    toast(`Baton: ${u.name}`);
+    if (!silent) toast(`Baton: ${u.name}`);
+    return true;
+  }
+
+  function availableUpgradeOptions(state = S){
+    const options = [];
+
+    for (const u of NOTE_UPGRADES){
+      if (state.noteUpgrades[u.id]) continue;
+      if ((state.owned[u.buildingId] || 0) < u.requireOwned) continue;
+      if ((state.notes || 0) < u.costNotes) continue;
+      const delta = previewDeltaForState(state, (s) => {
+        s.noteUpgrades[u.id] = true;
+        u.apply(s);
+      });
+      options.push({
+        key: `note:${u.id}`,
+        label: u.name,
+        kind: "note",
+        delta,
+        apply: () => buyNoteUpgrade(u.id, true)
+      });
+    }
+
+    for (const u of BATON_UPGRADES){
+      if (hasBatonTechnique(state, u.id)) continue;
+      if (!batonUpgradeUnlockedInState(state, u)) continue;
+      if ((state.notes || 0) < u.costNotes) continue;
+      const delta = previewDeltaForState(state, (s) => {
+        s.batonUpgrades[u.id] = 1;
+        if (u.setStage !== undefined && u.setStage > (s.noteStageIdx || 0)){
+          s.noteStageIdx = u.setStage;
+        }
+        s.batonClickMult = batonClickMultForState(s);
+      });
+      options.push({
+        key: `baton:${u.id}`,
+        label: u.name,
+        kind: "baton",
+        delta,
+        apply: () => buyBatonUpgrade(u.id, true)
+      });
+    }
+
+    for (const u of SYNERGY_UPGRADES){
+      if (state.synergyUpgrades[u.id]) continue;
+      if (!u.can(state)) continue;
+      if ((state.notes || 0) < u.costNotes) continue;
+      const delta = previewDeltaForState(state, (s) => {
+        s.synergyUpgrades[u.id] = true;
+        u.apply(s);
+      });
+      options.push({
+        key: `syn:${u.id}`,
+        label: u.name,
+        kind: "synergy",
+        delta,
+        apply: () => buySynergyUpgrade(u.id, true)
+      });
+    }
+
+    options.sort((a, b) => {
+      if (Math.abs((b.delta?.nps || 0) - (a.delta?.nps || 0)) > 1e-9){
+        return (b.delta?.nps || 0) - (a.delta?.nps || 0);
+      }
+      if (Math.abs((b.delta?.click || 0) - (a.delta?.click || 0)) > 1e-9){
+        return (b.delta?.click || 0) - (a.delta?.click || 0);
+      }
+      return a.label.localeCompare(b.label);
+    });
+
+    return options;
+  }
+
+  function buyAllAvailableUpgrades(){
+    if (isBlocked()) return;
+
+    let purchased = 0;
+    let firstName = "";
+
+    while (true){
+      const options = availableUpgradeOptions(S);
+      if (options.length === 0) break;
+      const best = options[0];
+      if (!best) break;
+      const ok = best.apply();
+      if (!ok) break;
+      if (!firstName) firstName = best.label;
+      purchased++;
+    }
+
+    if (purchased <= 0){
+      toast("No unlocked upgrades are currently affordable.");
+      return;
+    }
+
+    toast(`Bought ${purchased} upgrade${purchased === 1 ? "" : "s"}${firstName ? ` • Started with ${firstName}` : ""}.`);
+    renderAll();
   }
 
   // ✅ Global “manual click” debounce (prevents double-fire from touch/click overlap)
@@ -1536,6 +1641,7 @@ const {
       const b = $("#"+id);
       if (b) b.classList.toggle("active", S.buyMode === mode);
     });
+    const upgradeOptions = availableUpgradeOptions(S);
 
     const batonBtn = $("#buyBatonBtn");
     if (batonBtn){
@@ -1577,6 +1683,19 @@ const {
       setButtonState(mQuickNote, enabled, reason);
       if (!blocked) mQuickNote.title = `Tap note (+${fmtExact(notesPerClick(), useSuffix)}).`;
     }
+    ["mBuyUpgrades", "dBuyUpgrades"].forEach((id) => {
+      const btn = $("#"+id);
+      if (!btn) return;
+      const best = upgradeOptions[0] || null;
+      const enabled = !blocked && !!best;
+      let reason = "";
+      if (blocked) reason = "Unavailable while tutorial or modal is open.";
+      else if (!best) reason = "No unlocked affordable upgrades right now.";
+      setButtonState(btn, enabled, reason);
+      if (best){
+        btn.title = `Starts with ${best.label} (${formatDeltaTip(best.delta.nps, best.delta.click)}).`;
+      }
+    });
 
     BUILDINGS.forEach(b=>{
       const buyBtn = document.querySelector(`button[data-buy="${b.id}"]`);
@@ -1854,6 +1973,9 @@ const {
             <span class="tag ${tag.cls}">${tag.text}</span>
           </div>
           <div class="muted smallSans">${u.desc}</div>
+          ${
+            owned ? "" : `<div class="muted smallSans mono" style="margin-top:4px;">Requires ${fmtInt(u.requireBatons || 0)} Batons</div>`
+          }
           ${
             owned ? "" : `
             <div class="muted smallSans mono afterPurchase" style="margin-top:4px;">
@@ -2548,7 +2670,7 @@ const {
       tickLibraryCore(S, dt);
     }
 
-    if (!S.settings.disableTooltips && !S.ui.prestigeExplained && (S.patronsEver || 0) === 0 && (S.runNotes || 0) >= 500000){
+    if (!S.settings.disableTooltips && !S.ui.prestigeExplained && (S.patronsEver || 0) === 0 && (S.runNotes || 0) >= runNotesForPatrons(1)){
       showPrestigeExplain();
       renderHUD();
       return;
@@ -2653,6 +2775,13 @@ const {
       refreshDynamicShopStates();
     });
   }
+  ["mBuyUpgrades", "dBuyUpgrades"].forEach((id) => {
+    const btn = $("#"+id);
+    if (!btn) return;
+    btn.addEventListener("click", ()=> {
+      buyAllAvailableUpgrades();
+    });
+  });
 
   $("#settingSuffix").addEventListener("change", (e)=>{
     S.settings.abbrevLarge = !!e.target.checked;

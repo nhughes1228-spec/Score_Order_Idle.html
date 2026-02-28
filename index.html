@@ -251,11 +251,10 @@
       <div class="content libraryWrap">
         <div class="libraryListView" id="libraryListView">
           <div class="libraryToolbar">
-            <label class="libraryFileLabel" for="libraryImportInput">Import MusicXML</label>
-            <input type="file" id="libraryImportInput" accept=".musicxml,.xml,application/xml,text/xml"/>
-            <button id="libraryAddDemoBtn">Add Demo Work</button>
+            <div class="muted smallSans">Library catalog syncs from <b class="mono">assets/music/manifest.json</b>.</div>
+            <button id="libraryReloadBtn">Reload Catalog</button>
           </div>
-          <div class="muted smallSans" id="libraryListMeta">Import a work to begin unlocking note events.</div>
+          <div class="muted smallSans" id="libraryListMeta">Scanning music catalog...</div>
           <div class="table" id="libraryWorksList"></div>
         </div>
 
@@ -371,12 +370,14 @@
   <button class="primary noteDockBtn" id="mQuickNoteBtn" aria-label="Tap note"></button>
   <button id="mBuy100" data-mbuymode="100">x100</button>
   <button id="mBuyMax" data-mbuymode="max">Next</button>
+  <button id="mBuyUpgrades" class="primary">Upgrades</button>
 </div>
 <div class="desktopBuyDock" id="desktopBuyDock" hidden>
   <button id="dBuy1" data-dbuymode="1">x1</button>
   <button id="dBuy10" data-dbuymode="10">x10</button>
   <button id="dBuy100" data-dbuymode="100">x100</button>
   <button id="dBuyMax" data-dbuymode="max">Next</button>
+  <button id="dBuyUpgrades" class="primary">Upgrades</button>
 </div>
 
 <div class="toast" id="toast"></div>
