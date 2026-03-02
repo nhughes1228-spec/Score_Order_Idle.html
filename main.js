@@ -205,6 +205,45 @@ const {
     };
   }
 
+  const FACILITY_CHAIN_CARRY_EXP = 0.35;
+
+  function nextLockedFacilityForState(s){
+    const currentIdx = FACILITIES.findIndex(f => f.id === s?.facility?.currentId);
+    if (currentIdx < 0) return FACILITIES.find(f => !s?.facility?.unlocked?.[f.id]) || null;
+    for (let i = currentIdx + 1; i < FACILITIES.length; i++){
+      const f = FACILITIES[i];
+      if (!s?.facility?.unlocked?.[f.id]) return f;
+    }
+    return null;
+  }
+
+  function facilityEntryBonusFromCurrent(s, nextFacilityId){
+    const currentId = s?.facility?.currentId;
+    const next = nextLockedFacilityForState(s);
+    if (!currentId || !next || next.id !== nextFacilityId){
+      return {
+        nps: 1,
+        click: 1,
+        stepNps: 1,
+        stepClick: 1,
+        source: { owned: 0, total: 0, ratio: 0 }
+      };
+    }
+
+    const carry = facilityCarryBonusFromCurrent(s, currentId);
+    const inherited = s?.facility?.baseBonus?.[currentId] || { nps: 1, click: 1 };
+    const stepNps = Math.pow(Math.max(1, carry.nps || 1), FACILITY_CHAIN_CARRY_EXP);
+    const stepClick = Math.pow(Math.max(1, carry.click || 1), FACILITY_CHAIN_CARRY_EXP);
+
+    return {
+      nps: +((inherited.nps || 1) * stepNps).toFixed(3),
+      click: +((inherited.click || 1) * stepClick).toFixed(3),
+      stepNps: +stepNps.toFixed(3),
+      stepClick: +stepClick.toFixed(3),
+      source: carry
+    };
+  }
+
   function facilityBaseMultForState(s, facilityId){
     const f = getFacility(facilityId);
     if (!f) return { nps: 1, click: 1 };
@@ -240,17 +279,19 @@ const {
     const f = getFacility(id);
     if (!f) return;
     if (S.facility.unlocked[id]) return;
+    const next = nextLockedFacilityForState(S);
+    if (!next || next.id !== id) return;
     if (!canAffordPatrons(f.patronCostToUnlock)) return;
 
-    const carry = facilityCarryBonusFromCurrent(S, S.facility.currentId);
+    const entry = facilityEntryBonusFromCurrent(S, id);
     if (!S.facility.baseBonus) S.facility.baseBonus = {};
-    S.facility.baseBonus[id] = { nps: carry.nps, click: carry.click };
+    S.facility.baseBonus[id] = { nps: entry.nps, click: entry.click };
 
     spendPatrons(f.patronCostToUnlock);
     S.facility.unlocked[id] = true;
     S.facility.currentId = id;
     addRecentUnlock("Venue", f.name);
-    toast(`Venue: ${f.name} (Mastery x${carry.nps.toFixed(2)} NPS • x${carry.click.toFixed(2)} Click)`);
+    toast(`Venue: ${f.name} (Inherited x${entry.nps.toFixed(2)} NPS • x${entry.click.toFixed(2)} Click)`);
     save(false);
     renderAll();
   }
@@ -384,7 +425,7 @@ const {
 
   // ---------- Prestige (Patrons reset ladder each run) ----------
   const patronBonus = (patrons) => (1 + patrons * 0.05);
-  const PATRON_NOTES_BASE = 200000;
+  const PATRON_NOTES_BASE = 500000;
   const PATRON_NOTES_EXP = 0.4;
   const PATRON_NOTES_INV_EXP = 1 / PATRON_NOTES_EXP;
   const FINAL_FACILITY_ID = FACILITIES?.[FACILITIES.length - 1]?.id || "famous";
@@ -1824,18 +1865,21 @@ const {
       const id = btn.getAttribute("data-fac");
       const f = getFacility(id);
       if (!f) return;
-      const afford = canAffordPatrons(f.patronCostToUnlock);
+      const next = nextLockedFacilityForState(S);
+      const sequential = !!next && next.id === id;
+      const afford = sequential && canAffordPatrons(f.patronCostToUnlock);
       const enabled = !blocked && afford;
       const delta = previewDelta(s => {
-        const carry = facilityCarryBonusFromCurrent(s, s.facility.currentId);
+        const entry = facilityEntryBonusFromCurrent(s, id);
         if (!s.facility.baseBonus) s.facility.baseBonus = {};
-        s.facility.baseBonus[id] = { nps: carry.nps, click: carry.click };
+        s.facility.baseBonus[id] = { nps: entry.nps, click: entry.click };
         s.facility.unlocked[id] = true;
         s.facility.currentId = id;
       });
       const tip = formatDeltaTip(delta.nps, delta.click);
       let reason = "";
       if (blocked) reason = "Unavailable while tutorial or modal is open.";
+      else if (!sequential) reason = "Unlock the current next venue first.";
       else if (!afford) reason = `Need ${f.patronCostToUnlock} Patron(s) (${fmtInt(S.patrons || 0)}/${fmtInt(f.patronCostToUnlock)}).`;
       setButtonState(btn, enabled, reason);
       setButtonEffectTip(btn, tip);
@@ -1868,6 +1912,11 @@ const {
 
     const rem = runNotesUntilNextPatron(S);
     $("#nextPatronInfo").textContent = `Next Patron in: ${fmtExact(rem, useSuffix)} Notes`;
+    const prestigeRow = $("#prestigeRow");
+    if (prestigeRow){
+      const showPrestigeRow = (S.runNotes || 0) >= runNotesForPatrons(1);
+      prestigeRow.hidden = !showPrestigeRow;
+    }
 
     const st = currentStage();
     $("#noteBtn").innerHTML = noteMarkup(st);
@@ -1876,7 +1925,8 @@ const {
     if (mQuickNote) mQuickNote.innerHTML = noteMarkup(st);
 
     const timeStr = new Date().toLocaleString();
-    $("#clock").textContent = timeStr;
+    const clock = $("#clock");
+    if (clock) clock.textContent = timeStr;
     $("#statsClock").textContent = timeStr;
     const ac = $("#achClock");
     if (ac) ac.textContent = timeStr;
@@ -1908,7 +1958,6 @@ const {
         <div class="top">
           <b>${BATON_ITEM.name}</b>
           <span class="tag good">Owned: <span class="mono" data-baton-owned>${owned}</span></span>
-          <span class="tag">Base click: <span class="mono">${fmtExact(batonBaseClick(), false)}</span></span>
         </div>
         <div class="muted smallSans">Each baton improves click power and grants Ink.</div>
         <div class="cost" id="batonGainLine" style="margin-top:4px;">+${fmtExact(gain, useSuffix)} Notes/click</div>
@@ -1975,12 +2024,6 @@ const {
           <div class="muted smallSans">${u.desc}</div>
           ${
             owned ? "" : `<div class="muted smallSans mono" style="margin-top:4px;">Requires ${fmtInt(u.requireBatons || 0)} Batons</div>`
-          }
-          ${
-            owned ? "" : `
-            <div class="muted smallSans mono afterPurchase" style="margin-top:4px;">
-              After purchase: Baton click multiplier <b>x${((batonClickMult() || 1) * (u.clickMult || 1)).toFixed(2)}</b>
-            </div>`
           }
         </div>
         <div class="right">
@@ -2333,6 +2376,8 @@ const {
 
     $("#facilityUpgradesTag").textContent = current ? current.name : "—";
     const carry = facilityCarryBonusFromCurrent(S, S.facility.currentId);
+    const nextFacility = nextLockedFacilityForState(S);
+    const entry = nextFacility ? facilityEntryBonusFromCurrent(S, nextFacility.id) : null;
     const masteryPct = Math.round(carry.ratio * 100);
     $("#facilityNextTag").textContent = `Venues • Mastery ${masteryPct}%`;
 
@@ -2400,26 +2445,35 @@ const {
       if (S.facility.unlocked[f.id]) continue;
       if (currentIdx !== -1 && i < currentIdx) continue;
 
-      const afford = canAffordPatrons(f.patronCostToUnlock);
+      const sequential = !!nextFacility && nextFacility.id === f.id;
+      const afford = sequential && canAffordPatrons(f.patronCostToUnlock);
       const enabled = afford && !isBlocked();
-      const boosted = {
-        nps: f.globalMult.nps * carry.nps,
-        click: f.globalMult.click * carry.click
-      };
+      const stepBoost = sequential ? entry : null;
+      const boosted = stepBoost
+        ? {
+            nps: f.globalMult.nps * stepBoost.nps,
+            click: f.globalMult.click * stepBoost.click
+          }
+        : {
+            nps: f.globalMult.nps,
+            click: f.globalMult.click
+          };
       const div = document.createElement("div");
       div.className = "mini";
       div.innerHTML = `
         <div class="name">
           <div class="top">
             <b>${f.name}</b>
-            <span class="tag ${afford ? "warn" : ""}">${afford ? "Available" : "Locked"}</span>
+            <span class="tag ${afford ? "warn" : ""}">${sequential ? (afford ? "Available" : "Locked") : "Later"}</span>
           </div>
           <div class="muted smallSans">${f.desc}</div>
           <div class="muted smallSans mono" style="margin-top:4px;">
             Base: x${f.globalMult.nps.toFixed(2)} NPS • x${f.globalMult.click.toFixed(2)} Click
           </div>
           <div class="muted smallSans mono" style="margin-top:4px;">
-            With current mastery (${carry.owned}/${carry.total}): x${boosted.nps.toFixed(2)} NPS • x${boosted.click.toFixed(2)} Click
+            ${sequential
+              ? `With current mastery (${carry.owned}/${carry.total}) and venue chain: x${boosted.nps.toFixed(2)} NPS • x${boosted.click.toFixed(2)} Click`
+              : `Unlock the previous venue first to reveal its inherited bonus`}
           </div>
         </div>
         <div class="right">

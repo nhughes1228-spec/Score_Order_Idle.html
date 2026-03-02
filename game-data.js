@@ -637,13 +637,13 @@ const INK_UPGRADES = buildInkUpgrades();
 // ---------- Facilities (Prestige Spending) ----------
 const FACILITY_BASE = [
   { id:"shed",    name:"Mildewy Shed",  desc:"A cramped shed behind the school. The stands wobble if you breathe too hard.",            patronCostToUnlock: 0,    globalMult:{ nps:1.00, click:1.00 } },
-  { id:"garage",  name:"One-Car Garage",desc:"Still echoey… but weatherproof, and you can fit a full section inside.",                  patronCostToUnlock: 100,  globalMult:{ nps:1.40, click:1.15 } },
-  { id:"bandroom",name:"Band Room",     desc:"Lockers. Posters. A metronome that survived three directors. It feels like home.",         patronCostToUnlock: 250,  globalMult:{ nps:1.85, click:1.25 } },
-  { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 600,  globalMult:{ nps:1.40, click:1.35 } },
-  { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 1200, globalMult:{ nps:3.25, click:1.55 } },
-  { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 2200, globalMult:{ nps:4.30, click:1.75 } },
-  { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 4000, globalMult:{ nps:6.00, click:2.05 } },
-  { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 8000, globalMult:{ nps:9.00, click:2.60 } },
+  { id:"garage",  name:"One-Car Garage",desc:"Still echoey… but weatherproof, and you can fit a full section inside.",                  patronCostToUnlock: 150,  globalMult:{ nps:1.40, click:1.15 } },
+  { id:"bandroom",name:"Band Room",     desc:"Lockers. Posters. A metronome that survived three directors. It feels like home.",         patronCostToUnlock: 550,  globalMult:{ nps:1.85, click:1.25 } },
+  { id:"gym",     name:"Gymnasium",     desc:"Huge, loud, unforgiving… but you can finally hear the low brass.",                         patronCostToUnlock: 1800, globalMult:{ nps:1.40, click:1.35 } },
+  { id:"pac",     name:"School PAC",    desc:"Real lights. Real stage. Real applause (and stagehands who judge setup time).",            patronCostToUnlock: 5500, globalMult:{ nps:3.25, click:1.55 } },
+  { id:"church",  name:"Stone Church",  desc:"Natural reverb for days. Every chord sounds like it means something.",                      patronCostToUnlock: 16000, globalMult:{ nps:4.30, click:1.75 } },
+  { id:"hall",    name:"Concert Hall",  desc:"Perfect sightlines. Perfect acoustics. Suddenly… you’re doing real work.",                 patronCostToUnlock: 45000, globalMult:{ nps:6.00, click:2.05 } },
+  { id:"famous",  name:"Famous Venue",  desc:"This is where the legends played. The score practically writes itself.",               patronCostToUnlock: 120000, globalMult:{ nps:9.00, click:2.60 } },
 ];
 const FACILITY_PREVIEW_IMAGE = {
   shed: "assets/venue-shed-mildewy.png",
@@ -707,7 +707,7 @@ function buildFacilities(){
   for (let i=0;i<FACILITY_BASE.length;i++){
     const f = FACILITY_BASE[i];
     const next = FACILITY_BASE[i+1];
-    const nextCost = next ? next.patronCostToUnlock : Math.max(1000, Math.round(f.patronCostToUnlock * 1.5));
+    const nextCost = next ? next.patronCostToUnlock : Math.max(2000, Math.round(f.patronCostToUnlock * 2.25));
     facilities.push({
       ...f,
       upgrades: upgradesFor(f.id, nextCost)

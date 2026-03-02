@@ -52,7 +52,9 @@
         </h2>
         <div class="content">
           <div class="clickZone">
-            <button class="noteBtn" id="noteBtn" aria-label="Click the note"></button>
+            <div class="noteBtnStage">
+              <button class="noteBtn" id="noteBtn" aria-label="Click the note"></button>
+            </div>
 
             <div class="bigNotes mono" id="bigNotes">0 Notes</div>
 
@@ -81,7 +83,7 @@
             </div>
           </details>
 
-          <div class="row">
+          <div class="row" id="prestigeRow" hidden>
             <div>
               <b>Take a bow: Court Patrons</b>
               <div class="muted smallSans">Patron gains are based on <b>Notes earned this run</b>.</div>
@@ -93,10 +95,6 @@
             <button class="primary" id="prestigeBtn">Take a bow</button>
           </div>
 
-          <div class="footer">
-            <span class="mono" id="clock">—</span>
-            <span class="muted">Real note art + parchment background + baton cursor enforced.</span>
-          </div>
         </div>
       </section>
 
@@ -134,11 +132,6 @@
               <div class="table" id="inkUpgradeList"></div>
             </div>
           </details>
-
-          <div class="footer">
-            <span class="muted">Synergies boost whole families. Ladders boost individual instruments.</span>
-            <span class="muted">Ink upgrades grow slowly, then compound.</span>
-          </div>
         </div>
       </section>
 
