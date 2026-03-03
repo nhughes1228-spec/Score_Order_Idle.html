@@ -1480,16 +1480,134 @@ const {
     });
     [["mBuy1","1"],["mBuy10","10"],["mBuy100","100"],["mBuyMax","max"]].forEach(([id,m])=>{
       const btn = $("#"+id);
-      if (btn) btn.classList.toggle("active", m === mode);
+      if (btn && m !== "max") btn.classList.toggle("active", m === mode);
     });
     [["dBuy1","1"],["dBuy10","10"],["dBuy100","100"],["dBuyMax","max"]].forEach(([id,m])=>{
       const btn = $("#"+id);
-      if (btn) btn.classList.toggle("active", m === mode);
+      if (btn && m !== "max") btn.classList.toggle("active", m === mode);
     });
     save(false);
     renderFamilies();
     refreshDynamicShopStates();
     updateFloatingControls();
+    syncDockQuickActionButtons();
+  }
+
+  let dockQuickAction = "next";
+
+  function normalizeDockQuickAction(action){
+    return (action === "upgrades") ? "upgrades" : "next";
+  }
+
+  function currentDockQuickAction(){
+    return normalizeDockQuickAction(dockQuickAction);
+  }
+
+  function setDockQuickAction(action){
+    dockQuickAction = normalizeDockQuickAction(action);
+    hideDockActionMenu();
+    syncDockQuickActionButtons();
+    refreshDynamicShopStates();
+  }
+
+  function syncDockQuickActionButtons(){
+    const action = currentDockQuickAction();
+    const label = action === "upgrades" ? "Upgrades ▾" : "Next ▾";
+    const activeAsMode = action === "next" && S.buyMode === "max";
+
+    ["mBuyMax", "dBuyMax"].forEach((id) => {
+      const btn = $("#"+id);
+      if (!btn) return;
+      btn.textContent = label;
+      btn.classList.toggle("active", activeAsMode);
+      btn.classList.toggle("primary", action === "upgrades");
+      btn.title = action === "upgrades"
+        ? "Click: buy all unlocked affordable upgrades. Hold to switch."
+        : "Click: set buy quantity to Next. Hold to switch.";
+    });
+
+    const menu = $("#dockActionMenu");
+    if (menu){
+      menu.querySelectorAll("button[data-dock-action]").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-dock-action") === action);
+      });
+    }
+  }
+
+  function runDockQuickAction(){
+    if (currentDockQuickAction() === "upgrades"){
+      buyAllAvailableUpgrades();
+      return;
+    }
+    setBuyMode("max");
+  }
+
+  function positionDockActionMenu(anchor){
+    const menu = $("#dockActionMenu");
+    if (!menu || !anchor) return;
+    menu.hidden = false;
+    const rect = anchor.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const left = Math.max(8, Math.min(window.innerWidth - menuRect.width - 8, rect.right - menuRect.width));
+    const top = Math.max(8, rect.top - menuRect.height - 8);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+  }
+
+  function openDockActionMenu(anchor){
+    const menu = $("#dockActionMenu");
+    if (!menu) return;
+    menu.hidden = false;
+    positionDockActionMenu(anchor);
+  }
+
+  function hideDockActionMenu(){
+    const menu = $("#dockActionMenu");
+    if (!menu) return;
+    menu.hidden = true;
+  }
+
+  function wireDockQuickActionButton(btn){
+    if (!btn || btn._wiredDockQuickAction) return;
+    btn._wiredDockQuickAction = true;
+
+    let holdTimer = 0;
+    let openedMenu = false;
+
+    const clearHold = () => {
+      if (holdTimer){
+        clearTimeout(holdTimer);
+        holdTimer = 0;
+      }
+    };
+
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      openedMenu = false;
+      clearHold();
+      holdTimer = setTimeout(() => {
+        openedMenu = true;
+        openDockActionMenu(btn);
+      }, 420);
+    });
+
+    btn.addEventListener("pointerup", (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      const wasLongPress = openedMenu;
+      clearHold();
+      if (wasLongPress){
+        e.preventDefault();
+        return;
+      }
+      hideDockActionMenu();
+      runDockQuickAction();
+    });
+
+    btn.addEventListener("pointerleave", clearHold);
+    btn.addEventListener("pointercancel", clearHold);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+    });
   }
 
   const INK_TAB_LABELS = {
@@ -1724,17 +1842,20 @@ const {
       setButtonState(mQuickNote, enabled, reason);
       if (!blocked) mQuickNote.title = `Tap note (+${fmtExact(notesPerClick(), useSuffix)}).`;
     }
-    ["mBuyUpgrades", "dBuyUpgrades"].forEach((id) => {
+    ["mBuyMax", "dBuyMax"].forEach((id) => {
       const btn = $("#"+id);
       if (!btn) return;
       const best = upgradeOptions[0] || null;
-      const enabled = !blocked && !!best;
+      const isUpgradeAction = currentDockQuickAction() === "upgrades";
+      const enabled = isUpgradeAction ? (!blocked && !!best) : !blocked;
       let reason = "";
       if (blocked) reason = "Unavailable while tutorial or modal is open.";
-      else if (!best) reason = "No unlocked affordable upgrades right now.";
+      else if (isUpgradeAction && !best) reason = "No unlocked affordable upgrades right now.";
       setButtonState(btn, enabled, reason);
-      if (best){
+      if (isUpgradeAction && best){
         btn.title = `Starts with ${best.label} (${formatDeltaTip(best.delta.nps, best.delta.click)}).`;
+      } else if (!isUpgradeAction){
+        btn.title = "Click: set buy quantity to Next. Hold to switch.";
       }
     });
 
@@ -2818,6 +2939,8 @@ const {
   document.querySelectorAll("button[data-dbuymode]").forEach(btn=>{
     btn.addEventListener("click", ()=> setBuyMode(btn.getAttribute("data-dbuymode")));
   });
+  wireDockQuickActionButton($("#mBuyMax"));
+  wireDockQuickActionButton($("#dBuyMax"));
   document.querySelectorAll("button[data-inktab]").forEach(btn=>{
     btn.addEventListener("click", ()=> setInkTab(btn.getAttribute("data-inktab")));
   });
@@ -2829,13 +2952,28 @@ const {
       refreshDynamicShopStates();
     });
   }
-  ["mBuyUpgrades", "dBuyUpgrades"].forEach((id) => {
-    const btn = $("#"+id);
-    if (!btn) return;
-    btn.addEventListener("click", ()=> {
-      buyAllAvailableUpgrades();
+  const dockActionMenu = $("#dockActionMenu");
+  if (dockActionMenu){
+    dockActionMenu.querySelectorAll("button[data-dock-action]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDockQuickAction(btn.getAttribute("data-dock-action"));
+      });
     });
+    dockActionMenu.addEventListener("pointerdown", (e) => e.stopPropagation());
+  }
+  document.addEventListener("pointerdown", (e) => {
+    const menu = $("#dockActionMenu");
+    if (!menu || menu.hidden) return;
+    const target = e.target;
+    if (menu.contains(target)) return;
+    if (target?.closest?.("#mBuyMax, #dBuyMax")) return;
+    hideDockActionMenu();
   });
+  window.addEventListener("resize", hideDockActionMenu);
+  window.addEventListener("scroll", hideDockActionMenu, true);
+  syncDockQuickActionButtons();
 
   $("#settingSuffix").addEventListener("change", (e)=>{
     S.settings.abbrevLarge = !!e.target.checked;
