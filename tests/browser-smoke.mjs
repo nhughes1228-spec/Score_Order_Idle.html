@@ -30,6 +30,7 @@ async function page(options={},seed={}){
     s.notes=1e8;s.ui.hasStarted=true;s.ui.tutorialCompleted=true;s.ui.tab="main";s.settings.disableTooltips=true;
     if(seed.fresh){s.notes=0;s.ui.hasStarted=false;s.ui.tutorialCompleted=false;s.ui.tab="start";}
     if(seed.prestige){s.runNotes=500000;s.patrons=100;s.patronsEver=100;s.ui.hasPrestiged=true;}
+    if(seed.softCap){s.runNotes=4.9e15;s.patrons=123456;s.patronsEver=234567;s.ui.hasPrestiged=true;}
     if(seed.library){s.library.unlocked=true;s.library.endowments=1;}
     if(seed.skills){s.batonOwned=100; s.owned.piccolo=100;}
     if(seed.endowment){s.patrons=1000000;s.patronsEver=1000000;s.ui.hasPrestiged=true;s.ui.tab="prestige";s.ui.endowmentReadyShown=true;
@@ -174,6 +175,21 @@ try{
   assert.equal(catchup.stats.clicks,elapsed.before.stats.clicks);
   await timed.reload();assert.equal((await state(timed)).notes,once);
   console.log("PASS browser background catch-up cap, Practice, repeated visibility and reload (no double credit)");
+  const softCap=await page({}, {softCap:true});
+  assert.equal((await state(softCap)).patrons,123456);
+  assert.ok((await softCap.locator("#patronLine").textContent()).includes("Take-a-bow Gain: +3149"));
+  const nextLabel=await softCap.evaluate(()=>{
+    const rules=ScoreEconomy.createProgressionRules(ScoreData);
+    return "Next Patron in: "+ScoreRender.fmtExact(rules.runNotesUntilNextPatron({runNotes:4.9e15}),true)+" Notes";
+  });
+  assert.equal(await softCap.locator("#nextPatronInfo").textContent(),nextLabel);
+  await softCap.locator("#prestigeRow").scrollIntoViewIfNeeded();
+  await softCap.screenshot({path:path.join(output,"patron-soft-cap.png")});
+  softCap.on("dialog",d=>d.accept());
+  await softCap.click("#prestigeBtn");
+  assert.equal((await state(softCap)).patrons,126605);
+  await softCap.reload();assert.equal((await state(softCap)).patrons,126605);
+  console.log("PASS softened prestige preview, Next Patron label, reward and save reload");
   const failure=await page();
   await failure.evaluate(()=>{Storage.prototype.setItem=()=>{throw Error("quota exceeded")};});
   await failure.click("[data-tab=settings]");await failure.click("#saveBtn");
@@ -182,4 +198,3 @@ try{
   assert.deepEqual(errors,[]);
   console.log("All browser checks passed without page errors.");
 }finally{await browser.close();server.close();}
-

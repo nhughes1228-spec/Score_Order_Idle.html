@@ -232,6 +232,7 @@ function createProgressionRules(data){
   const PATRON_NOTES_BASE = 500000;
   const PATRON_NOTES_EXP = 0.4;
   const PATRON_NOTES_INV_EXP = 1 / PATRON_NOTES_EXP;
+  const PATRON_REWARD_SOFT_CAP = 1000;
   const FINAL_FACILITY_ID = FACILITIES?.[FACILITIES.length - 1]?.id || "famous";
   const ENDOWMENT_REQUIRED_PATRONS = Math.max(1, Math.floor(ENDGAME_LIBRARY_UNLOCK?.requiredPatrons || 10000));
   const ENDOWMENT_BASE_PATRONS = Math.max(1, Math.floor(ENDGAME_LIBRARY_UNLOCK?.gainBasePatrons || ENDOWMENT_REQUIRED_PATRONS));
@@ -266,11 +267,24 @@ function createProgressionRules(data){
 
   function patronsFromRun(runNotes){
     const scaled = Math.max(0, (runNotes || 0) / PATRON_NOTES_BASE);
-    return Math.floor(Math.pow(scaled, PATRON_NOTES_EXP));
+    const originalReward = Math.pow(scaled, PATRON_NOTES_EXP);
+    const reward = originalReward <= PATRON_REWARD_SOFT_CAP
+      ? originalReward
+      : PATRON_REWARD_SOFT_CAP * Math.sqrt(originalReward / PATRON_REWARD_SOFT_CAP);
+    return Math.floor(reward);
   }
   function runNotesForPatrons(p){
-    const target = Math.max(0, Number(p) || 0);
-    return Math.ceil(Math.pow(target, PATRON_NOTES_INV_EXP) * PATRON_NOTES_BASE);
+    const target = Math.max(0, Math.ceil(Number(p) || 0));
+    const originalReward = target <= PATRON_REWARD_SOFT_CAP
+      ? target
+      : PATRON_REWARD_SOFT_CAP * Math.pow(target / PATRON_REWARD_SOFT_CAP, 2);
+    let notes = Math.ceil(Math.pow(originalReward, PATRON_NOTES_INV_EXP) * PATRON_NOTES_BASE);
+    // Inverting powers can round just below a reward boundary. At large values,
+    // adding one Note may do nothing, so advance by at least a representable step.
+    while (Number.isFinite(notes) && patronsFromRun(notes) < target){
+      notes += Math.max(1, notes * Number.EPSILON);
+    }
+    return notes;
   }
   function runNotesUntilNextPatron(s){
     const possibleNow = patronsFromRun(s.runNotes || 0);

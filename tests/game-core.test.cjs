@@ -119,5 +119,64 @@ test("pure real-action progression smoke and endowment reset",()=>{
   assert.equal(result.state.library.endowments,1);assert.equal(result.state.library.unlocked,true);
   assert.equal(result.state.notes,0);assert.equal(result.state.facility.currentId,"shed");
 });
+test("Patron soft cap preserves early rewards and softens only above 1000",()=>{
+  const r=a.rules;
+  const oldReward=notes=>Math.floor(Math.pow(Math.max(0,notes)/500000,.4));
+  const boundary=500000*Math.pow(1000,2.5);
+  for(let i=0;i<=10000;i++){
+    const notes=boundary*i/10000;
+    assert.equal(r.patronsFromRun(notes),oldReward(notes));
+  }
+  for(const gain of [1,20,40,80,160,320,640,999,1000]){
+    const notes=r.runNotesForPatrons(gain);
+    assert.equal(r.patronsFromRun(notes),gain);
+    near(notes,500000*Math.pow(gain,2.5));
+  }
+  assert.equal(r.patronsFromRun(499999),0);
+  assert.equal(r.patronsFromRun(500000),1);
+  assert.equal(r.patronsFromRun(boundary*(1-1e-10)),999);
+  assert.equal(r.patronsFromRun(boundary),1000);
+  assert.equal(r.patronsFromRun(boundary*(1+1e-10)),1000);
+  for(const [notes,reward] of [[4.9e15,3149],[3.85e20,30012],[1.93e21,41430],[6.05e24,207279],[3.8e27,751904]]){
+    assert.equal(r.patronsFromRun(notes),reward);
+  }
+  let previous=0;
+  for(let i=0;i<=4000;i++){
+    const notes=500000*Math.pow(10,i/100);
+    const gain=r.patronsFromRun(notes);
+    assert.ok(gain>=previous);assert.ok(gain<=oldReward(notes));previous=gain;
+  }
+});
+test("Patron inverse and next-reward thresholds round safely",()=>{
+  const r=a.rules;
+  for(const target of [...Array.from({length:10000},(_,i)=>i+1),100000,1000000,1e9,1e12]){
+    const notes=r.runNotesForPatrons(target);
+    assert.ok(r.patronsFromRun(notes)>=target,"threshold under-awards "+target);
+    assert.ok(r.patronsFromRun(notes-Math.max(1,notes*1e-12))<target,"threshold too high "+target);
+    const raw=target<=1000?target:1000*Math.pow(target/1000,2);
+    const expected=Math.ceil(500000*Math.pow(raw,2.5));
+    assert.ok(Math.abs(notes-expected)<=Math.max(1,expected*1e-12));
+  }
+  for(const target of [1,999,1000,1001,2000,1000000]){
+    const notes=r.runNotesForPatrons(target);
+    const s=fresh();s.runNotes=notes-Math.max(1,notes*1e-10);
+    const before=r.patronsFromRun(s.runNotes),remaining=r.runNotesUntilNextPatron(s);
+    assert.ok(remaining>0);
+    assert.ok(r.patronsFromRun(s.runNotes+remaining)>before);
+  }
+  assert.equal(r.runNotesForPatrons(0),0);
+  assert.equal(r.runNotesForPatrons(Infinity),Infinity);
+});
+test("existing Patrons and saves survive; only future prestige rewards change",()=>{
+  const s=fresh(),st=storage();s.patrons=123456;s.patronsEver=234567;s.runNotes=4.9e15;
+  const bonus=a.rules.patronBonus(s.patrons);
+  assert.ok(P.saveState(st,P.SAVE_KEY,s,()=>1).ok);
+  const restored=load(st);
+  assert.equal(restored.patrons,123456);assert.equal(restored.patronsEver,234567);
+  assert.equal(a.rules.patronBonus(restored.patrons),bonus);
+  const result=a.prestige(restored);
+  assert.equal(result.gain,3149);assert.equal(restored.patrons,126605);
+  assert.equal(restored.patronsEver,237716);
+  assert.equal(a.rules.ENDOWMENT_REQUIRED_PATRONS,1000000);
+});
 console.log(passed+" core test groups passed");
-
